@@ -31,7 +31,6 @@
       "@volli/messaging": ["./packages/messaging/src"],
       "@volli/sync-ipfs": ["./packages/sync-ipfs/src"],
       "@volli/plugins": ["./packages/plugins/src"],
-      "@volli/cap-table": ["./packages/cap-table/src"],
       "@volli/ui-kit": ["./packages/ui-kit/src"]
     }
   },

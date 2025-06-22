@@ -348,45 +348,6 @@ interface PluginRuntime {
 ### Dependencies
 - `@wasmer/wasi`: WASM runtime
 - `comlink`: Worker communication
-- `@volli/cap-table`: Permission system
-
-## 7. Capability Table (`@volli/cap-table`)
-
-### Functional Requirements
-- Compile-time capability analysis
-- Runtime permission enforcement
-- Capability inheritance system
-- Audit trail generation
-- Permission visualization
-
-### Security Requirements
-- Principle of least privilege
-- Capability transitivity rules
-- Revocation mechanisms
-- Tamper-proof audit logs
-
-### API Contract
-```typescript
-interface CapabilityTable {
-  // Compile-time
-  parseManifest(manifest: PluginManifest): CapabilitySet
-  validateCapabilities(capabilities: CapabilitySet): ValidationResult
-  generateTable(capabilities: CapabilitySet): CapabilityTable
-  
-  // Runtime
-  checkAccess(principal: string, resource: string, operation: Operation): boolean
-  grant(principal: string, capability: Capability): void
-  revoke(principal: string, capability: Capability): void
-  
-  // Audit
-  logAccess(principal: string, resource: string, operation: Operation, result: boolean): void
-  getAuditLog(filter?: AuditFilter): AuditEntry[]
-}
-```
-
-### Dependencies
-- TypeScript compiler API
-- `ajv`: JSON schema validation
 
 ## Integration Requirements
 
@@ -402,7 +363,6 @@ graph TD
     
     MSG --> UI[ui-kit]
     
-    PLUGIN[plugins] --> CAP[cap-table]
     PLUGIN --> VC
     PLUGIN --> MSG
     

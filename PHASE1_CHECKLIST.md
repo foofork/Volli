@@ -50,14 +50,6 @@
   - [x] Build passing
   - [x] TypeScript clean
 
-- [x] **@volli/cap-table** ✅
-  - [x] types.ts
-  - [x] cap-table.ts
-  - [x] documents.ts
-  - [x] audit.ts
-  - [x] Build passing
-  - [x] TypeScript clean
-
 ### UI Package
 - [ ] **@volli/ui-kit** ⚠️
   - [x] Components created

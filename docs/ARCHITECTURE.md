@@ -28,7 +28,6 @@ graph TB
         VAULT[Vault Core<br/>@volli/vault-core]
         ID[Identity Core<br/>@volli/identity-core]
         PLUGIN[Plugin Runtime<br/>@volli/plugins]
-        CAP[Capability Table<br/>@volli/cap-table]
     end
     
     subgraph "Storage & Sync"
@@ -65,8 +64,6 @@ graph TB
     
     ID --> CRYPTO
     VAULT --> CRYPTO
-    
-    PLUGIN --> CAP
     
     CRDT --> SYNC
     SYNC --> IPFS
@@ -190,16 +187,6 @@ WASM-based plugin runtime with capability security.
 }
 ```
 
-### 6. Capability Table (`@volli/cap-table`)
-
-Compile-time permission system for plugins.
-
-**Responsibilities:**
-- Parse plugin manifests
-- Generate capability tables
-- Runtime permission checks
-- Audit trail generation
-
 ## Security Architecture
 
 ### Cryptographic Stack
@@ -294,7 +281,6 @@ volli/
 │   ├── messaging/
 │   ├── sync-ipfs/
 │   ├── plugins/
-│   ├── cap-table/
 │   └── ui-kit/
 ├── plugins/          # Example plugins
 ├── docs/

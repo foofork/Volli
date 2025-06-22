@@ -147,7 +147,6 @@ Add plugin system, sync capabilities, and polish for beta release.
 | Task | Package | Priority | Effort |
 |------|---------|----------|--------|
 | Wasmer-JS integration | @volli/plugins | P0 | 2d |
-| Capability table compiler | @volli/cap-table | P0 | 2d |
 | Permission enforcement | @volli/plugins | P0 | 2d |
 | Audit logging | @volli/plugins | P0 | 1d |
 | Sample plugins (2) | plugins/ | P1 | 2d |

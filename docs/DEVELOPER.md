@@ -67,7 +67,6 @@ volli/
 │   ├── messaging/         # Message handling
 │   ├── sync-ipfs/         # P2P synchronization
 │   ├── plugins/           # Plugin runtime
-│   ├── cap-table/         # Capability compiler
 │   └── ui-kit/            # Shared UI components
 ├── plugins/               # Example plugins
 ├── docs/                  # Documentation

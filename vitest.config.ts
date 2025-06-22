@@ -26,7 +26,6 @@ export default defineConfig({
       '@volli/messaging': path.resolve(__dirname, './packages/messaging/src'),
       '@volli/sync-ipfs': path.resolve(__dirname, './packages/sync-ipfs/src'),
       '@volli/plugins': path.resolve(__dirname, './packages/plugins/src'),
-      '@volli/cap-table': path.resolve(__dirname, './packages/cap-table/src'),
       '@volli/ui-kit': path.resolve(__dirname, './packages/ui-kit/src')
     }
   }

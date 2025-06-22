@@ -17,15 +17,11 @@
    - `message.test.ts` - Message handling tests
    - Coverage: Message creation, status updates, reactions, editing, validation
 
-4. **@volli/cap-table**
-   - `cap-table.test.ts` - Equity management tests
-   - Coverage: Share issuance, vesting, ownership calculations
-
-5. **@volli/plugins**
+4. **@volli/plugins**
    - `plugin-manager.test.ts` - Plugin system tests
    - Coverage: Manifest validation, permissions, resource limits
 
-6. **@volli/sync-ipfs**
+5. **@volli/sync-ipfs**
    - `ipfs-sync.test.ts` - Synchronization tests
    - Coverage: Manifest creation, conflict resolution, peer tracking
 

@@ -112,7 +112,6 @@ Volli uses a monorepo structure with the following packages:
 - **`@volli/messaging`** - Message schemas and encryption helpers  
 - **`@volli/sync-ipfs`** - P2P synchronization via IPFS
 - **`@volli/plugins`** - WASM plugin runtime
-- **`@volli/cap-table`** - Equity and cap table management
 - **`@volli/ui-kit`** - Shared Svelte UI components
 - **`@volli/web`** - SvelteKit web application
 
@@ -199,7 +198,6 @@ volli/
 │   ├── messaging/      # Message handling
 │   ├── sync-ipfs/      # P2P synchronization
 │   ├── plugins/        # Plugin system
-│   ├── cap-table/      # Equity management
 │   └── ui-kit/         # Shared components
 ├── apps/              # Applications
 │   ├── web/           # SvelteKit web app
