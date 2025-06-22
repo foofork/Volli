@@ -2,183 +2,142 @@
 
 # 🔐 Volli
 
-**Post-Quantum Secure, Local-First Messaging Platform**
+### Post‑Quantum Secure, Local‑First Messaging Platform
 
-[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Svelte](https://img.shields.io/badge/Svelte-FF3E00?logo=svelte&logoColor=white)](https://svelte.dev/)
+[![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-2F74C0?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![SvelteKit](https://img.shields.io/badge/SvelteKit-FF3E00?logo=svelte&logoColor=white)](https://kit.svelte.dev/)
 [![Tests](https://img.shields.io/badge/Tests-70%2B%20Passing-brightgreen)]()
-[![Security](https://img.shields.io/badge/Security-Post--Quantum-green)](docs/SECURITY.md)
+[![Security](https://img.shields.io/badge/Encryption-Post--Quantum-green)](docs/SECURITY.md)
 
-> **⚠️ Development Status:** Currently in **Phase 2** development. Core foundation complete, working towards v1.0 release.
-
-*Privacy-first messaging with quantum-resistant cryptography and local-first architecture*
-
-[🚀 Quick Start](#-quick-start) • [📖 Documentation](#-documentation) • [🏗️ Architecture](#️-architecture) • [🔒 Security](#-security)
+**Private chat that stays private—even in a quantum future.**
 
 </div>
 
-## ✨ What's Working Now
-
-<table>
-<tr>
-<td width="50%">
-
-### 🔒 **Military-Grade Encryption**
-- Your messages are encrypted before they leave your device
-- Uses the same crypto libraries as Signal and WhatsApp
-- Future-proof against quantum computer attacks
-- *No one can read your messages, not even us*
-
-### 🌐 **Works Offline First** 
-- Send and receive messages without internet
-- All your data stays on your device
-- Automatic sync when you're back online
-- *Your conversations, your control*
-
-</td>
-<td width="50%">
-
-### 📱 **One App, Every Device**
-- Works in any web browser (Chrome, Safari, Firefox)
-- Responsive design for phones, tablets, and desktop
-- Same features everywhere you use it
-- *Start a conversation on your phone, continue on your laptop*
-
-### ⚡ **Lightning Fast Search**
-- Find any message in under 50 milliseconds
-- Search works even when you're offline
-- Your search history stays private
-- *Find that important message instantly*
-
-</td>
-</tr>
-</table>
-
-## 🚀 Coming Soon - The Future of Private Messaging
-
-### 🏠 **Native Desktop Apps**
-*Why it matters:* Faster performance, better integration with your operating system, and the peace of mind that comes with a dedicated app.
-- **macOS, Windows, and Linux** desktop applications
-- **Native notifications** without compromising privacy
-- **System integration** for seamless file sharing
-- **Better performance** than web browsers
-
-### 📱 **Mobile Apps That Actually Protect You**
-*Why it matters:* True privacy on the devices you use most, with biometric security that keeps others out.
-- **iOS and Android** native applications
-- **Biometric unlock** (FaceID, TouchID, fingerprint)
-- **Background sync** without draining battery
-- **Local notifications** that don't leak metadata
-
-### 🌐 **Peer-to-Peer Magic**
-*Why it matters:* Your messages travel directly between devices, not through corporate servers that can be hacked or monitored.
-- **Direct device-to-device** messaging via IPFS
-- **No central servers** means no single point of failure
-- **Automatic relay** when direct connection isn't possible
-- **Multi-device sync** that just works
-
-### 🧩 **Smart Plugins That Respect Privacy**
-*Why it matters:* Extend Volli with new features while keeping your data secure and private.
-- **AI-powered message summarization** (runs locally, never sent to cloud)
-- **Language translation** without sending text to Google
-- **File format converters** (PDF, images, documents)
-- **Custom integrations** with your favorite tools
-
-### 🔮 **Quantum-Proof Security**
-*Why it matters:* When quantum computers arrive, your old messages will still be private.
-- **Kyber-1024 encryption** resistant to quantum attacks
-- **Dilithium-3 signatures** for tamper-proof messaging
-- **Automatic key rotation** for perfect forward secrecy
-- **Future-proof cryptography** that evolves with threats
+> **Project status:** 🚧 **Phase 2 – Multi‑Platform Apps & P2P Sync**  
+> Core cryptography and vault are **stable**. We're racing toward the first public beta (v1.0)!
 
 ---
 
-## 📋 Prerequisites
+## ✨ Why Volli?
 
-- **Node.js** 18+ 
-- **npm** 9+
-- **Git**
+|                                   |           Volli           | Signal / WhatsApp |
+| --------------------------------- | :-----------------------: | :---------------: |
+| **Post‑Quantum Crypto**           | ✅ Kyber‑1024, Dilithium‑3 |         ❌         |
+| **Local‑First Storage**           |  ✅ Device‑only by default |     ❌ (server)    |
+| **Works Completely Offline**      |             ✅             |         ❌         |
+| **Plugin Ecosystem**              |       ✅ WASM sandbox      |         ❌         |
+| **P2P Sync / No Central Servers** |           ✅ IPFS          |         ❌         |
 
-<details>
-<summary><strong>Optional Development Tools</strong></summary>
+**Your messages never hit our servers—because we don't have any.**
 
-- **Rust** - For Tauri desktop development
-- **Xcode** - For iOS development  
-- **Android Studio** - For Android development
-
-</details>
+---
 
 ## 🚀 Quick Start
 
-### 1. Clone and Install
 ```bash
+# 1. Clone
 git clone https://github.com/foofork/Volli.git
 cd Volli
+
+# 2. Install dependencies
 npm install
-```
 
-### 2. Build All Packages
-```bash
+# 3. Build packages
 npm run build:packages
+
+# 4. Run the web app
+cd apps/web && npm run dev     # → http://localhost:5173
+
+# 5. Run the full test suite
+npm test
 ```
 
-### 3. Start Development
+<details>
+<summary>Need desktop or mobile builds?</summary>
 
 ```bash
-# Start web application
-cd apps/web && npm run dev
-# → http://localhost:5173
+# Desktop (Tauri) - requires Rust
+cd apps/desktop && npm run dev
 
-# Run all tests
-npm run test
-
-# Type checking
-npm run typecheck
-
-# Lint code
-npm run lint
+# Mobile (Capacitor) - requires Xcode/Android Studio
+cd apps/mobile && npm run dev
 ```
 
-> **Note**: The web app runs locally with encrypted storage. No server required!
+</details>
 
-## 🏗️ Architecture
+> 💡 Volli is **server‑less** in development too—your data lives in an encrypted SQLite db inside the browser or app sandbox.
 
-Volli uses a monorepo structure with the following packages:
+---
 
-- **`@volli/identity-core`** - Post-quantum cryptography and identity management
-- **`@volli/vault-core`** - Encrypted local storage with CRDT sync
-- **`@volli/messaging`** - Message schemas and encryption helpers  
-- **`@volli/sync-ipfs`** - P2P synchronization via IPFS
-- **`@volli/plugins`** - WASM plugin runtime
-- **`@volli/ui-kit`** - Shared Svelte UI components
-- **`@volli/web`** - SvelteKit web application
+## 🛡️ Key Features (Today)
 
-See [Architecture Documentation](docs/ARCHITECTURE.md) for details.
+* **Military‑grade, quantum‑resistant encryption** (Kyber‑1024 + Dilithium‑3)
+* **Offline‑first**: send, receive & search with zero network
+* **Instant search** over thousands of messages (< 50 ms)
+* **Cross‑device**: identical UX on web, desktop & mobile
+* **Plugin runtime**: sandboxed WASM for custom features
 
-## 🔒 How We Protect Your Privacy
+<details>
+<summary>On the near horizon…</summary>
 
-**🛡️ Bank-Level Encryption**  
-Every message is encrypted with military-grade algorithms before leaving your device. Even if someone intercepts your messages, they'll see gibberish.
+* Native desktop & mobile apps with biometric unlock
+* P2P multi‑device sync via IPFS (Phase 2)
+* WASM plugin marketplace (Phase 3)
+* Group messaging (MLS), voice/video, federation & more
 
-**🏠 Your Data Stays Home**  
-Unlike WhatsApp or Telegram, your messages live on your devices, not our servers. We can't read them because we don't have them.
+</details>
 
-**🔮 Future-Proof Security**  
-We're already preparing for quantum computers that could break today's encryption. Your messages will stay private for decades.
+---
 
-**🔍 Zero-Knowledge Design**  
-We built Volli so that even we can't access your conversations, contacts, or any personal information. Privacy by design, not by policy.
+## 🏗️ Architecture Overview
 
-> **Technical Details:** See our [Security Guide](docs/SECURITY.md) for cryptographic specifications and threat model analysis.
+```
+ ┌────────────┐      ┌─────────────┐
+ │  identity  │──┐   │   plugins   │
+ │  core 🔑   │  │   │   (WASM)    │
+ └────────────┘  │   └─────────────┘
+                 │
+ ┌────────────┐  ▼   ┌─────────────┐
+ │   vault    │─────►│   sync      │
+ │  core 🔒   │ CRDT │  (IPFS)     │
+ └────────────┘      └─────────────┘
+        ▲
+        │
+ ┌────────────┐
+ │   UI kit   │  SvelteKit / Tauri / Capacitor
+ └────────────┘
+```
 
-## 🗺️ Development Milestones
+*Monorepo packages live under `packages/`—see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for deep‑dive.*
 
-**✅ Phase 1 Complete:** Core messaging platform with encrypted storage and web interface  
-**🚧 Phase 2 Current:** Multi-platform apps and P2P synchronization  
-**📅 Phase 3 Planned:** Advanced features and plugin ecosystem
+---
 
-> See [**Technical Roadmap**](docs/ROADMAP.md) for detailed development timeline.
+## 🔒 Security at a Glance
+
+| Layer          | Tech                           | Purpose                                       |
+| -------------- | ------------------------------ | --------------------------------------------- |
+| **Encryption** | Kyber‑1024, XChaCha20‑Poly1305 | Post‑quantum E2E confidentiality              |
+| **Signatures** | Dilithium‑3                    | Authenticated, tamper‑proof messages          |
+| **KDF**        | Argon2id                       | Strong password‑based key derivation          |
+| **Storage**    | Encrypted SQLite + CRDT        | Local‑only vault, conflict‑free offline edits |
+
+Read the full [Security Guide](docs/SECURITY.md) for threat model, key rotation, and audit plans.
+
+---
+
+## 📅 Roadmap
+
+| Phase                 | Status         | Highlights                           |
+| --------------------- | -------------- | ------------------------------------ |
+| **1. Foundation**     | ✅ Done         | Post‑quantum crypto, encrypted vault |
+| **2. Apps & Sync**    | 🚧 In progress | Web/desktop/mobile, IPFS sync        |
+| **3. Plugins & Beta** | 🔜 Q3 2025     | WASM plugins, public beta            |
+| **4. Federation**     | 🔜 Q4 2025     | MLS groups, bridges, enterprise      |
+
+Track progress in [docs/ROADMAP.md](docs/ROADMAP.md).
+
+---
 
 ## 🛠️ Development
 
@@ -216,14 +175,16 @@ volli/
 │   └── ui-kit/         # Shared components
 ├── apps/              # Applications
 │   ├── web/           # SvelteKit web app
-│   ├── desktop/       # Desktop app
-│   └── mobile/        # Mobile app
+│   ├── desktop/       # Tauri desktop app
+│   └── mobile/        # Capacitor mobile app
 └── docs/              # Documentation
 ```
 
 </details>
 
 See [**Developer Guide**](docs/DEVELOPER.md) for comprehensive setup instructions.
+
+---
 
 ## 📚 Documentation
 
@@ -235,47 +196,30 @@ See [**Developer Guide**](docs/DEVELOPER.md) for comprehensive setup instruction
 | [**Developer Guide**](docs/DEVELOPER.md) | Setup and development workflow |
 | [**Roadmap**](docs/ROADMAP.md) | Development timeline and milestones |
 
+---
+
 ## 🤝 Contributing
 
-We welcome contributions to Volli! Here's how you can help:
+We love PRs! Start here:
 
-### 🐛 **Bug Reports**
-File detailed bug reports with reproduction steps
+1. **Fork & clone** the repo
+2. `npm install && npm test` – ensure green tests
+3. Follow the [contribution guide](docs/DEVELOPER.md#contributing)
+4. Open a pull request—include tests & a clear description
 
-### 💡 **Feature Requests** 
-Propose new features that align with our privacy-first mission
+Security issues? Please **do not** open a public issue. Email `security@volli.chat` or file a confidential issue.
 
-### 🔧 **Code Contributions**
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes with tests
-4. Ensure all tests pass (`npm run test`)
-5. Submit a pull request
+---
 
-### 🔒 **Security**
-For security vulnerabilities, please create a GitHub issue with the `security` label.
+## 📄 License
+
+MIT © 2025 The Volli Authors
 
 ---
 
 <div align="center">
 
-## 📄 License
-
-**Volli** is licensed under the [MIT License](LICENSE).
-
-## 🙏 Acknowledgments
-
-Built with these amazing technologies:
-
-[![NIST PQC](https://img.shields.io/badge/NIST-Post--Quantum%20Cryptography-blue)](https://csrc.nist.gov/projects/post-quantum-cryptography)
-[![libsodium](https://img.shields.io/badge/libsodium-Cryptography-orange)](https://libsodium.org/)
-[![SvelteKit](https://img.shields.io/badge/SvelteKit-Web%20Framework-FF3E00)](https://kit.svelte.dev/)
-[![IPFS](https://img.shields.io/badge/IPFS-Distributed%20Storage-65C2CB)](https://ipfs.io/)
-
----
-
-### 🔐 Built with ❤️ for Privacy and Security
-
-*"Privacy is not something that I'm merely entitled to, it's an absolute prerequisite."* - Marlon Brando
+Built with ❤️ for privacy and autonomy.  
+**"Privacy is not granted—it's taken back."**
 
 </div>
