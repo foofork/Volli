@@ -104,9 +104,9 @@ temp/
 *.local
 
 # Claude Code / AI tools
-.claude/sessions/
-.roo/temp/
-memory/temp/
+.claude/
+.roo/
+.roomodes
 memory/
 coordination/
 coordination.md
