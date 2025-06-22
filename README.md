@@ -1,58 +1,107 @@
-# 🔐 Volli - Post-Quantum Secure Messaging
-
 <div align="center">
-  <img src="docs/assets/volli-logo.svg" alt="Volli Logo" width="200" />
-  
-  **Local-first, privacy-first messaging with post-quantum security**
-  
-  [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-  [![Security](https://img.shields.io/badge/security-post--quantum-green.svg)](docs/SECURITY.md)
-  [![Docs](https://img.shields.io/badge/docs-available-brightgreen.svg)](docs/OVERVIEW.md)
-  
-  🎉 **Phase 1 Complete!** All core packages implemented. See [PHASE1_CHECKLIST.md](./PHASE1_CHECKLIST.md) | [SPARC Report](./docs/SPARC_PHASE1_COMPLETION.md)
+
+# 🔐 Volli
+
+**Post-Quantum Secure, Local-First Messaging Platform**
+
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Svelte](https://img.shields.io/badge/Svelte-FF3E00?logo=svelte&logoColor=white)](https://svelte.dev/)
+[![Tests](https://img.shields.io/badge/Tests-70%2B%20Passing-brightgreen)]()
+[![Security](https://img.shields.io/badge/Security-Post--Quantum-green)](docs/SECURITY.md)
+
+> **⚠️ Development Status:** Currently in **Phase 2** development. Core foundation complete, working towards v1.0 release.
+
+*Privacy-first messaging with quantum-resistant cryptography and local-first architecture*
+
+[🚀 Quick Start](#-quick-start) • [📖 Documentation](#-documentation) • [🏗️ Architecture](#️-architecture) • [🔒 Security](#-security)
+
 </div>
 
-## 🚀 Features
+## ✨ Features
 
-- **🔒 Post-Quantum Security**: Kyber-1024 (KEM) + Dilithium-3 (signatures) with X25519/Ed25519 hybrid mode
-- **📱 Multi-Platform**: Single codebase for Web, iOS, Android, and Desktop
-- **🔌 Extensible**: WASM plugin system with capability-based security
-- **🌐 Local-First**: Works 100% offline with P2P sync when online
-- **🎯 Zero Trust**: No server ever sees plaintext or key material
-- **🔍 Private Search**: Encrypted local search with < 50ms performance
+<table>
+<tr>
+<td width="50%">
 
-## 📋 Requirements
+### 🔒 **Quantum-Resistant Security**
+- Kyber-1024 (KEM) + Dilithium-3 (signatures)
+- X25519/Ed25519 hybrid compatibility
+- XChaCha20-Poly1305 encryption
+- Forward secrecy and deniability
 
-- Node.js 18+ and npm 9+
-- Git
-- Optional: iOS/Android dev tools for mobile development
-- Optional: Rust for Tauri desktop development
+### 🌐 **Local-First Architecture** 
+- 100% offline functionality
+- Encrypted SQLite storage
+- CRDT-based synchronization
+- No server dependencies
+
+</td>
+<td width="50%">
+
+### 📱 **Multi-Platform Support**
+- Progressive Web App
+- Native desktop (Tauri/Electron)
+- iOS and Android (planned)
+- Single TypeScript codebase
+
+### 🔌 **Extensible Design**
+- WASM plugin system
+- Capability-based security
+- Encrypted search (< 50ms)
+- Zero-trust architecture
+
+</td>
+</tr>
+</table>
+
+## 📋 Prerequisites
+
+- **Node.js** 18+ 
+- **npm** 9+
+- **Git**
+
+<details>
+<summary><strong>Optional Development Tools</strong></summary>
+
+- **Rust** - For Tauri desktop development
+- **Xcode** - For iOS development  
+- **Android Studio** - For Android development
+
+</details>
 
 ## 🚀 Quick Start
 
 ### 1. Clone and Install
 ```bash
-git clone https://github.com/volli/volli.git
-cd volli
+git clone https://github.com/foofork/Volli.git
+cd Volli
 npm install
 ```
 
 ### 2. Build All Packages
 ```bash
-npm run build
+npm run build:packages
 ```
 
 ### 3. Start Development
-```bash
-# Web development
-npm run dev
 
-# Run tests
+```bash
+# Start web application
+cd apps/web && npm run dev
+# → http://localhost:5173
+
+# Run all tests
 npm run test
 
 # Type checking
 npm run typecheck
+
+# Lint code
+npm run lint
 ```
+
+> **Note**: The web app runs locally with encrypted storage. No server required!
 
 ## 🏗️ Architecture
 
@@ -63,7 +112,9 @@ Volli uses a monorepo structure with the following packages:
 - **`@volli/messaging`** - Message schemas and encryption helpers  
 - **`@volli/sync-ipfs`** - P2P synchronization via IPFS
 - **`@volli/plugins`** - WASM plugin runtime
+- **`@volli/cap-table`** - Equity and cap table management
 - **`@volli/ui-kit`** - Shared Svelte UI components
+- **`@volli/web`** - SvelteKit web application
 
 See [Architecture Documentation](docs/ARCHITECTURE.md) for details.
 
@@ -78,70 +129,140 @@ Volli implements defense-in-depth security:
 
 See [Security Guide](docs/SECURITY.md) for details.
 
-## 🗺️ Roadmap
+## 🗺️ Development Status
 
-### Phase 1: Foundation ✅
-- Post-quantum crypto implementation
-- Encrypted local storage
-- Basic messaging UI
+<details open>
+<summary><strong>✅ Phase 1: Foundation (Complete)</strong></summary>
 
-### Phase 2: Distribution 🚧
-- Mobile apps (iOS/Android)
-- P2P sync via IPFS
-- Multi-device support
+- ✅ Post-quantum cryptography implementation
+- ✅ Encrypted local storage with CRDT synchronization  
+- ✅ Web application with authentication flows
+- ✅ Message management and end-to-end encryption
+- ✅ Comprehensive test suite (70+ tests passing)
+- ✅ Full TypeScript support across packages
+- ✅ Multi-package monorepo architecture
 
-### Phase 3: Extensibility 📅
-- Plugin system
-- Group messaging
-- Voice/video calls
+</details>
 
-See [Full Roadmap](docs/ROADMAP.md) for timeline.
+<details>
+<summary><strong>🚧 Phase 2: Multi-Platform (In Progress)</strong></summary>
 
-## 🧑‍💻 Development
+- 🔄 Desktop application (Tauri/Electron)
+- 📅 Mobile applications (React Native)
+- 📅 P2P synchronization via IPFS
+- 📅 Multi-device identity management
 
-### Using SPARC Methodology
+</details>
+
+<details>
+<summary><strong>📅 Phase 3: Advanced Features (Planned)</strong></summary>
+
+- 📅 WASM plugin system
+- 📅 Group messaging and channels
+- 📅 Voice and video calling
+- 📅 File sharing and collaboration
+
+</details>
+
+> See [**Full Roadmap**](docs/ROADMAP.md) for detailed timeline and milestones.
+
+## 🛠️ Development
+
+<details>
+<summary><strong>Package Scripts</strong></summary>
+
 ```bash
-# List available SPARC modes
-npm run sparc:modes
+# Package management
+npm install              # Install all dependencies
+npm run build:packages   # Build all packages
+npm run clean            # Clean build artifacts
 
-# Run specific mode
-npm run sparc:run architect "design new feature"
+# Quality assurance  
+npm run test             # Run all tests
+npm run typecheck        # TypeScript validation
+npm run lint             # Code linting
 
-# Test-driven development
-npm run sparc:tdd "implement user stories"
+# Development
+npm run dev              # Start development servers
 ```
 
-See [Developer Guide](docs/DEVELOPER.md) for complete instructions.
+</details>
+
+<details>
+<summary><strong>Project Structure</strong></summary>
+
+```
+volli/
+├── packages/           # Core packages
+│   ├── identity-core/  # Cryptography & identity
+│   ├── vault-core/     # Encrypted storage  
+│   ├── messaging/      # Message handling
+│   ├── sync-ipfs/      # P2P synchronization
+│   ├── plugins/        # Plugin system
+│   ├── cap-table/      # Equity management
+│   └── ui-kit/         # Shared components
+├── apps/              # Applications
+│   ├── web/           # SvelteKit web app
+│   ├── desktop/       # Desktop app
+│   └── mobile/        # Mobile app
+└── docs/              # Documentation
+```
+
+</details>
+
+See [**Developer Guide**](docs/DEVELOPER.md) for comprehensive setup instructions.
 
 ## 📚 Documentation
 
-- [Overview](docs/OVERVIEW.md) - Project introduction
-- [Architecture](docs/ARCHITECTURE.md) - System design
-- [Security](docs/SECURITY.md) - Security model
-- [Developer Guide](docs/DEVELOPER.md) - Setup and development
-- [API Reference](docs/API.md) - Package APIs
-- [Plugin Guide](docs/PLUGINS.md) - Creating plugins
+| Document | Description |
+|----------|-------------|
+| [**Overview**](docs/OVERVIEW.md) | Project introduction and goals |
+| [**Architecture**](docs/ARCHITECTURE.md) | System design and components |
+| [**Security**](docs/SECURITY.md) | Cryptography and security model |
+| [**Developer Guide**](docs/DEVELOPER.md) | Setup and development workflow |
+| [**Roadmap**](docs/ROADMAP.md) | Development timeline and milestones |
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions to Volli! Here's how you can help:
 
-### Reporting Security Issues
-Please report security vulnerabilities to security@volli.chat. See [Security Policy](SECURITY.md) for details.
+### 🐛 **Bug Reports**
+File detailed bug reports with reproduction steps
 
-## 📄 License
+### 💡 **Feature Requests** 
+Propose new features that align with our privacy-first mission
 
-Volli is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+### 🔧 **Code Contributions**
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes with tests
+4. Ensure all tests pass (`npm run test`)
+5. Submit a pull request
 
-## 🙏 Acknowledgments
-
-- [NIST PQC](https://csrc.nist.gov/projects/post-quantum-cryptography) for post-quantum standards
-- [libsodium](https://libsodium.org/) for cryptographic primitives  
-- [IPFS](https://ipfs.io/) for distributed storage
-- [SvelteKit](https://kit.svelte.dev/) for the web framework
+### 🔒 **Security**
+For security vulnerabilities, please create a GitHub issue with the `security` label.
 
 ---
 
 <div align="center">
-  Built with ❤️ for privacy and security
+
+## 📄 License
+
+**Volli** is licensed under the [MIT License](LICENSE).
+
+## 🙏 Acknowledgments
+
+Built with these amazing technologies:
+
+[![NIST PQC](https://img.shields.io/badge/NIST-Post--Quantum%20Cryptography-blue)](https://csrc.nist.gov/projects/post-quantum-cryptography)
+[![libsodium](https://img.shields.io/badge/libsodium-Cryptography-orange)](https://libsodium.org/)
+[![SvelteKit](https://img.shields.io/badge/SvelteKit-Web%20Framework-FF3E00)](https://kit.svelte.dev/)
+[![IPFS](https://img.shields.io/badge/IPFS-Distributed%20Storage-65C2CB)](https://ipfs.io/)
+
+---
+
+### 🔐 Built with ❤️ for Privacy and Security
+
+*"Privacy is not something that I'm merely entitled to, it's an absolute prerequisite."* - Marlon Brando
+
 </div>
