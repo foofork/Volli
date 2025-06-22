@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "noImplicitAny": false
+  },
+  "files": [],
+  "references": [
+    { "path": "./packages/identity-core" },
+    { "path": "./packages/vault-core" },
+    { "path": "./packages/messaging" },
+    { "path": "./packages/sync-ipfs" },
+    { "path": "./packages/plugins" },
+    { "path": "./packages/cap-table" }
+  ]
+}

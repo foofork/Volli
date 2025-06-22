@@ -1,0 +1,34 @@
+{
+  "name": "volli",
+  "version": "0.1.0",
+  "description": "Post-quantum secure, local-first messaging platform",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build:packages": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "sparc:modes": "npx claude-flow sparc modes",
+    "sparc:run": "npx claude-flow sparc run",
+    "sparc:tdd": "npx claude-flow sparc tdd",
+    "sparc:info": "npx claude-flow sparc info"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "turbo": "^1.10.0",
+    "vitest": "^1.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "jsdom": "^23.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

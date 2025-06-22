@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
+    "jsx": "react-jsx",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "removeComments": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@volli/identity-core": ["./packages/identity-core/src"],
+      "@volli/vault-core": ["./packages/vault-core/src"],
+      "@volli/messaging": ["./packages/messaging/src"],
+      "@volli/sync-ipfs": ["./packages/sync-ipfs/src"],
+      "@volli/plugins": ["./packages/plugins/src"],
+      "@volli/cap-table": ["./packages/cap-table/src"],
+      "@volli/ui-kit": ["./packages/ui-kit/src"]
+    }
+  },
+  "include": ["apps/**/*", "packages/**/*", "plugins/**/*"],
+  "exclude": ["node_modules", "dist", "build", ".turbo"]
+}

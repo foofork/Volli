@@ -1,0 +1,59 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@layer base {
+  :root {
+    --volli-radius: 0.5rem;
+    --volli-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --volli-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+
+  * {
+    @apply border-volli-gray-200 dark:border-volli-gray-700;
+  }
+
+  body {
+    @apply text-volli-gray-900 dark:text-volli-gray-50;
+    @apply bg-white dark:bg-volli-gray-900;
+  }
+}
+
+@layer components {
+  .volli-focus {
+    @apply focus:outline-none focus:ring-2 focus:ring-volli-primary-500 focus:ring-offset-2 dark:focus:ring-offset-volli-gray-900;
+  }
+
+  .volli-transition {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .volli-card {
+    @apply bg-white dark:bg-volli-gray-800 rounded-lg shadow-sm border border-volli-gray-200 dark:border-volli-gray-700;
+  }
+}
+
+/* Custom scrollbar styles */
+@layer utilities {
+  .volli-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.volli.gray.400') transparent;
+  }
+
+  .volli-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .volli-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .volli-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-volli-gray-400 dark:bg-volli-gray-600 rounded-full;
+  }
+
+  .volli-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-volli-gray-500 dark:bg-volli-gray-500;
+  }
+}
