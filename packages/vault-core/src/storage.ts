@@ -2,6 +2,19 @@ import { Database } from 'sql.js';
 import { EncryptedRecord, Document, DatabaseSchema } from './types';
 import { encryptData, decryptData, hashData } from './crypto';
 
+interface DocumentRow {
+  id: string;
+  type: string;
+  encrypted_data: Uint8Array;
+  nonce: Uint8Array;
+  checksum: Uint8Array;
+  size: number;
+  created_at: number;
+  updated_at: number;
+  version: number;
+  sync_status: string;
+}
+
 /**
  * Core storage operations for encrypted SQLite database
  */
@@ -124,7 +137,7 @@ export class VaultStorage {
       FROM documents WHERE id = ?
     `);
     
-    const result = stmt.get([id]);
+    const result = stmt.get([id]) as unknown as DocumentRow | undefined;
     stmt.free();
     
     if (!result) {
@@ -174,7 +187,7 @@ export class VaultStorage {
     }
     
     const stmt = this.db.prepare(query);
-    const results = stmt.all(params);
+    const results = (stmt as any).all(params) as DocumentRow[];
     stmt.free();
     
     const documents: Document[] = [];
@@ -211,7 +224,7 @@ export class VaultStorage {
    */
   deleteDocument(id: string): boolean {
     const stmt = this.db.prepare('DELETE FROM documents WHERE id = ?');
-    const result = stmt.run([id]);
+    const result = stmt.run([id]) as unknown as { changes: number };
     stmt.free();
     
     // Also delete from search index
@@ -235,7 +248,7 @@ export class VaultStorage {
     }
     
     const stmt = this.db.prepare(query);
-    const result = stmt.get(params);
+    const result = stmt.get(params) as unknown as { count: number };
     stmt.free();
     
     return result.count;
@@ -252,12 +265,12 @@ export class VaultStorage {
   } {
     // Total document count
     const countStmt = this.db.prepare('SELECT COUNT(*) as count FROM documents');
-    const countResult = countStmt.get();
+    const countResult = countStmt.get() as unknown as { count: number };
     countStmt.free();
     
     // Total sizes
     const sizeStmt = this.db.prepare('SELECT SUM(size) as total_size FROM documents');
-    const sizeResult = sizeStmt.get();
+    const sizeResult = sizeStmt.get() as unknown as { total_size: number };
     sizeStmt.free();
     
     // Type breakdown
@@ -266,7 +279,7 @@ export class VaultStorage {
       FROM documents 
       GROUP BY type
     `);
-    const typeResults = typeStmt.all();
+    const typeResults = (typeStmt as any).all() as { type: string; count: number }[];
     typeStmt.free();
     
     const typeBreakdown: Record<string, number> = {};
@@ -306,7 +319,7 @@ export class VaultStorage {
    */
   getMetadata(key: string): string | null {
     const stmt = this.db.prepare('SELECT value FROM metadata WHERE key = ?');
-    const result = stmt.get([key]);
+    const result = stmt.get([key]) as unknown as { value: string } | undefined;
     stmt.free();
     
     return result ? result.value : null;

@@ -26,8 +26,7 @@ export class VaultSearch {
       tokenize: 'forward',
       cache: true,
       resolution: 9,
-      optimize: true,
-      fastupdate: true
+      optimize: true
     });
     
     this.isInitialized = true;
@@ -150,8 +149,7 @@ export class VaultSearch {
       tokenize: 'forward',
       cache: true,
       resolution: 9,
-      optimize: true,
-      fastupdate: true
+      optimize: true
     });
   }
   

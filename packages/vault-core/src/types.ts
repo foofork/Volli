@@ -9,6 +9,7 @@ export interface VaultConfig {
   maxMemoryUsage?: number;
   syncEnabled?: boolean;
   searchEnabled?: boolean;
+  collections?: string[];
 }
 
 export interface Document {

@@ -177,8 +177,7 @@ export function deriveMessageKey(sessionKey: Uint8Array, messageId: string): Uin
     32, // key length
     1,  // subkey id
     'VOLLI_MSG',
-    sessionKey,
-    messageIdBytes.slice(0, 16) // context must be 16 bytes
+    sessionKey
   );
 }
 

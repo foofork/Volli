@@ -156,7 +156,7 @@ export class VaultSync {
    * Create Automerge document for CRDT operations
    */
   createAutomergeDoc<T>(initialData: T): Automerge.Doc<T> {
-    return Automerge.from(initialData, this.actorId);
+    return Automerge.from(initialData as Record<string, unknown>, this.actorId) as Automerge.Doc<T>;
   }
   
   /**
@@ -169,15 +169,15 @@ export class VaultSync {
   /**
    * Get changes since a specific state
    */
-  getChangesSince<T>(doc: Automerge.Doc<T>, heads: Automerge.Heads): Automerge.BinaryChange[] {
-    return Automerge.getChanges(doc, heads);
+  getChangesSince<T>(doc: Automerge.Doc<T>, heads: Automerge.Heads): Uint8Array[] {
+    return Automerge.getChanges(doc as any, heads) as Uint8Array[];
   }
   
   /**
    * Apply changes to document
    */
-  applyChanges<T>(doc: Automerge.Doc<T>, changes: Automerge.BinaryChange[]): Automerge.Doc<T> {
-    return Automerge.applyChanges(doc, changes);
+  applyChanges<T>(doc: Automerge.Doc<T>, changes: Uint8Array[]): Automerge.Doc<T> {
+    return (Automerge.applyChanges(doc, changes) as unknown) as Automerge.Doc<T>;
   }
   
   /**
