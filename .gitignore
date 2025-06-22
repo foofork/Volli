@@ -11,6 +11,15 @@ out/
 *.tsbuildinfo
 .turbo/
 
+# SvelteKit
+.svelte-kit/
+.svelte-package/
+
+# Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
 # Testing
 coverage/
 .nyc_output/
@@ -72,6 +81,11 @@ apps/desktop/src-tauri/WixTools/
 # IPFS
 .ipfs/
 ipfs-repo/
+.ipfs-*/
+
+# WASM
+*.wasm
+*.wat
 
 # Backup files
 *.bak
@@ -83,3 +97,23 @@ Thumbs.db
 # Temporary
 tmp/
 temp/
+
+# Development
+.tool-versions
+.nvmrc
+*.local
+
+# Claude Code / AI tools
+.claude/sessions/
+.roo/temp/
+memory/temp/
+
+# Test artifacts
+test-results/
+playwright-report/
+test-output/
+
+# Security
+secrets/
+keys/
+certificates/
