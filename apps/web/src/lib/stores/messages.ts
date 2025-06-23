@@ -164,15 +164,11 @@ function createMessagesStore() {
 	async function sendMessage(content: string): Promise<void> {
 		const state = get({ subscribe });
 		
-		// Use internal activeConversation state if it was overridden for testing
-		const activeConv = (messagesStore as any).activeConversation !== undefined ? 
-			(messagesStore as any).activeConversation : state.activeConversation;
-		
-		if (!activeConv) {
+		if (!state.activeConversation) {
 			throw new Error('No active conversation');
 		}
 
-		const conversation = state.conversations.find(c => c.id === activeConv);
+		const conversation = state.conversations.find(c => c.id === state.activeConversation);
 		if (!conversation) {
 			throw new Error('Conversation not found');
 		}

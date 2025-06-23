@@ -1,0 +1,1 @@
+export { default as PassphraseInput } from './PassphraseInput.svelte';

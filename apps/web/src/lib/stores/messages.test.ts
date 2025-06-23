@@ -63,14 +63,32 @@ describe('MessagesStore', () => {
     });
 
     it('should trigger sync if online', async () => {
-      // Mock online status
-      (messagesStore as any).networkStore = { isOnline: true };
-      const syncSpy = vi.spyOn(messagesStore, 'syncMessages').mockResolvedValue();
+      // Store original network
+      const originalNetwork = (messagesStore as any).networkStore;
+      
+      // Track if endpoint was called
+      const mockGetMessages = vi.fn().mockResolvedValue([]);
+      const mockGetSyncEndpoint = vi.fn().mockResolvedValue({
+        getMessages: mockGetMessages,
+        sendMessage: vi.fn().mockResolvedValue(true)
+      });
+      
+      // Set network online
+      (messagesStore as any).networkStore = { 
+        isOnline: true,
+        getSyncEndpoint: mockGetSyncEndpoint
+      };
       
       await messagesStore.loadConversations();
       
-      expect(syncSpy).toHaveBeenCalled();
-      syncSpy.mockRestore();
+      // Wait for async sync to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Verify sync was triggered by checking if endpoint was requested
+      expect(mockGetSyncEndpoint).toHaveBeenCalled();
+      
+      // Restore
+      (messagesStore as any).networkStore = originalNetwork;
     });
   });
 
@@ -127,8 +145,7 @@ describe('MessagesStore', () => {
     });
 
     it('should throw error if no active conversation', async () => {
-      const state = get(messagesStore);
-      (messagesStore as any).activeConversation = null;
+      messagesStore.setActiveConversation(null);
       
       await expect(messagesStore.sendMessage('test')).rejects.toThrow(
         'No active conversation'
@@ -136,16 +153,29 @@ describe('MessagesStore', () => {
     });
 
     it('should encrypt message for each participant', async () => {
+      // Mock encrypt function
+      const mockEncrypt = vi.fn().mockResolvedValue('encrypted-content');
+      (messagesStore as any).encryptForRecipient = mockEncrypt;
+      
       // Mock contact store
       const mockGetPublicKey = vi.fn().mockResolvedValue('mock-public-key');
       (messagesStore as any).contactStore = { getPublicKey: mockGetPublicKey };
       
+      // Create conversation and send message
+      await messagesStore.createConversation(['alice-id']);
       await messagesStore.sendMessage('Secret message');
       
       expect(mockGetPublicKey).toHaveBeenCalledWith('alice-id');
+      expect(mockEncrypt).toHaveBeenCalledWith('Secret message', 'mock-public-key');
+      
+      // Clean up
+      delete (messagesStore as any).encryptForRecipient;
+      delete (messagesStore as any).contactStore;
     });
 
     it('should update conversation last activity', async () => {
+      // Create conversation first
+      await messagesStore.createConversation(['alice-id']);
       const before = get(messagesStore).conversations[0].lastActivity;
       
       await new Promise(resolve => setTimeout(resolve, 10));
@@ -156,6 +186,9 @@ describe('MessagesStore', () => {
     });
 
     it('should queue message for delivery if offline', async () => {
+      // Create conversation first
+      await messagesStore.createConversation(['alice-id']);
+      
       (messagesStore as any).networkStore = { isOnline: false };
       const enqueueSpy = vi.fn();
       (messagesStore as any).messageQueue = { enqueue: enqueueSpy };
@@ -163,6 +196,10 @@ describe('MessagesStore', () => {
       await messagesStore.sendMessage('Offline message');
       
       expect(enqueueSpy).toHaveBeenCalled();
+      
+      // Clean up
+      delete (messagesStore as any).networkStore;
+      delete (messagesStore as any).messageQueue;
     });
   });
 
@@ -189,17 +226,20 @@ describe('MessagesStore', () => {
 
   describe('syncMessages', () => {
     it('should sync messages with remote endpoint', async () => {
+      // Clear localStorage to ensure clean state
+      localStorage.removeItem('volli-last-sync');
+      
+      // Store original network store
+      const originalNetwork = (messagesStore as any).networkStore;
+      
       // Mock sync endpoint
+      const mockGetMessages = vi.fn().mockImplementation(async (params) => {
+        // Return empty array to simulate no new messages
+        return [];
+      });
       const mockEndpoint = {
-        getMessages: vi.fn().mockResolvedValue([
-          {
-            id: 'remote-msg-1',
-            conversationId: 'conv-1',
-            content: 'Remote message',
-            sender: 'alice-id',
-            timestamp: Date.now()
-          }
-        ])
+        getMessages: mockGetMessages,
+        sendMessage: vi.fn().mockResolvedValue(true)
       };
       
       (messagesStore as any).networkStore = {
@@ -209,12 +249,23 @@ describe('MessagesStore', () => {
       
       await messagesStore.syncMessages();
       
-      expect(mockEndpoint.getMessages).toHaveBeenCalled();
+      expect(mockGetMessages).toHaveBeenCalledWith({
+        identityId: 'test-identity-123',
+        since: 0
+      });
       const state = get(messagesStore);
       expect(state.syncStatus).toBe('synced');
+      
+      // Restore
+      (messagesStore as any).networkStore = originalNetwork;
     });
 
     it('should handle sync errors gracefully', async () => {
+      // Store original network store and console.error
+      const originalNetwork = (messagesStore as any).networkStore;
+      const originalConsoleError = console.error;
+      console.error = vi.fn(); // Mock console.error to avoid noise
+      
       (messagesStore as any).networkStore = {
         isOnline: true,
         getSyncEndpoint: vi.fn().mockRejectedValue(new Error('Network error'))
@@ -224,30 +275,71 @@ describe('MessagesStore', () => {
       
       const state = get(messagesStore);
       expect(state.syncStatus).toBe('error');
+      
+      // Restore
+      (messagesStore as any).networkStore = originalNetwork;
+      console.error = originalConsoleError;
     });
 
     it('should send pending messages during sync', async () => {
-      const mockDeliver = vi.fn().mockResolvedValue(true);
-      const mockQueue = {
-        getPending: vi.fn().mockResolvedValue([
-          factories.message({ id: 'pending-1' })
-        ]),
-        markDelivered: vi.fn()
+      // Store originals
+      const originalNetwork = (messagesStore as any).networkStore;
+      const originalQueue = (messagesStore as any).messageQueue;
+      
+      const testMessage = {
+        id: 'pending-1',
+        conversationId: 'conv-1',
+        content: 'Test message',
+        sender: 'test-identity-123',
+        timestamp: Date.now(),
+        delivered: false,
+        read: false,
+        encrypted: true
       };
       
-      (messagesStore as any).messageQueue = mockQueue;
-      (messagesStore as any).deliverMessage = mockDeliver;
+      // Track if deliverMessage was called
+      let deliverCalled = false;
+      let deliveredMessage: any = null;
+      
+      // Mock deliverMessage to track calls
+      const originalDeliver = (messagesStore as any).deliverMessage;
+      (messagesStore as any).deliverMessage = vi.fn().mockImplementation(async (msg) => {
+        deliverCalled = true;
+        deliveredMessage = msg;
+        return Promise.resolve();
+      });
+      
+      // Mock endpoint
+      const mockEndpoint = {
+        getMessages: vi.fn().mockResolvedValue([]),
+        sendMessage: vi.fn().mockResolvedValue(true)
+      };
+      
+      // Mock network to return our endpoint
       (messagesStore as any).networkStore = {
         isOnline: true,
-        getSyncEndpoint: vi.fn().mockResolvedValue({
-          getMessages: vi.fn().mockResolvedValue([])
-        })
+        getSyncEndpoint: vi.fn().mockResolvedValue(mockEndpoint)
       };
+      
+      // Mock queue with pending messages
+      const mockQueue = {
+        getPending: vi.fn().mockResolvedValue([testMessage]),
+        markDelivered: vi.fn(),
+        pending: [testMessage]
+      };
+      (messagesStore as any).messageQueue = mockQueue;
       
       await messagesStore.syncMessages();
       
-      expect(mockDeliver).toHaveBeenCalled();
+      // Verify deliverMessage was called with the test message
+      expect(deliverCalled).toBe(true);
+      expect(deliveredMessage).toEqual(testMessage);
       expect(mockQueue.markDelivered).toHaveBeenCalledWith('pending-1');
+      
+      // Restore
+      (messagesStore as any).networkStore = originalNetwork;
+      (messagesStore as any).messageQueue = originalQueue;
+      (messagesStore as any).deliverMessage = originalDeliver;
     });
   });
 
@@ -306,67 +398,111 @@ describe('MessagesStore', () => {
         getPublicKey: vi.fn().mockResolvedValue('public-key')
       };
       
-      await messagesStore.createConversation(['alice-id']);
+      const conv = await messagesStore.createConversation(['alice-id']);
+      messagesStore.setActiveConversation(conv.id);
       await messagesStore.sendMessage('Secret');
       
       expect(mockEncrypt).toHaveBeenCalledWith('Secret', 'public-key');
+      
+      // Clean up
+      delete (messagesStore as any).encryptForRecipient;
+      delete (messagesStore as any).contactStore;
     });
 
     it('should decrypt incoming messages', async () => {
-      const mockDecrypt = vi.fn().mockResolvedValue({
+      // Store originals
+      const originalNetwork = (messagesStore as any).networkStore;
+      
+      // Create a new message that will be returned by the endpoint
+      const encryptedMsg = { encrypted: 'encrypted-data' };
+      const decryptedMsg = {
         id: 'msg-1',
         conversationId: 'conv-1',
         content: 'Decrypted message',
         sender: 'alice-id',
-        timestamp: Date.now()
-      });
+        timestamp: Date.now(),
+        delivered: true,
+        read: false,
+        encrypted: true
+      };
       
-      (messagesStore as any).decryptIncomingMessage = mockDecrypt;
+      // Mock the decryptIncomingMessage to return our message
+      const originalDecrypt = (messagesStore as any).decryptIncomingMessage;
+      (messagesStore as any).decryptIncomingMessage = vi.fn().mockResolvedValue(decryptedMsg);
+      
+      // Mock endpoint to return encrypted messages
       (messagesStore as any).networkStore = {
         isOnline: true,
         getSyncEndpoint: vi.fn().mockResolvedValue({
-          getMessages: vi.fn().mockResolvedValue([
-            { encrypted: 'encrypted-data' }
-          ])
+          getMessages: vi.fn().mockResolvedValue([encryptedMsg]),
+          sendMessage: vi.fn().mockResolvedValue(true)
         })
       };
       
+      // Clear localStorage to ensure clean sync
+      localStorage.removeItem('volli-last-sync');
+      
       await messagesStore.syncMessages();
       
-      expect(mockDecrypt).toHaveBeenCalledWith({ encrypted: 'encrypted-data' });
+      // Verify decryption was called
+      expect((messagesStore as any).decryptIncomingMessage).toHaveBeenCalledWith(encryptedMsg);
+      
+      // Verify the decrypted message was added to a conversation
+      const state = get(messagesStore);
+      const conversation = state.conversations.find(c => c.id === 'conv-1');
+      expect(conversation).toBeDefined();
+      expect(conversation?.messages).toContainEqual(decryptedMsg);
+      
+      // Restore
+      (messagesStore as any).decryptIncomingMessage = originalDecrypt;
+      (messagesStore as any).networkStore = originalNetwork;
     });
   });
 
   describe('Error Handling', () => {
     it('should handle vault errors gracefully', async () => {
-      vi.spyOn(vaultStore, 'getMessages').mockRejectedValue(new Error('Vault error'));
+      // Mock getDecryptedVault to throw error
+      const originalGetDecryptedVault = (vaultStore as any).getDecryptedVault;
+      (vaultStore as any).getDecryptedVault = vi.fn().mockRejectedValue(new Error('Vault error'));
       
       await expect(messagesStore.loadConversations()).rejects.toThrow('Vault error');
       
       const state = get(messagesStore);
       expect(state.error).toBe('Failed to load conversations: Vault error');
+      
+      // Restore original method
+      (vaultStore as any).getDecryptedVault = originalGetDecryptedVault;
     });
 
     it('should handle network errors during send', async () => {
-      await messagesStore.createConversation(['alice-id']);
+      const conv = await messagesStore.createConversation(['alice-id']);
+      messagesStore.setActiveConversation(conv.id);
       
       (messagesStore as any).deliverMessage = vi.fn().mockRejectedValue(new Error('Network error'));
       (messagesStore as any).networkStore = { isOnline: true };
+      const mockQueue = { enqueue: vi.fn() };
+      (messagesStore as any).messageQueue = mockQueue;
       
       // Should not throw, but queue for retry
       await expect(messagesStore.sendMessage('Test')).resolves.not.toThrow();
+      expect(mockQueue.enqueue).toHaveBeenCalled();
+      
+      // Clean up
+      delete (messagesStore as any).deliverMessage;
+      delete (messagesStore as any).networkStore;
+      delete (messagesStore as any).messageQueue;
     });
   });
 
   describe('Conversation Management', () => {
-    it('should find or create conversation', async () => {
-      const participants = ['alice-id'];
+    it('should find or create conversation', () => {
+      const participants = ['test-identity-123', 'alice-id'];
       
       // First call creates
-      const conv1 = await messagesStore.findOrCreateConversation(participants);
+      const conv1 = messagesStore.findOrCreateConversation(participants);
       
       // Second call finds existing
-      const conv2 = await messagesStore.findOrCreateConversation(participants);
+      const conv2 = messagesStore.findOrCreateConversation(participants);
       
       expect(conv1.id).toBe(conv2.id);
       const state = get(messagesStore);
