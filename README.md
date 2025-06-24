@@ -233,15 +233,15 @@ graph TD
 > See [detailed roadmap](docs/ROADMAP.md) for complete timeline and sprint planning.
 
 ### Phase 0: Integration 🚨 *(Current Priority)*
-- [ ] Connect existing packages to web app
 - [ ] Add persistent storage (IndexedDB)
+- [ ] Connect existing packages to web app
 - [ ] Integrate real encryption
 
 ### Phase 1: Core Features 🚧
 - [x] Core encryption packages *(built, not integrated)*
 - [x] Plugin system with WASM runtime
-- [ ] Post-quantum crypto (Kyber/Dilithium)
 - [ ] P2P messaging layer
+- [ ] Post-quantum crypto (Kyber/Dilithium)
 
 ### Phase 2: Advanced Features 📅
 - [ ] Real-time P2P sync

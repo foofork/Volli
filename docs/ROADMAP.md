@@ -81,29 +81,9 @@ Build mobile and desktop applications
 
 ## Phase 1: Core Functionality (Weeks 5-8)
 
-### Sprint 1.1: Post-Quantum Crypto (2 weeks)
+### Sprint 1.1: Network Layer (2 weeks)
 
-**Goal**: Replace placeholder PQ crypto with real implementation
-
-**Tasks**:
-| Task | Package | Priority | Effort |
-|------|---------|----------|--------|
-| Integrate liboqs-wasm or pqc-js | identity-core | P0 | 3d |
-| Implement Kyber-1024 key exchange | identity-core | P0 | 2d |
-| Implement Dilithium-3 signatures | identity-core | P0 | 2d |
-| Hybrid mode with classical crypto | identity-core | P0 | 2d |
-| Performance optimization | identity-core | P1 | 1d |
-
-**Deliverables**:
-- [ ] Working post-quantum crypto
-- [ ] Hybrid mode for compatibility
-- [ ] Performance < 200ms for operations
-
----
-
-### Sprint 1.2: Network Layer (2 weeks)
-
-**Goal**: Implement real P2P messaging
+**Goal**: Implement real P2P messaging with classical crypto
 
 **Tasks**:
 | Task | Package | Priority | Effort |
@@ -118,6 +98,26 @@ Build mobile and desktop applications
 - [ ] Messages actually sent between clients
 - [ ] Offline message queue
 - [ ] P2P with relay fallback
+
+---
+
+### Sprint 1.2: Post-Quantum Crypto (2 weeks)
+
+**Goal**: Upgrade to post-quantum cryptography
+
+**Tasks**:
+| Task | Package | Priority | Effort |
+|------|---------|----------|--------|
+| Integrate liboqs-wasm or pqc-js | identity-core | P0 | 3d |
+| Implement Kyber-1024 key exchange | identity-core | P0 | 2d |
+| Implement Dilithium-3 signatures | identity-core | P0 | 2d |
+| Hybrid mode with classical crypto | identity-core | P0 | 2d |
+| Performance optimization | identity-core | P1 | 1d |
+
+**Deliverables**:
+- [ ] Working post-quantum crypto
+- [ ] Hybrid mode for compatibility
+- [ ] Performance < 200ms for operations
 
 ---
 
@@ -213,8 +213,8 @@ Build mobile and desktop applications
 - [ ] Manual testing complete
 
 ### Short-term Goals (Phase 1)
-- [ ] Post-quantum crypto operational
 - [ ] P2P messaging working
+- [ ] Post-quantum crypto operational
 - [ ] Performance targets met
 - [ ] Security review passed
 
