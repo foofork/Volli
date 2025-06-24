@@ -280,6 +280,56 @@ describe('VaultStore', () => {
     });
   });
 
+  describe('SaveVault Error Handling', () => {
+    it('should throw error when trying to save to locked vault', async () => {
+      // Setup unlocked vault first
+      await authStore.createIdentity('Test User');
+      await authStore.createVaultWithPassphrase(fixtures.validPassphrase);
+      
+      // Lock the vault
+      authStore.lockVault();
+      
+      // Try to save to locked vault
+      const testData = {
+        version: 1,
+        created: Date.now(),
+        contacts: [],
+        conversations: {},
+        files: [],
+        settings: { theme: 'dark', notifications: true }
+      };
+      
+      await expect((vaultStore as any).saveVault(testData)).rejects.toThrow(
+        'Cannot save to locked vault'
+      );
+    });
+  });
+  
+  describe('GetFile Error Handling', () => {
+    it('should throw error when file content is missing', async () => {
+      // Setup vault
+      await authStore.createIdentity('Test User');
+      await authStore.createVaultWithPassphrase(fixtures.validPassphrase);
+      
+      // Add file metadata without content
+      const fileId = 'missing-content-file';
+      const vaultData = await (vaultStore as any).getDecryptedVault();
+      vaultData.files.push({
+        id: fileId,
+        name: 'test.txt',
+        size: 100,
+        type: 'text/plain',
+        uploadedAt: Date.now()
+      });
+      await (vaultStore as any).saveVault(vaultData);
+      
+      // Try to get file with missing content
+      await expect(vaultStore.getFile(fileId)).rejects.toThrow(
+        'File content not found'
+      );
+    });
+  });
+  
   describe('Error Handling', () => {
     it('should handle vault not available error', async () => {
       // Directly set vault data to null in the store
@@ -342,6 +392,66 @@ describe('VaultStore', () => {
       
       const results = await vaultStore.searchMessages('Hello');
       expect(results).toHaveLength(2);
+    });
+  });
+  
+  describe('Initialize Function', () => {
+    it('should sync isUnlocked state with auth store on initialization', async () => {
+      // Reset and setup initial state
+      vaultStore.reset();
+      authStore.logout();
+      
+      // Create identity and unlock vault
+      await authStore.createIdentity('Test User');
+      await authStore.createVaultWithPassphrase(fixtures.validPassphrase);
+      
+      // Auth store shows vault unlocked
+      expect(get(authStore).vaultUnlocked).toBe(true);
+      
+      // Vault store might not be synced yet
+      const beforeState = get(vaultStore);
+      
+      // Call initialize to sync states
+      await vaultStore.initialize();
+      
+      // Now vault store should reflect the auth store state
+      const afterState = get(vaultStore);
+      expect(afterState.isUnlocked).toBe(true);
+    });
+    
+    it('should not unlock if auth store is not authenticated', async () => {
+      // Reset both stores
+      vaultStore.reset();
+      authStore.logout();
+      
+      // Call initialize when not authenticated
+      await vaultStore.initialize();
+      
+      const state = get(vaultStore);
+      expect(state.isUnlocked).toBe(false);
+    });
+  });
+  
+  describe('Lock Function', () => {
+    it('should delegate to auth store lockVault', async () => {
+      // Setup unlocked vault
+      await authStore.createIdentity('Test User');
+      await authStore.createVaultWithPassphrase(fixtures.validPassphrase);
+      
+      // Spy on auth store lockVault
+      const lockVaultSpy = vi.spyOn(authStore, 'lockVault');
+      
+      // Call vault store lock
+      await vaultStore.lock();
+      
+      // Verify it delegated to auth store
+      expect(lockVaultSpy).toHaveBeenCalled();
+      
+      // Both stores should show locked state
+      expect(get(authStore).vaultUnlocked).toBe(false);
+      expect(get(vaultStore).isUnlocked).toBe(false);
+      
+      lockVaultSpy.mockRestore();
     });
   });
 });

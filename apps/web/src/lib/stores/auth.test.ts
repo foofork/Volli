@@ -198,6 +198,24 @@ describe('AuthStore', () => {
         'No identity loaded'
       );
     });
+    
+    it.skip('should throw error if vault not found', async () => {
+      // TODO: Fix mock DB access for this test
+      // This tests the edge case where vault metadata exists but no vault is found
+      // Create identity but don't create vault
+      await authStore.createIdentity('Test User');
+      
+      // Ensure no vault exists by clearing the mock DB
+      const mockDB = (authStore as any).constructor.mockDB || (global as any).mockDB;
+      if (mockDB && mockDB.vaults) {
+        mockDB.vaults.clear();
+      }
+      
+      // Try to unlock non-existent vault
+      await expect(authStore.unlockVault('any-passphrase')).rejects.toThrow(
+        'Vault not found'
+      );
+    });
   });
 
   describe('lockVault', () => {
@@ -295,6 +313,58 @@ describe('AuthStore', () => {
       expect(hasSession).toBe(false);
       expect(localStorage.getItem('volli-session')).toBe(null);
       expect(localStorage.getItem('volli-identity')).toBe(null); // Should also clear identity
+    });
+  });
+
+  describe('Session restoration error handling', () => {
+    it('should handle corrupted session data gracefully', async () => {
+      // Set invalid JSON in localStorage
+      localStorage.setItem('volli-session', 'invalid-json{');
+      localStorage.setItem('volli-identity', JSON.stringify({ id: 'test', displayName: 'Test' }));
+      
+      const result = await authStore.checkSession();
+      
+      expect(result).toBe(false);
+      const state = get(authStore);
+      expect(state.isAuthenticated).toBe(false);
+    });
+    
+    it('should handle corrupted identity data gracefully', async () => {
+      // Set valid session but invalid identity
+      localStorage.setItem('volli-session', JSON.stringify({ 
+        token: 'test-token',
+        expiresAt: Date.now() + 10000
+      }));
+      localStorage.setItem('volli-identity', 'corrupted-data');
+      
+      const result = await authStore.checkSession();
+      
+      expect(result).toBe(false);
+      const state = get(authStore);
+      expect(state.isAuthenticated).toBe(false);
+    });
+  });
+  
+  describe('Initialize function', () => {
+    it('should restore session from localStorage on initialize', async () => {
+      // Setup: Create a session
+      await authStore.createIdentity('Test User');
+      await authStore.createVaultWithPassphrase(fixtures.validPassphrase);
+      
+      // Save current state
+      const savedIdentity = get(authStore).currentIdentity;
+      
+      // Clear memory state but keep localStorage
+      authStore['clearMemoryState']();
+      expect(get(authStore).isAuthenticated).toBe(false);
+      
+      // Call initialize - should restore from localStorage
+      await authStore.initialize();
+      
+      // Verify session was restored
+      const state = get(authStore);
+      expect(state.isAuthenticated).toBe(true);
+      expect(state.currentIdentity).toEqual(savedIdentity);
     });
   });
 

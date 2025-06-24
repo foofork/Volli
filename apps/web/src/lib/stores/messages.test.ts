@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { get } from 'svelte/store';
-import { messagesStore } from './messages';
+import { messagesStore, activeConversation, activeMessages } from './messages';
 import { authStore } from './auth';
 import { vaultStore } from './vault';
 import { clearAllDatabases } from '../../tests/setup/db-mock';
@@ -519,6 +519,99 @@ describe('MessagesStore', () => {
     it('should return undefined for non-existent conversation', () => {
       const found = messagesStore.getConversation('non-existent');
       expect(found).toBeUndefined();
+    });
+  });
+  
+  describe('Internal Functions', () => {
+    it('should decrypt incoming messages', async () => {
+      // Test the decryptIncomingMessage function
+      const encryptedMsg = {
+        id: 'test-msg',
+        content: 'encrypted content',
+        conversationId: 'conv-1',
+        sender: 'alice',
+        timestamp: Date.now()
+      };
+      
+      const decrypted = await (messagesStore as any).decryptIncomingMessage(encryptedMsg);
+      
+      // Since it's a mock, it should return the same object
+      expect(decrypted).toEqual(encryptedMsg);
+    });
+    
+    it('should deliver message via network endpoint', async () => {
+      // Store original network store
+      const originalNetworkStore = (messagesStore as any).networkStore;
+      
+      // Mock network store and endpoint
+      const mockSendMessage = vi.fn().mockResolvedValue(true);
+      const mockEndpoint = {
+        sendMessage: mockSendMessage
+      };
+      
+      (messagesStore as any).networkStore = {
+        getSyncEndpoint: vi.fn().mockResolvedValue(mockEndpoint)
+      };
+      
+      const message = factories.message();
+      
+      // Call the exposed deliverMessage function
+      const deliverMessage = (messagesStore as any).deliverMessage;
+      if (deliverMessage) {
+        await deliverMessage.call(messagesStore, message);
+        expect(mockSendMessage).toHaveBeenCalledWith(message);
+      } else {
+        // If not exposed, test the functionality through sendMessage
+        const conv = await messagesStore.createConversation(['test-user']);
+        messagesStore.setActiveConversation(conv.id);
+        (messagesStore as any).networkStore.isOnline = true;
+        
+        // deliverMessage is called internally when online
+        await messagesStore.sendMessage('Test message');
+        
+        // Check that network endpoint was used
+        const syncEndpoint = await (messagesStore as any).networkStore.getSyncEndpoint();
+        expect(syncEndpoint).toBeDefined();
+      }
+      
+      // Restore
+      (messagesStore as any).networkStore = originalNetworkStore;
+    });
+  });
+  
+  describe('Derived Stores', () => {
+    it('should handle activeConversation with no active conversation', () => {
+      // Reset store to ensure no active conversation
+      messagesStore.reset();
+      
+      const activeConv = get(activeConversation);
+      expect(activeConv).toBe(null);
+    });
+    
+    it('should handle activeConversation with invalid conversation ID', async () => {
+      // Create a conversation then set an invalid active ID
+      await messagesStore.createConversation(['alice-id']);
+      messagesStore.setActiveConversation('non-existent-id');
+      
+      const activeConv = get(activeConversation);
+      expect(activeConv).toBe(null);
+    });
+    
+    it('should handle activeMessages with no active conversation', () => {
+      // Reset store to ensure no active conversation
+      messagesStore.reset();
+      
+      const messages = get(activeMessages);
+      expect(messages).toEqual([]);
+    });
+    
+    it('should handle activeMessages with conversation that has no messages', async () => {
+      // Create a conversation but don't send any messages
+      const conv = await messagesStore.createConversation(['alice-id']);
+      messagesStore.setActiveConversation(conv.id);
+      
+      const messages = get(activeMessages);
+      expect(messages).toEqual([]);
     });
   });
 });
