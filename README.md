@@ -203,18 +203,6 @@ See [**Developer Guide**](docs/DEVELOPER.md) for comprehensive setup instruction
 | [**Developer Guide**](docs/DEVELOPER.md) | Setup and development workflow |
 | [**Roadmap**](docs/ROADMAP.md) | Development timeline and milestones |
 
----
-
-## 🤝 Contributing
-
-We love PRs! Start here:
-
-1. **Fork & clone** the repo
-2. `npm install && npm test` – ensure green tests
-3. Follow the [contribution guide](docs/DEVELOPER.md#contributing)
-4. Open a pull request—include tests & a clear description
-
-Security issues? Please **do not** open a public issue. Email `security@volli.chat` or file a confidential issue.
 
 ---
 
