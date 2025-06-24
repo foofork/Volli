@@ -104,6 +104,8 @@ Encrypted local storage with CRDT synchronization.
 - Automerge adapter for conflict-free sync
 - Search index management
 - Backup/restore operations
+- Contact verification and management
+- Encrypted file storage (10MB limit per file)
 
 **Storage Schema:**
 ```sql
@@ -121,7 +123,24 @@ CREATE TABLE contacts (
   id TEXT PRIMARY KEY,
   public_key BLOB,
   display_name_encrypted BLOB,
-  trust_level INTEGER
+  trust_level INTEGER,
+  verified BOOLEAN DEFAULT FALSE,
+  created_at INTEGER,
+  last_seen INTEGER,
+  avatar_encrypted BLOB,
+  notes_encrypted BLOB
+);
+
+CREATE TABLE files (
+  id TEXT PRIMARY KEY,
+  name_encrypted BLOB,
+  size INTEGER,
+  type TEXT,
+  content_encrypted BLOB,
+  uploaded_at INTEGER,
+  checksum TEXT,
+  tags_encrypted BLOB,
+  shared_with TEXT -- JSON array of contact IDs
 );
 
 CREATE TABLE vault_metadata (
@@ -138,15 +157,25 @@ Message handling and cryptographic operations.
 - Message schema definitions
 - Encryption/decryption helpers
 - Thread management
-- File sharing support
+- File sharing with encryption
+- Contact-based message routing
+- Offline message queue
 
 **Message Types:**
 ```typescript
 type MessageSchema = 
   | { type: 'chat.message', content: string, attachments?: FileRef[] }
-  | { type: 'file.share', file: FileRef, caption?: string }
+  | { type: 'file.share', file: FileRef, caption?: string, sharedWith: string[] }
   | { type: 'thread.update', updates: ThreadUpdate[] }
+  | { type: 'contact.verify', contactId: string, verificationData: string }
+  | { type: 'file.request', fileId: string, requesterId: string }
 ```
+
+**File Sharing Flow:**
+1. File encrypted with random key
+2. Key encrypted for each recipient
+3. File metadata + encrypted keys stored
+4. Recipients decrypt with their private key
 
 ### 4. IPFS Sync (`@volli/sync-ipfs`)
 
@@ -186,6 +215,64 @@ WASM-based plugin runtime with capability security.
   }
 }
 ```
+
+## Web Application Architecture
+
+The web application implements a reactive store-based architecture using Svelte.
+
+### Store Architecture
+
+```mermaid
+graph LR
+    subgraph "UI Layer"
+        COMP[Svelte Components]
+    end
+    
+    subgraph "Store Layer"
+        AUTH[Auth Store]
+        VAULT[Vault Store]
+        MSG[Messages Store]
+        CONTACT[Contacts Store]
+        FILES[Files Store]
+    end
+    
+    subgraph "Core Services"
+        CRYPTO[Crypto Service]
+        DB[IndexedDB]
+    end
+    
+    COMP --> AUTH
+    COMP --> MSG
+    COMP --> CONTACT
+    COMP --> FILES
+    
+    AUTH --> VAULT
+    MSG --> VAULT
+    CONTACT --> VAULT
+    FILES --> VAULT
+    
+    VAULT --> CRYPTO
+    VAULT --> DB
+```
+
+### Store Responsibilities
+
+1. **Auth Store**: Identity lifecycle, passphrase validation, auto-lock
+2. **Vault Store**: Encrypted persistence, data access control
+3. **Messages Store**: Conversation management, encryption/decryption
+4. **Contacts Store**: Contact verification, public key management
+5. **Files Store**: File encryption, sharing permissions, storage limits
+
+### Data Flow Example - Sending a File
+
+1. User selects file in UI component
+2. Files store validates size (< 10MB)
+3. Generates random encryption key
+4. Encrypts file content
+5. Stores encrypted blob in vault
+6. Creates shareable reference
+7. Message store sends file reference
+8. Recipients decrypt with their keys
 
 ## Security Architecture
 

@@ -103,6 +103,36 @@ Root Identity Key (Dilithium-3 + Ed25519)
 - Message size padded to fixed buckets
 - Traffic analysis resistance
 
+### File Security
+
+#### File Encryption Protocol
+```
+1. Validate file size (< 10MB limit)
+2. Generate random file encryption key (256-bit)
+3. Encrypt file content with XChaCha20-Poly1305
+4. Calculate SHA-256 checksum of encrypted content
+5. Encrypt file metadata (name, type, tags)
+6. Store encrypted blob in vault
+```
+
+#### File Sharing Security
+```
+1. File owner generates encrypted file
+2. For each recipient:
+   a. Encrypt file key with recipient's public key (Kyber-1024)
+   b. Store encrypted key mapping
+3. Recipients decrypt file key with private key
+4. File content remains encrypted at rest
+```
+
+#### Security Features
+- **Size Limits**: 10MB per file to prevent DoS
+- **Type Validation**: MIME type verification
+- **Checksum Verification**: Integrity checking on decrypt
+- **Access Control**: Per-contact sharing permissions
+- **Secure Deletion**: Cryptographic erasure of file keys
+- **Thumbnail Generation**: Client-side only for images
+
 ### Plugin Security
 
 #### Capability System
