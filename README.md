@@ -22,6 +22,9 @@
 > **Project Status: 🛠️ Alpha - Core Packages Built**  
 > Core encryption packages implemented with 98.9% test coverage. Web app UI functional but using in-memory storage (not persistent). Post-quantum crypto and mobile/desktop apps pending.
 
+> [!TIP]
+> **Starting with Research Phase**: Before implementing, we're evaluating production-ready libraries to avoid reinventing wheels and ensure robust, secure solutions.
+
 <br/>
 
 ## 🌟 Why Choose Volli?
@@ -232,7 +235,12 @@ graph TD
 
 > See [detailed roadmap](docs/ROADMAP.md) for complete timeline and sprint planning.
 
-### Phase 0: Integration 🚨 *(Current Priority)*
+### Phase -1: Research 🔬 *(Starting Now)*
+- [ ] Evaluate production-ready libraries
+- [ ] Benchmark performance options
+- [ ] Validate architecture decisions
+
+### Phase 0: Integration 🚨 *(Next Priority)*
 - [ ] Add persistent storage (IndexedDB)
 - [ ] Connect existing packages to web app
 - [ ] Integrate real encryption

@@ -23,6 +23,9 @@
 
 ## Revised Development Phases
 
+### Phase -1: Research & Validation 🔬 *(1-2 weeks)*
+Validate technology choices before implementation
+
 ### Phase 0: Integration (Current Priority) 🚨
 Connect existing packages to the web application
 
@@ -37,18 +40,44 @@ Build mobile and desktop applications
 
 ---
 
+## Critical Research Phase (Phase -1)
+
+### Sprint -1: Technology Research & Validation
+
+**Goal**: Ensure we're using production-worthy approaches and not reinventing wheels
+
+**Research Tasks**:
+| Task | Focus Area | Priority | Effort |
+|------|------------|----------|--------|
+| Evaluate IndexedDB libraries (Dexie vs LocalForage vs PouchDB) | Storage | P0 | 1d |
+| Research encrypted browser storage patterns | Security | P0 | 1d |
+| Compare P2P approaches (IPFS vs WebRTC vs libp2p vs Gun.js) | Networking | P0 | 2d |
+| Evaluate CRDT libraries (Yjs vs Automerge vs others) | Sync | P0 | 2d |
+| Research PQ crypto libraries (liboqs vs pqc-js vs kyber-crystals) | Crypto | P0 | 2d |
+| Benchmark PQ crypto performance in browsers | Performance | P0 | 1d |
+| Research key management best practices (WebAuthn, recovery) | Security | P0 | 1d |
+
+**Deliverables**:
+- [ ] Technology decision matrix with justifications
+- [ ] Performance benchmark results
+- [ ] Architecture validation document
+- [ ] Security considerations checklist
+
+---
+
 ## Immediate Priorities (Phase 0)
 
 ### Sprint 0.1: Web App Persistence (2 weeks)
 
-**Goal**: Make the web app actually save data
+**Goal**: Make the web app actually save data using best practices
 
-**Tasks**:
+**Research & Implementation Tasks**:
 | Task | Component | Priority | Effort |
 |------|-----------|----------|--------|
-| Integrate vault-core SQL.js with web app | apps/web | P0 | 3d |
-| Replace mock stores with real implementations | apps/web | P0 | 3d |
-| Implement IndexedDB adapter | apps/web | P0 | 2d |
+| Implement chosen IndexedDB library from Phase -1 | apps/web | P0 | 2d |
+| Apply encrypted storage patterns from research | apps/web | P0 | 2d |
+| Integrate vault-core SQL.js with web app | apps/web | P0 | 2d |
+| Replace mock stores with real implementations | apps/web | P0 | 2d |
 | Add data migration system | apps/web | P1 | 1d |
 | Update tests for persistence | apps/web | P0 | 1d |
 
@@ -83,16 +112,17 @@ Build mobile and desktop applications
 
 ### Sprint 1.1: Network Layer (2 weeks)
 
-**Goal**: Implement real P2P messaging with classical crypto
+**Goal**: Implement real P2P messaging using research-validated approach
 
-**Tasks**:
+**Implementation Tasks**:
 | Task | Package | Priority | Effort |
 |------|---------|----------|--------|
-| Integrate sync-ipfs with web app | apps/web | P0 | 3d |
+| Implement chosen P2P solution from Phase -1 research | apps/web | P0 | 3d |
+| Apply NAT traversal best practices (STUN/TURN) | sync-ipfs | P0 | 1d |
 | Implement message routing | messaging | P0 | 2d |
 | Add relay server fallback | sync-ipfs | P0 | 2d |
-| Implement offline queue | messaging | P0 | 2d |
-| Network testing | all | P0 | 1d |
+| Implement offline queue | messaging | P0 | 1d |
+| Network performance testing | all | P0 | 1d |
 
 **Deliverables**:
 - [ ] Messages actually sent between clients
@@ -103,16 +133,16 @@ Build mobile and desktop applications
 
 ### Sprint 1.2: Post-Quantum Crypto (2 weeks)
 
-**Goal**: Upgrade to post-quantum cryptography
+**Goal**: Upgrade to post-quantum cryptography using production-ready library
 
-**Tasks**:
+**Implementation Tasks**:
 | Task | Package | Priority | Effort |
 |------|---------|----------|--------|
-| Integrate liboqs-wasm or pqc-js | identity-core | P0 | 3d |
-| Implement Kyber-1024 key exchange | identity-core | P0 | 2d |
-| Implement Dilithium-3 signatures | identity-core | P0 | 2d |
-| Hybrid mode with classical crypto | identity-core | P0 | 2d |
-| Performance optimization | identity-core | P1 | 1d |
+| Integrate chosen PQ library from Phase -1 benchmarks | identity-core | P0 | 2d |
+| Implement Kyber-1024 key exchange per NIST standards | identity-core | P0 | 2d |
+| Implement Dilithium-3 signatures per NIST standards | identity-core | P0 | 2d |
+| Apply hybrid crypto pattern from research | identity-core | P0 | 2d |
+| Performance optimization based on benchmarks | identity-core | P1 | 2d |
 
 **Deliverables**:
 - [ ] Working post-quantum crypto
@@ -125,15 +155,16 @@ Build mobile and desktop applications
 
 ### Sprint 2.1: Multi-Device Sync (2 weeks)
 
-**Goal**: Enable sync across devices
+**Goal**: Enable sync across devices using proven CRDT approach
 
-**Tasks**:
+**Implementation Tasks**:
 | Task | Package | Priority | Effort |
 |------|---------|----------|--------|
-| Device pairing protocol | sync-ipfs | P0 | 3d |
-| CRDT conflict resolution | vault-core | P0 | 3d |
+| Integrate chosen CRDT library from Phase -1 | vault-core | P0 | 2d |
+| Device pairing protocol with WebAuthn support | sync-ipfs | P0 | 2d |
+| Implement CRDT conflict resolution patterns | vault-core | P0 | 2d |
 | Sync UI implementation | apps/web | P0 | 2d |
-| Bandwidth optimization | sync-ipfs | P1 | 2d |
+| Bandwidth optimization based on CRDT benchmarks | sync-ipfs | P1 | 2d |
 
 **Deliverables**:
 - [ ] Multi-device pairing
@@ -166,16 +197,22 @@ Build mobile and desktop applications
 
 ### Sprint 3.1: Desktop Application (2 weeks)
 
-**Goal**: Create Tauri desktop app
+**Goal**: Create desktop app using research-validated framework
 
-**Tasks**:
+**Pre-Sprint Research**:
 | Task | Component | Priority | Effort |
 |------|-----------|----------|--------|
-| Tauri project setup | apps/desktop | P0 | 1d |
+| Compare Tauri vs Electron vs native approaches | apps/desktop | P0 | 1d |
+| Evaluate security implications of each approach | apps/desktop | P0 | 0.5d |
+
+**Implementation Tasks**:
+| Task | Component | Priority | Effort |
+|------|-----------|----------|--------|
+| Framework setup based on research choice | apps/desktop | P0 | 1d |
 | Native menu integration | apps/desktop | P0 | 2d |
-| System tray support | apps/desktop | P1 | 2d |
-| Auto-updater | apps/desktop | P1 | 2d |
-| Platform testing (Win/Mac/Linux) | apps/desktop | P0 | 3d |
+| System tray support | apps/desktop | P1 | 1.5d |
+| Auto-updater with code signing | apps/desktop | P1 | 2d |
+| Platform testing (Win/Mac/Linux) | apps/desktop | P0 | 2d |
 
 **Deliverables**:
 - [ ] Working desktop app
@@ -264,12 +301,36 @@ Build mobile and desktop applications
 
 ---
 
+## Best Practices & Standards
+
+### Key Principles
+1. **Research First**: Never implement without researching existing solutions
+2. **Use Proven Libraries**: Prefer battle-tested libraries over custom implementations
+3. **Follow Standards**: Adhere to NIST, W3C, and industry standards
+4. **Security by Design**: Consider security implications at every step
+5. **Performance Budgets**: Set and maintain performance targets
+
+### Critical Standards to Follow
+- **NIST PQC Standards**: For post-quantum cryptography
+- **W3C Web Crypto API**: For browser cryptography
+- **OWASP Guidelines**: For web and mobile security
+- **RFC Standards**: For networking protocols
+
+### Recommended Libraries to Evaluate
+- **Storage**: Dexie.js, LocalForage, PouchDB
+- **Crypto**: libsodium.js, noble-crypto, WebCrypto API
+- **P2P**: WebRTC, libp2p, Gun.js
+- **CRDT**: Yjs, Automerge
+- **Testing**: Vitest, Playwright, WASM testing tools
+
+---
+
 ## Next Steps
 
-1. **Immediate**: Begin Sprint 0.1 - Web App Persistence
-2. **Week 1**: Set up IndexedDB integration
-3. **Week 2**: Replace mock stores with real implementations
-4. **Week 3**: Security review of persistence layer
-5. **Week 4**: Begin real crypto integration
+1. **Immediate**: Complete Phase -1 Research (1-2 weeks)
+2. **Week 3**: Begin Sprint 0.1 - Web App Persistence
+3. **Week 5**: Replace mock stores with real implementations
+4. **Week 7**: Security review of persistence layer
+5. **Week 9**: Begin real crypto integration
 
-This roadmap reflects the actual current state and provides a realistic path forward.
+This roadmap reflects the actual current state and provides a research-driven path forward.
