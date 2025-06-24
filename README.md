@@ -230,15 +230,20 @@ graph TD
 
 ## 📊 Development Progress
 
-### Phase 1: Foundation 🚧
-- [x] Core encryption packages (XChaCha20-Poly1305)
-- [x] Plugin system with WASM runtime
-- [x] Web UI mockup (non-persistent)
-- [x] 98.9% test coverage on packages
-- [ ] Post-quantum crypto (Kyber/Dilithium)
-- [ ] Persistent encrypted storage (IndexedDB)
+> See [detailed roadmap](docs/ROADMAP.md) for complete timeline and sprint planning.
 
-### Phase 2: Advanced Features 🚧
+### Phase 0: Integration 🚨 *(Current Priority)*
+- [ ] Connect existing packages to web app
+- [ ] Add persistent storage (IndexedDB)
+- [ ] Integrate real encryption
+
+### Phase 1: Core Features 🚧
+- [x] Core encryption packages *(built, not integrated)*
+- [x] Plugin system with WASM runtime
+- [ ] Post-quantum crypto (Kyber/Dilithium)
+- [ ] P2P messaging layer
+
+### Phase 2: Advanced Features 📅
 - [ ] Real-time P2P sync
 - [ ] Group messaging
 - [ ] Voice notes
@@ -246,14 +251,9 @@ graph TD
 
 ### Phase 3: Multi-Platform 🔜
 - [ ] Desktop app (Tauri)
-- [ ] iOS app (Capacitor)
+- [ ] iOS app (Capacitor) 
 - [ ] Android app (Capacitor)
 - [ ] Cross-platform sync
-
-### Phase 4: Full Crypto 🔮
-- [ ] Complete PQ implementation
-- [ ] Hardware key support
-- [ ] Quantum-safe backups
 
 <br/>
 
