@@ -34,10 +34,10 @@ Add plugin system, sync capabilities, and polish for beta release.
 | Unit tests & benchmarks | @volli/identity-core | P0 | 1d |
 
 **Deliverables**:
-- ✅ Working PQ key generation *(Phase 1 Complete)*
-- ✅ Performance benchmarks (< 100ms key gen) *(Phase 1 Complete)*
-- ✅ 98.9% test coverage *(Phase 1 Complete)*
-- ✅ Security test harness *(Phase 1 Complete)*
+- ❌ Working PQ key generation *(Placeholder code only)*
+- ✅ Classical crypto working *(X25519, Ed25519)*
+- ✅ 98.9% test coverage *(On implemented features)*
+- ✅ Security test harness *(For classical crypto)*
 
 **Dependencies**: None
 
@@ -83,12 +83,12 @@ Add plugin system, sync capabilities, and polish for beta release.
 | i18n scaffolding | @volli/ui-kit | P1 | 1d |
 
 **Deliverables**:
-- ✅ Responsive web app *(Phase 1 Complete)*
-- ✅ Core messaging UI *(Phase 1 Complete)*
-- ✅ Contact management with verification *(Phase 1 Complete)*
-- ✅ Secure file storage and sharing *(Phase 1 Complete)*
-- ✅ < 200ms load time *(Phase 1 Complete)*
-- ✅ Accessibility compliant *(Phase 1 Complete)*
+- ✅ Responsive web app *(UI Complete - no persistence)*
+- ✅ Core messaging UI *(UI Complete - in-memory only)*
+- ✅ Contact management UI *(UI Complete - no real verification)*
+- ✅ File storage UI *(UI Complete - in-memory only)*
+- ✅ < 200ms load time *(Achieved)*
+- ⚠️ Accessibility compliant *(Partial)*
 
 **Dependencies**: Sprint 2 (vault-core)
 
@@ -167,22 +167,22 @@ Add plugin system, sync capabilities, and polish for beta release.
 ## Technical Milestones
 
 ### M1: Security Foundation (Week 4)
-- [x] Post-quantum crypto working ✅ (Phase 1 Complete)
-- [x] Encrypted storage operational ✅ (Phase 1 Complete)
-- [x] Security test suite passing ✅ (Phase 1 Complete)
-- [x] Threat model documented ✅ (Phase 1 Complete)
+- [ ] Post-quantum crypto working ❌ (Placeholder code only)
+- [x] Classical crypto operational ✅ (XChaCha20-Poly1305)
+- [x] Security test suite passing ✅ (For implemented features)
+- [x] Threat model documented ✅ (In SECURITY.md)
 
 ### M2: Core Messaging (Week 8)
-- [x] Send/receive messages ✅ (Phase 1 Complete)
-- [x] Multi-platform support ✅ (Phase 1 Complete - Web fully functional)
-- [x] Offline functionality ✅ (Phase 1 Complete)
-- [x] Performance targets met ✅ (Phase 1 Complete)
+- [x] Send/receive messages ✅ (UI only - no persistence)
+- [ ] Multi-platform support ❌ (Web UI only, mobile/desktop empty)
+- [ ] Offline functionality ❌ (No persistent storage)
+- [x] Performance targets met ✅ (For in-memory operations)
 
 ### M3: Beta Ready (Week 12)
-- [x] All Phase 1 features integrated ✅ (Phase 1 Complete)
-- [x] Plugin system operational ✅ (Phase 1 Complete)
-- [x] 98.9% test coverage ✅ (Phase 1 Complete - exceeded target)
-- [ ] Security audit scheduled
+- [ ] All features integrated ⚠️ (UI only, no persistence)
+- [x] Plugin system operational ✅ (WASM runtime working)
+- [x] 98.9% test coverage ✅ (Package tests only)
+- [ ] Security audit scheduled ❌ (Not ready for audit)
 
 ## Risk Mitigation
 

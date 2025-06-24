@@ -19,8 +19,8 @@
 </div>
 
 > [!NOTE]
-> **Project Status: 🚀 Web App Phase 1 Complete**  
-> Full messaging, contact management, secure file storage, and vault functionality with 98.9% test coverage. Desktop and mobile apps coming soon!
+> **Project Status: 🛠️ Alpha - Core Packages Built**  
+> Core encryption packages implemented with 98.9% test coverage. Web app UI functional but using in-memory storage (not persistent). Post-quantum crypto and mobile/desktop apps pending.
 
 <br/>
 
@@ -37,27 +37,27 @@
 <tbody>
 <tr>
 <td><strong>🔮 Post‑Quantum Crypto</strong></td>
-<td align="center">✅ Kyber + Dilithium</td>
+<td align="center">🚧 Planned</td>
 <td align="center">❌ Not Yet</td>
 </tr>
 <tr>
 <td><strong>💾 Local‑First Storage</strong></td>
-<td align="center">✅ Device Only</td>
+<td align="center">🚧 In Development</td>
 <td align="center">❌ Server Required</td>
 </tr>
 <tr>
 <td><strong>🌐 Offline Operation</strong></td>
-<td align="center">✅ Full Features</td>
+<td align="center">🚧 Planned</td>
 <td align="center">❌ Limited</td>
 </tr>
 <tr>
 <td><strong>🧩 Plugin Ecosystem</strong></td>
-<td align="center">✅ WASM Sandbox</td>
+<td align="center">✅ WASM Runtime Ready</td>
 <td align="center">❌ None</td>
 </tr>
 <tr>
 <td><strong>🔗 P2P Sync</strong></td>
-<td align="center">✅ IPFS/Direct</td>
+<td align="center">🚧 Partial IPFS</td>
 <td align="center">❌ Centralized</td>
 </tr>
 </tbody>
@@ -70,8 +70,11 @@
 
 ## 🚀 Quick Start
 
+> [!WARNING]
+> **Current Limitations**: The web app currently stores data in memory only. All data is lost on page refresh. This is a development preview - not ready for production use.
+
 > [!TIP]
-> Volli is **server‑less** in development too—your data lives in an encrypted SQLite db inside the browser or app sandbox.
+> Volli will be **server‑less** when complete—your data will live in an encrypted SQLite db inside the browser or app sandbox.
 
 <details open>
 <summary><h3>📦 Installation</h3></summary>
@@ -117,16 +120,16 @@ cd apps/mobile && npm run dev
 
 ## ✨ Features
 
-### 🎯 Available Now (Phase 1 Complete)
+### 🎯 What's Actually Working
 
-- [x] **🔐 Secure Vault** - Passphrase-protected local storage with encryption
-- [x] **💬 E2E Messaging** - Send and receive encrypted messages
-- [x] **👥 Contact Management** - Add, verify, and manage contacts with PKI
-- [x] **📁 File Storage** - Encrypt and share files up to 10MB
-- [x] **🔑 Strong Auth** - 128-bit entropy passphrase validation
-- [x] **⏱️ Auto-lock** - Automatic vault locking after inactivity
-- [x] **📱 Responsive UI** - Works on all screen sizes
-- [x] **🧪 Test Coverage** - 98.9% coverage with comprehensive tests
+- [x] **📦 Core Packages** - Encryption libraries with real crypto implementations
+- [x] **🧪 Test Coverage** - 98.9% coverage on core packages
+- [x] **🎨 Web UI** - Functional interface (data resets on refresh)
+- [x] **🔑 Authentication Flow** - Passphrase validation logic
+- [x] **🧩 Plugin System** - WASM runtime with sandboxing
+- [ ] **💾 Persistent Storage** - Currently in-memory only
+- [ ] **🔐 Post-Quantum Crypto** - Placeholder code only
+- [ ] **🔄 IPFS Sync** - Partially implemented
 
 ### 🔜 Coming Soon
 
@@ -227,13 +230,13 @@ graph TD
 
 ## 📊 Development Progress
 
-### Phase 1: Core Web App ✅
-- [x] Post-quantum crypto foundation
-- [x] Encrypted local storage
-- [x] Messaging functionality
-- [x] Contact management
-- [x] File storage & sharing
-- [x] 98.9% test coverage
+### Phase 1: Foundation 🚧
+- [x] Core encryption packages (XChaCha20-Poly1305)
+- [x] Plugin system with WASM runtime
+- [x] Web UI mockup (non-persistent)
+- [x] 98.9% test coverage on packages
+- [ ] Post-quantum crypto (Kyber/Dilithium)
+- [ ] Persistent encrypted storage (IndexedDB)
 
 ### Phase 2: Advanced Features 🚧
 - [ ] Real-time P2P sync
