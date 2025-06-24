@@ -11,8 +11,8 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@volli/vault-core": "^0.1.0",
-    "@volli/identity-core": "^0.1.0",
+    "@volli/vault-core": "workspace:*",
+    "@volli/identity-core": "workspace:*",
     "ipfs-core": "^0.18.0",
     "ipfs-http-client": "^60.0.0",
     "it-all": "^3.0.0",

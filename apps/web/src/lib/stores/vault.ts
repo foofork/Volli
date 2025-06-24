@@ -1,5 +1,7 @@
 import { writable, derived, get } from 'svelte/store';
 import { authStore } from './auth';
+import { core } from './core';
+import type { Vault, Message } from '@volli/integration';
 
 // Local type definitions
 interface Contact {
@@ -8,17 +10,6 @@ interface Contact {
 	identityId: string;
 	publicKey: string;
 	addedAt: number;
-}
-
-interface Message {
-	id: string;
-	conversationId: string;
-	content: string;
-	sender: string;
-	timestamp: number;
-	delivered: boolean;
-	read: boolean;
-	encrypted: boolean;
 }
 
 interface FileMetadata {
@@ -56,7 +47,7 @@ interface VaultState {
 // Maximum file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-// Mock encrypted file storage (in real app, use IndexedDB)
+// Temporary file storage until we implement proper encrypted file storage
 const fileStorage = new Map<string, ArrayBuffer>();
 
 function createVaultStore() {
@@ -66,19 +57,6 @@ function createVaultStore() {
 		lastActivity: Date.now(),
 		error: null
 	});
-
-	// Mock vault data (in real app, this would be encrypted in IndexedDB)
-	let vaultData: VaultData = {
-		version: 1,
-		created: Date.now(),
-		contacts: [],
-		conversations: {},
-		files: [],
-		settings: {
-			theme: 'light',
-			notifications: true
-		}
-	};
 
 	// Subscribe to auth store to sync vault lock state
 	authStore.subscribe(authState => {
@@ -102,13 +80,46 @@ function createVaultStore() {
 			throw new Error('Vault is locked');
 		}
 
-		// In real app, decrypt from storage
-		if (!vaultData) {
-			throw new Error('Vault data not available');
+		const currentVault = await core.getCurrentVault();
+		if (!currentVault) {
+			throw new Error('No vault available');
 		}
 
+		// Get data from database
+		const contacts = await core.database.contacts.toArray();
+		const messages = await core.database.messages.toArray();
+		const config = await core.database.config.toArray();
+		
+		// Build conversations from messages
+		const conversations: { [id: string]: Message[] } = {};
+		messages.forEach(msg => {
+			if (!conversations[msg.conversationId]) {
+				conversations[msg.conversationId] = [];
+			}
+			conversations[msg.conversationId].push(msg);
+		});
+
+		// Get settings from config
+		const settingsConfig = config.find(c => c.key === 'settings');
+		const settings = settingsConfig?.value || {
+			theme: 'light',
+			notifications: true
+		};
+
+		// Get files from config (temporary until proper file storage)
+		const filesConfig = config.find(c => c.key === 'files');
+		const files = filesConfig?.value || [];
+
 		updateLastActivity();
-		return vaultData;
+		
+		return {
+			version: 1,
+			created: currentVault.createdAt,
+			contacts,
+			conversations,
+			files,
+			settings
+		};
 	}
 
 	async function saveVault(data: VaultData): Promise<void> {
@@ -117,11 +128,21 @@ function createVaultStore() {
 			throw new Error('Cannot save to locked vault');
 		}
 
-		// In real app, encrypt and save to IndexedDB
-		vaultData = data;
+		// Save settings to config
+		await core.database.config.put({
+			key: 'settings',
+			value: data.settings
+		});
+
+		// Save files metadata to config (temporary)
+		await core.database.config.put({
+			key: 'files',
+			value: data.files
+		});
+		
 		updateLastActivity();
 		
-		// Simulate save operation that could fail
+		// Simulate save operation that could fail (for backward compatibility)
 		const shouldFail = (authStore as any).saveVaultData;
 		if (shouldFail && typeof shouldFail === 'function') {
 			await shouldFail(data);
@@ -129,48 +150,47 @@ function createVaultStore() {
 	}
 
 	async function getContacts(): Promise<Contact[]> {
-		const vault = await getDecryptedVault();
-		return vault.contacts || [];
+		await getDecryptedVault(); // Ensure vault is unlocked
+		return core.database.contacts.toArray();
 	}
 
 	async function addContact(contact: Contact): Promise<void> {
-		const vault = await getDecryptedVault();
+		await getDecryptedVault(); // Ensure vault is unlocked
 		
 		// Check for duplicates
-		if (vault.contacts.some(c => c.id === contact.id || c.identityId === contact.identityId)) {
+		const existing = await core.database.contacts
+			.where('id').equals(contact.id)
+			.or('publicKey').equals(contact.publicKey)
+			.first();
+			
+		if (existing) {
 			throw new Error('Contact already exists');
 		}
 		
-		vault.contacts.push(contact);
-		await saveVault(vault);
+		await core.database.contacts.add(contact);
+		updateLastActivity();
 	}
 
 	async function getMessages(conversationId: string): Promise<Message[]> {
-		const vault = await getDecryptedVault();
-		return vault.conversations[conversationId] || [];
+		await getDecryptedVault(); // Ensure vault is unlocked
+		return core.messaging.getMessages(conversationId);
 	}
 
 	async function sendMessage(conversationId: string, content: string): Promise<Message> {
-		const vault = await getDecryptedVault();
+		await getDecryptedVault(); // Ensure vault is unlocked
 		
-		const message: Message = {
-			id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-			conversationId,
-			content,
-			sender: get(authStore).currentIdentity?.id || 'unknown',
-			timestamp: Date.now(),
-			delivered: false,
-			read: false,
-			encrypted: true
-		};
-		
-		if (!vault.conversations[conversationId]) {
-			vault.conversations[conversationId] = [];
+		const currentVault = await core.getCurrentVault();
+		if (!currentVault) {
+			throw new Error('No vault available');
 		}
 		
-		vault.conversations[conversationId].push(message);
-		await saveVault(vault);
+		const message = await core.messaging.sendMessage(
+			conversationId,
+			content,
+			currentVault
+		);
 		
+		updateLastActivity();
 		return message;
 	}
 
@@ -196,7 +216,7 @@ function createVaultStore() {
 			uploadedAt: Date.now()
 		};
 		
-		// Store encrypted file (mock)
+		// Store encrypted file (temporary implementation)
 		fileStorage.set(fileId, content);
 		
 		// Add metadata to vault
@@ -253,64 +273,62 @@ function createVaultStore() {
 	}
 
 	async function searchMessages(query: string): Promise<Message[]> {
-		const vault = await getDecryptedVault();
+		await getDecryptedVault(); // Ensure vault is unlocked
+		
 		const lowerQuery = query.toLowerCase();
-		const results: Message[] = [];
+		const allMessages = await core.database.messages.toArray();
 		
-		for (const messages of Object.values(vault.conversations)) {
-			results.push(...messages.filter(msg => 
-				msg.content.toLowerCase().includes(lowerQuery)
-			));
-		}
-		
-		return results;
+		return allMessages.filter(msg => 
+			msg.content.toLowerCase().includes(lowerQuery)
+		);
 	}
 
 	async function storeData(key: string, data: any): Promise<void> {
-		const vault = await getDecryptedVault();
+		await getDecryptedVault(); // Ensure vault is unlocked
 		
-		// Store data in vault with dynamic key
-		(vault as any)[key] = data;
-		await saveVault(vault);
+		await core.database.config.put({
+			key: `custom_${key}`,
+			value: data
+		});
+		
+		updateLastActivity();
 	}
 	
 	async function getData(key: string): Promise<any> {
-		const vault = await getDecryptedVault();
-		return (vault as any)[key];
+		await getDecryptedVault(); // Ensure vault is unlocked
+		
+		const config = await core.database.config.get(`custom_${key}`);
+		return config?.value;
 	}
 	
 	async function removeData(key: string): Promise<void> {
-		const vault = await getDecryptedVault();
-		delete (vault as any)[key];
-		await saveVault(vault);
+		await getDecryptedVault(); // Ensure vault is unlocked
+		
+		await core.database.config.delete(`custom_${key}`);
+		updateLastActivity();
 	}
 
 	function reset() {
-		vaultData = {
-			version: 1,
-			created: Date.now(),
-			contacts: [],
-			conversations: {},
-			files: [],
-			settings: {
-				theme: 'light',
-				notifications: true
-			}
-		};
+		// Clear file storage
 		fileStorage.clear();
+		
+		// Reset state
 		set({
 			isUnlocked: false,
 			autoLockTimeout: 15,
 			lastActivity: Date.now(),
 			error: null
 		});
+		
+		// Note: We don't clear the database here as that should be done
+		// through proper vault deletion flow
 	}
 
 	// For testing - expose vault data getter
-	(authStore as any).getVaultData = async () => vaultData;
+	(authStore as any).getVaultData = async () => getDecryptedVault();
 
 	async function initialize() {
-		// Initialize vault - in real app, load from IndexedDB
+		// Initialize vault - check if unlocked in auth store
 		const authState = get(authStore);
 		if (authState.isAuthenticated && authState.vaultUnlocked) {
 			update(state => ({
@@ -321,8 +339,9 @@ function createVaultStore() {
 	}
 
 	async function lock() {
-		// Lock the vault - this should be synchronized with auth store
+		// Lock the vault through auth store
 		authStore.lockVault();
+		await core.lockVault();
 	}
 
 	const store = {
@@ -349,11 +368,9 @@ function createVaultStore() {
 		saveVault
 	};
 	
-	// For testing - expose internal data
-	(store as any).vaultData = vaultData;
+	// For testing - expose internal data getter
 	Object.defineProperty(store, 'vaultData', {
-		get: () => vaultData,
-		set: (value) => { vaultData = value; },
+		get: async () => getDecryptedVault(),
 		configurable: true
 	});
 	
@@ -362,3 +379,35 @@ function createVaultStore() {
 
 export const vaultStore = createVaultStore();
 export const vault = vaultStore; // Backward compatibility
+
+// Re-export currentVaultId for components that need it
+export const currentVaultId = writable<string | null>(null);
+
+export async function createVault(password: string) {
+	try {
+		const vaultId = await core.createVault(password);
+		currentVaultId.set(vaultId);
+		
+		// Update auth store
+		authStore.createVault(password, vaultId);
+		
+		return { success: true };
+	} catch (error) {
+		return { success: false, error };
+	}
+}
+
+export async function unlockVault(password: string) {
+	try {
+		const unlocked = await core.unlockVault(password);
+		if (unlocked) {
+			currentVaultId.set(unlocked.id);
+			
+			// Update auth store
+			authStore.unlockVault();
+		}
+		return { success: !!unlocked };
+	} catch (error) {
+		return { success: false, error };
+	}
+}

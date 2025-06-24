@@ -1,4 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
+import { core } from './core';
 
 // Local type definitions
 interface Identity {
@@ -195,57 +196,45 @@ function createAuthStore() {
 			throw new Error('Passphrase too weak. Minimum 12 characters with good entropy required');
 		}
 
-		// Generate mock keys (in real app, use Web Crypto API)
-		const keyPair = {
-			publicKey: 'mock-public-key-' + generateSecureId(),
-			privateKey: 'mock-private-key-' + generateSecureId()
-		};
+		try {
+			// Create vault using the core implementation
+			const vaultId = await core.createVault(passphrase);
+			
+			if (vaultId) {
+				// Generate session token
+				const sessionToken = 'session-' + generateSecureId();
+				
+				// Store session
+				localStorage.setItem('volli-session', JSON.stringify({
+					token: sessionToken,
+					expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+				}));
+				
+				// Store identity info
+				const updatedIdentity = {
+					...state.currentIdentity,
+					hasVault: true
+				};
+				localStorage.setItem('volli-identity', JSON.stringify(updatedIdentity));
 
-		// Update identity with keys
-		const updatedIdentity = {
-			...state.currentIdentity,
-			publicKey: keyPair.publicKey,
-			encryptedPrivateKey: 'encrypted-' + keyPair.privateKey
-		};
+				update(state => ({
+					...state,
+					currentIdentity: updatedIdentity,
+					isAuthenticated: true,
+					vaultUnlocked: true,
+					sessionToken,
+					failedUnlockAttempts: 0,
+					error: null
+				}));
 
-		// Create vault
-		const vault = {
-			id: generateSecureId(),
-			identityId: updatedIdentity.id,
-			version: 1,
-			salt: generateSecureId(),
-			encryptedData: 'mock-encrypted-vault-data',
-			createdAt: Date.now(),
-			lastModified: Date.now()
-		};
-
-		// Store everything
-		mockDB.identities.set(updatedIdentity.id, updatedIdentity);
-		mockDB.vaults.set(updatedIdentity.id, vault);
-		vaultPassphrase = passphrase; // Store for demo unlock
-		
-		// Generate session token
-		const sessionToken = 'session-' + generateSecureId();
-		
-		// Update localStorage
-		localStorage.setItem('volli-identity', JSON.stringify(updatedIdentity));
-		localStorage.setItem('volli-session', JSON.stringify({
-			token: sessionToken,
-			expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
-		}));
-
-		update(state => ({
-			...state,
-			currentIdentity: updatedIdentity,
-			isAuthenticated: true,
-			vaultUnlocked: true,
-			sessionToken,
-			failedUnlockAttempts: 0,
-			error: null
-		}));
-
-		// Start auto-lock timer
-		startAutoLockTimer();
+				// Start auto-lock timer
+				startAutoLockTimer();
+			} else {
+				throw new Error('Failed to create vault');
+			}
+		} catch (error) {
+			throw error;
+		}
 	}
 
 	async function unlockVault(passphrase: string): Promise<boolean> {
@@ -255,16 +244,39 @@ function createAuthStore() {
 			throw new Error('No identity loaded');
 		}
 
-		// Check if we have a vault
-		const vault = mockDB.vaults.get(state.currentIdentity.id);
-		if (!vault) {
-			throw new Error('Vault not found');
-		}
+		try {
+			// Use core unlock implementation
+			const success = await core.unlockVault(passphrase);
+			
+			if (success) {
+				// Success
+				update(s => ({
+					...s,
+					vaultUnlocked: true,
+					failedUnlockAttempts: 0,
+					lastActivity: Date.now()
+				}));
 
-		// Simulate passphrase verification (in real app, derive key and decrypt)
-		const isCorrect = constantTimeCompare(passphrase, vaultPassphrase || '');
-		
-		if (!isCorrect) {
+				startAutoLockTimer();
+				return true;
+			} else {
+				// Failed unlock
+				update(s => ({
+					...s,
+					failedUnlockAttempts: s.failedUnlockAttempts + 1
+				}));
+
+				const newState = get({ subscribe });
+				if (newState.failedUnlockAttempts >= 3) {
+					// Too many attempts, logout
+					logout();
+					throw new Error('Too many failed attempts. Please log in again');
+				}
+
+				return false;
+			}
+		} catch (error) {
+			// Failed unlock
 			update(s => ({
 				...s,
 				failedUnlockAttempts: s.failedUnlockAttempts + 1
@@ -279,17 +291,6 @@ function createAuthStore() {
 
 			return false;
 		}
-
-		// Success
-		update(s => ({
-			...s,
-			vaultUnlocked: true,
-			failedUnlockAttempts: 0,
-			lastActivity: Date.now()
-		}));
-
-		startAutoLockTimer();
-		return true;
 	}
 
 	function lockVault(): void {

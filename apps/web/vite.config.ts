@@ -9,9 +9,17 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
-    sourcemap: true
+    sourcemap: true,
+    rollupOptions: {
+      external: []
+    }
   },
   optimizeDeps: {
     exclude: ['libsodium-wrappers']
+  },
+  resolve: {
+    alias: {
+      '@volli/integration': '/workspaces/Volli/packages/integration/dist/index.js'
+    }
   }
 });

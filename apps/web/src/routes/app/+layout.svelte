@@ -4,9 +4,11 @@
 	import { auth, isAuthenticated } from '$lib/stores/auth';
 	import { vault } from '$lib/stores/vault';
 	import { messages } from '$lib/stores/messages';
-	import { PassphraseInput } from '$lib/components';
+	import { PassphraseInput, ErrorBoundary } from '$lib/components';
 	import { contacts } from '$lib/stores/contacts';
 	import { files } from '$lib/stores/files';
+	import { toasts } from '$lib/stores/toasts';
+	import VaultErrorFallback from '$lib/components/VaultErrorFallback.svelte';
 	
 	let isReady = false;
 	let unlockPassphrase = '';
@@ -49,14 +51,17 @@
 			const success = await auth.unlockVault(unlockPassphrase);
 			if (success) {
 				unlockPassphrase = '';
+				toasts.success('Vault unlocked successfully!');
 				await messages.loadConversations();
 				await contacts.loadContacts();
 				await files.loadFiles();
 			} else {
 				unlockError = 'Incorrect passphrase';
+				toasts.error('Incorrect passphrase');
 			}
 		} catch (err) {
 			unlockError = err instanceof Error ? err.message : 'Failed to unlock vault';
+			toasts.error(unlockError);
 		} finally {
 			isUnlocking = false;
 		}
@@ -67,6 +72,7 @@
 		messages.reset();
 		contacts.reset();
 		files.reset();
+		toasts.info('Vault locked');
 	}
 	
 	async function handleLogout() {
@@ -75,6 +81,7 @@
 	}
 </script>
 
+<ErrorBoundary fallback={VaultErrorFallback}>
 {#if isReady}
 	{#if !$vault.isUnlocked}
 		<div class="unlock-screen">
@@ -173,6 +180,7 @@
 		<p>Initializing secure environment...</p>
 	</div>
 {/if}
+</ErrorBoundary>
 
 <style>
 	.app-layout {

@@ -1,15 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { auth } from '$lib/stores/auth';
-	import { messages, activeConversation, activeMessages } from '$lib/stores/messages';
+	import { messages, conversations, activeConversation, activeMessages } from '$lib/stores/messages';
+	import { toasts } from '$lib/stores/toasts';
 	
 	let messageInput = '';
 	let isCreatingConversation = false;
 	let newConversationParticipant = '';
 	let showNewConversation = false;
-	
-	// Get all conversations as an array
-	$: conversationsArray = Array.from($messages.conversations.values());
+	let isSendingMessage = false;
 	
 	onMount(() => {
 		// Conversations are loaded by the layout when vault is unlocked
@@ -22,13 +21,21 @@
 	});
 	
 	async function handleSendMessage() {
-		if (!messageInput.trim() || !$activeConversation) return;
+		if (!messageInput.trim() || !$activeConversation || isSendingMessage) return;
+		
+		isSendingMessage = true;
+		const message = messageInput.trim();
+		messageInput = ''; // Clear input immediately for better UX
 		
 		try {
-			await messages.sendMessage(messageInput.trim());
-			messageInput = '';
+			await messages.sendMessage(message);
 		} catch (error) {
 			console.error('Failed to send message:', error);
+			// Restore message on error
+			messageInput = message;
+			toasts.error('Failed to send message. Please try again.');
+		} finally {
+			isSendingMessage = false;
 		}
 	}
 	
@@ -41,14 +48,16 @@
 			// In a real app, this would be an actual user ID
 			// For demo, we'll create a mock participant
 			const participantId = `user-${newConversationParticipant.toLowerCase().replace(/\s+/g, '-')}`;
-			const conversation = await messages.createConversation([participantId]);
-			messages.setActiveConversation(conversation.id);
+			const conversationId = await messages.createConversation([participantId]);
+			messages.setActiveConversation(conversationId);
 			
 			// Reset form
 			newConversationParticipant = '';
 			showNewConversation = false;
+			toasts.success('Conversation created successfully!');
 		} catch (error) {
 			console.error('Failed to create conversation:', error);
+			toasts.error('Failed to create conversation. Please try again.');
 		} finally {
 			isCreatingConversation = false;
 		}
@@ -114,8 +123,8 @@
 		}
 		
 		const lastMessage = conversation.messages[conversation.messages.length - 1];
-		const isSent = lastMessage.sender === $auth.currentIdentity?.id || 
-		              lastMessage.sender === 'test-identity-123';
+		const isSent = lastMessage.senderId === $auth.currentIdentity?.id || 
+		              lastMessage.senderId === 'test-identity-123';
 		
 		return (isSent ? 'You: ' : '') + lastMessage.content;
 	}
@@ -148,13 +157,18 @@
 		{/if}
 		
 		<div class="conversations">
-			{#if conversationsArray.length === 0}
+			{#if $messages.isLoading}
+				<div class="empty-state">
+					<div class="spinner"></div>
+					<p>Loading conversations...</p>
+				</div>
+			{:else if $conversations.length === 0}
 				<div class="empty-state">
 					<p>No conversations yet</p>
 					<button on:click={toggleNewConversation}>Start a conversation</button>
 				</div>
 			{:else}
-				{#each conversationsArray as conversation}
+				{#each $conversations as conversation}
 					<button
 						class="conversation-item"
 						class:active={$activeConversation?.id === conversation.id}
@@ -196,7 +210,7 @@
 					</div>
 				{:else}
 					{#each $activeMessages as message}
-						<div class="message" class:sent={message.sender === $auth.currentIdentity?.id || message.sender === 'test-identity-123'}>
+						<div class="message" class:sent={message.senderId === $auth.currentIdentity?.id || message.senderId === 'test-identity-123'}>
 							<div class="message-bubble">
 								{message.content}
 							</div>
@@ -213,9 +227,10 @@
 					type="text"
 					bind:value={messageInput}
 					placeholder="Type a secure message..."
+					disabled={isSendingMessage}
 				/>
-				<button type="submit" disabled={!messageInput.trim()}>
-					Send
+				<button type="submit" disabled={!messageInput.trim() || isSendingMessage}>
+					{isSendingMessage ? 'Sending...' : 'Send'}
 				</button>
 			</form>
 		{:else}
@@ -574,6 +589,20 @@
 	.no-conversation h2 {
 		margin: 0 0 0.5rem;
 		color: #888;
+	}
+	
+	.spinner {
+		width: 32px;
+		height: 32px;
+		margin: 0 auto 1rem;
+		border: 3px solid rgba(255, 255, 255, 0.1);
+		border-top-color: #3B82F6;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+	}
+	
+	@keyframes spin {
+		to { transform: rotate(360deg); }
 	}
 	
 	@media (max-width: 768px) {

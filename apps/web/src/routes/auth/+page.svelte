@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/stores/auth';
 	import { PassphraseInput } from '$lib/components';
+	import { toasts } from '$lib/stores/toasts';
 	import { onMount } from 'svelte';
 	
 	let displayName = '';
@@ -40,10 +41,12 @@
 		
 		try {
 			await auth.createIdentity(displayName.trim());
+			toasts.success('Identity created successfully!');
 			step = 'passphrase';
 			error = '';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to create identity';
+			toasts.error(error);
 		} finally {
 			isCreating = false;
 		}
@@ -70,9 +73,11 @@
 		
 		try {
 			await auth.createVaultWithPassphrase(passphrase);
+			toasts.success('Vault created successfully! Redirecting...');
 			// Navigation handled by subscription
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to create vault';
+			toasts.error(error);
 		} finally {
 			isCreating = false;
 		}

@@ -2,23 +2,37 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/stores/auth';
+	import { initializeCore } from '$lib/stores/core';
 	
 	let ready = false;
 	
 	onMount(async () => {
-		// Initialize auth
-		await auth.initialize();
-		
-		// Check if already authenticated
-		const unsubscribe = auth.subscribe(state => {
-			if (state.isAuthenticated) {
-				goto('/app');
+		try {
+			// Initialize core first
+			await initializeCore();
+			
+			// Initialize auth
+			await auth.initialize();
+			
+			// Load dev tools in development
+			if (import.meta.env.DEV) {
+				import('$lib/dev-tools');
 			}
-		});
-		
-		ready = true;
-		
-		return unsubscribe;
+			
+			// Check if already authenticated
+			const unsubscribe = auth.subscribe(state => {
+				if (state.isAuthenticated) {
+					goto('/app');
+				}
+			});
+			
+			ready = true;
+			
+			return unsubscribe;
+		} catch (error) {
+			console.error('Failed to initialize:', error);
+			ready = true; // Show UI even if there's an error
+		}
 	});
 	
 	function getStarted() {

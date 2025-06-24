@@ -1,285 +1,361 @@
 # 🔐 Volli Security Guide
 
-## Overview
+## Executive Summary
 
-Volli implements defense-in-depth security with post-quantum cryptography, zero-trust architecture, and local-first design. This guide covers our security model, threat analysis, and best practices.
+Volli is designed as a privacy-first messaging platform with a goal of post-quantum security and local-first operation. This document outlines our security architecture, current implementation status, and roadmap to achieving our security goals.
+
+## Table of Contents
+1. [Security Status](#security-status)
+2. [Security Principles](#security-principles)
+3. [Current Implementation](#current-implementation)
+4. [Target Security Architecture](#target-security-architecture)
+5. [Threat Model](#threat-model)
+6. [Cryptographic Standards](#cryptographic-standards)
+7. [Security Best Practices](#security-best-practices)
+8. [Vulnerability Disclosure](#vulnerability-disclosure)
+9. [Security Roadmap](#security-roadmap)
+
+---
+
+## Security Status
+
+### ⚠️ Development Preview Warning
+This is an alpha release intended for development and testing only. Do not use for sensitive communications.
+
+### Current Security Implementation
+| Component | Status | Implementation |
+|-----------|--------|----------------|
+| **Classical Crypto** | ✅ Implemented | X25519, Ed25519, XChaCha20-Poly1305 |
+| **Post-Quantum Crypto** | ❌ Placeholder | TODO comments in code |
+| **Storage Encryption** | ⚠️ Partial | Package exists, not integrated |
+| **E2E Messaging** | ❌ Mock Only | No network layer |
+| **Key Management** | ⚠️ Basic | In-memory only |
+| **Secure Persistence** | ❌ Missing | Data lost on refresh |
+
+---
 
 ## Security Principles
 
-### 1. Zero Trust Architecture
-- **No Plaintext on Servers**: All encryption/decryption happens client-side
-- **No Key Material on Servers**: Private keys never leave the device
-- **Metadata Minimization**: Servers only see encrypted blobs and content hashes
+### Core Security Tenets
 
-### 2. Post-Quantum Cryptography
-- **Kyber-1024**: NIST-selected KEM for key encapsulation
-- **Dilithium-3**: NIST-selected signature algorithm
-- **Hybrid Mode**: Combined with X25519/Ed25519 until 2027
+1. **Zero Trust Architecture**
+   - No plaintext data on servers
+   - Client-side encryption/decryption only
+   - Minimal metadata exposure
 
-### 3. Local-First Security
-- **Device as Trust Anchor**: Each device generates its own keys
-- **Encrypted at Rest**: SQLite database encrypted with XChaCha20-Poly1305
-- **Secure Key Storage**: Platform-specific secure enclaves when available
+2. **Defense in Depth**
+   - Multiple encryption layers
+   - Fail-secure defaults
+   - Principle of least privilege
 
-## Cryptographic Architecture
+3. **Privacy by Design**
+   - Local-first architecture
+   - No telemetry without consent
+   - Minimal data collection
 
-### Key Hierarchy
+4. **Transparency**
+   - Open source codebase
+   - Documented security architecture
+   - Regular security updates
 
+---
+
+## Current Implementation
+
+### What's Actually Secure Now
+
+#### 1. Classical Cryptography (libsodium.js)
+```typescript
+// Currently implemented in packages
+- Key Exchange: X25519
+- Signatures: Ed25519  
+- Encryption: XChaCha20-Poly1305
+- KDF: Argon2id
+- Random: crypto.getRandomValues()
 ```
-Root Identity Key (Dilithium-3 + Ed25519)
-    │
-    ├── Device Keys (per device)
-    │   ├── Encryption Key (Kyber-1024 + X25519)
-    │   └── Signing Key (Dilithium-3 + Ed25519)
-    │
-    ├── Session Keys (ephemeral)
-    │   ├── Message Encryption (XChaCha20-Poly1305)
-    │   └── File Encryption (XChaCha20-Poly1305)
-    │
-    └── Backup Key (Argon2id derived)
-        └── Recovery Encryption (XChaCha20-Poly1305)
+
+#### 2. WASM Plugin Sandbox
+```typescript
+// Implemented security features
+- Memory isolation
+- CPU time limits
+- Capability-based permissions
+- Resource quotas
 ```
 
-### Encryption Layers
+### What's NOT Secure Yet
 
-1. **Message Layer**: End-to-end encryption between contacts
-2. **Storage Layer**: Local database encryption
-3. **Transport Layer**: TLS 1.3 for network communication
-4. **Backup Layer**: Additional encryption for cloud backups
+#### 1. No Persistent Encryption
+- Web app stores data in memory only
+- No IndexedDB encryption implemented
+- Vault-core package not integrated
+
+#### 2. No Real Network Security
+- Messages don't leave the browser
+- No P2P implementation
+- No transport encryption
+
+#### 3. Post-Quantum Crypto Missing
+```typescript
+// Current placeholder code:
+// TODO: Replace with actual Kyber-1024 key generation
+const kex_pk = new Uint8Array(1568);
+const kex_sk = new Uint8Array(3168);
+crypto.getRandomValues(kex_pk);
+crypto.getRandomValues(kex_sk);
+```
+
+---
+
+## Target Security Architecture
+
+### Complete Security Stack (Planned)
+
+```mermaid
+graph TB
+    subgraph "Application Layer"
+        APP[Application]
+        CSP[Content Security Policy]
+        SRI[Subresource Integrity]
+    end
+    
+    subgraph "Cryptographic Layer"
+        PQ[Post-Quantum Crypto<br/>Kyber + Dilithium]
+        CLASSICAL[Classical Crypto<br/>X25519 + Ed25519]
+        HYBRID[Hybrid Mode]
+    end
+    
+    subgraph "Storage Layer"
+        VAULT[Encrypted Vault]
+        IDB[IndexedDB Encryption]
+        KEY[Key Storage]
+    end
+    
+    subgraph "Network Layer"
+        E2E[E2E Encryption]
+        TLS[TLS 1.3]
+        ONION[Onion Routing]
+    end
+    
+    APP --> PQ
+    APP --> CLASSICAL
+    PQ --> HYBRID
+    CLASSICAL --> HYBRID
+    HYBRID --> VAULT
+    VAULT --> IDB
+    HYBRID --> E2E
+    E2E --> TLS
+    TLS --> ONION
+```
+
+### Cryptographic Protocol (Target)
+
+#### Key Hierarchy
+```
+Master Identity (Hardware-backed when available)
+├── Device Identity (PQ + Classical)
+│   ├── Kyber-1024 (Key Exchange)
+│   ├── Dilithium-3 (Signatures)
+│   ├── X25519 (Fallback KEX)
+│   └── Ed25519 (Fallback Sig)
+├── Session Keys (Ephemeral)
+│   ├── Message Keys (per conversation)
+│   └── File Keys (per file)
+└── Recovery Key (User passphrase)
+    └── Argon2id derived
+```
+
+#### Message Encryption Flow
+```
+1. Generate ephemeral Kyber-1024 keypair
+2. Encapsulate shared secret with recipient's public key
+3. Derive message key using HKDF
+4. Encrypt with XChaCha20-Poly1305
+5. Sign with Dilithium-3
+6. Add forward secrecy ratchet
+```
+
+---
 
 ## Threat Model
 
-### In Scope Threats
+### In-Scope Threats
 
-| Threat | Mitigation |
-|--------|------------|
-| Server compromise | Zero-trust design, E2E encryption |
-| Network eavesdropping | E2E encryption, metadata protection |
-| Device theft | Biometric/PIN lock, encrypted storage |
-| Quantum computer attacks | Post-quantum algorithms |
-| Malicious plugins | Capability-based permissions, WASM sandbox |
-| Key compromise | Forward secrecy, key rotation |
-| Denial of service | Local-first operation, P2P fallback |
+| Threat | Current Status | Target Mitigation |
+|--------|----------------|-------------------|
+| **Network Eavesdropping** | ❌ No protection | E2E encryption |
+| **MITM Attacks** | ❌ No protection | Public key verification |
+| **Server Compromise** | ✅ N/A (no server) | Zero-trust design |
+| **Device Theft** | ❌ No protection | Encrypted storage |
+| **Quantum Attacks** | ❌ Vulnerable | PQ algorithms |
+| **Metadata Analysis** | ⚠️ Partial | Onion routing |
+| **Malicious Plugins** | ✅ Sandboxed | WASM isolation |
 
-### Out of Scope
+### Out-of-Scope Threats
 
-- Physical access to unlocked device
-- Compromised device OS
-- Side-channel attacks on device
-- Nation-state targeted attacks
+1. **Compromised Endpoint**: Malware with system access
+2. **Physical Attacks**: Hardware keyloggers, cameras
+3. **Supply Chain**: Compromised dependencies
+4. **Legal Compulsion**: Lawful access requests
+5. **Social Engineering**: User deception
 
-## Security Features
+---
 
-### Authentication
+## Cryptographic Standards
 
-#### Biometric Authentication
-- Touch ID / Face ID on iOS
-- Fingerprint / Face unlock on Android
-- Windows Hello on desktop
-- Fallback to PIN/passphrase
+### Algorithms & Parameters
 
-#### Multi-Device Pairing
-```
-1. Existing device generates pairing code (QR + 6-digit PIN)
-2. New device scans QR code
-3. User confirms PIN on both devices
-4. Secure key exchange via Kyber-1024
-5. Trust relationship established
-```
+#### Current Implementation
+| Purpose | Algorithm | Parameters | Library |
+|---------|-----------|------------|---------|
+| KEX | X25519 | RFC 7748 | libsodium.js |
+| Sign | Ed25519 | RFC 8032 | libsodium.js |
+| Encrypt | XChaCha20-Poly1305 | RFC 8439 ext | libsodium.js |
+| KDF | Argon2id | N=65536, r=8, p=1 | libsodium.js |
+| Random | CSPRNG | crypto.getRandomValues | Web Crypto |
 
-### Message Security
+#### Target Implementation (Research Phase)
+| Purpose | Algorithm | NIST Level | Library TBD |
+|---------|-----------|------------|-------------|
+| KEX | Kyber-1024 | Level 5 | Research pending |
+| Sign | Dilithium-3 | Level 3 | Research pending |
+| Hybrid | PQ + Classical | N/A | Custom |
 
-#### Encryption Protocol
-```
-1. Generate ephemeral session key via Kyber-1024 KEM
-2. Encrypt message with XChaCha20-Poly1305
-3. Sign ciphertext with Dilithium-3
-4. Add forward secrecy via key rotation
-```
+### Key Sizes & Lifetimes
 
-#### Metadata Protection
-- Message timestamps obfuscated
-- Sender/recipient IDs encrypted
-- Message size padded to fixed buckets
-- Traffic analysis resistance
-
-### File Security
-
-#### File Encryption Protocol
-```
-1. Validate file size (< 10MB limit)
-2. Generate random file encryption key (256-bit)
-3. Encrypt file content with XChaCha20-Poly1305
-4. Calculate SHA-256 checksum of encrypted content
-5. Encrypt file metadata (name, type, tags)
-6. Store encrypted blob in vault
+```yaml
+keys:
+  identity:
+    classical_size: 32 bytes
+    pq_size: 1568 bytes (public)
+    lifetime: 1 year
+    
+  session:
+    size: 32 bytes
+    lifetime: 1 hour
+    rotation: automatic
+    
+  file:
+    size: 32 bytes
+    lifetime: until deleted
 ```
 
-#### File Sharing Security
-```
-1. File owner generates encrypted file
-2. For each recipient:
-   a. Encrypt file key with recipient's public key (Kyber-1024)
-   b. Store encrypted key mapping
-3. Recipients decrypt file key with private key
-4. File content remains encrypted at rest
-```
-
-#### Security Features
-- **Size Limits**: 10MB per file to prevent DoS
-- **Type Validation**: MIME type verification
-- **Checksum Verification**: Integrity checking on decrypt
-- **Access Control**: Per-contact sharing permissions
-- **Secure Deletion**: Cryptographic erasure of file keys
-- **Thumbnail Generation**: Client-side only for images
-
-### Plugin Security
-
-#### Capability System
-```json
-{
-  "plugin": "summarizer",
-  "capabilities": {
-    "vault.read": ["messages"],
-    "vault.write": ["summaries"],
-    "network": false,
-    "compute.memory": "100MB",
-    "compute.timeout": "30s"
-  }
-}
-```
-
-#### Enforcement
-- Compile-time capability verification
-- Runtime permission checks
-- Resource quotas
-- Audit logging
-
-### Backup Security
-
-#### Encryption
-```
-1. Generate backup key via Argon2id(passphrase, salt, N=2^17, r=8, p=1)
-2. Encrypt vault with XChaCha20-Poly1305
-3. Create recovery bundle with versioning
-4. Optional: Split key with Shamir's Secret Sharing
-```
-
-#### Recovery
-- Passphrase required
-- Optional hardware token support
-- Social recovery (future feature)
+---
 
 ## Security Best Practices
 
-### For Users
-
-1. **Strong Passphrase**
-   - Use 6+ word passphrase
-   - Enable biometric authentication
-   - Store recovery phrase securely
-
-2. **Device Security**
-   - Keep OS updated
-   - Use device lock screen
-   - Enable remote wipe
-
-3. **Contact Verification**
-   - Verify fingerprints on first contact
-   - Use out-of-band verification for high-value contacts
-   - Monitor for key changes
-
-4. **Plugin Safety**
-   - Only install plugins from trusted sources
-   - Review requested permissions
-   - Monitor plugin audit logs
-
 ### For Developers
 
-1. **Secure Coding**
-   - Never log sensitive data
-   - Use provided crypto APIs
-   - Validate all inputs
-   - Handle errors gracefully
+#### Secure Coding Standards
+```typescript
+// ✅ DO: Use constant-time operations
+import { timingSafeEqual } from 'crypto';
 
-2. **Key Management**
-   - Use secure random for key generation
-   - Implement proper key rotation
-   - Zero memory after use
-   - Never hardcode secrets
+// ❌ DON'T: Use regular comparison for secrets
+if (password === storedPassword) // VULNERABLE
 
-3. **Testing**
-   - Run security test suite
-   - Perform mutation testing
-   - Use static analysis tools
-   - Regular dependency updates
+// ✅ DO: Clear sensitive memory
+sodium.memzero(privateKey);
 
-## Incident Response
+// ❌ DON'T: Leave keys in memory
+let privateKey = generateKey(); // RISKY
 
-### Vulnerability Disclosure
-- Email: security@volli.chat
-- PGP Key: [0xDEADBEEF](./security-key.asc)
-- Response time: 24-48 hours
+// ✅ DO: Validate all inputs
+const validated = schema.parse(userInput);
 
-### Security Updates
-- Automatic security updates enabled by default
-- Critical updates forced after 7 days
-- Update changelog includes security fixes
-- CVE assignment for public vulnerabilities
+// ❌ DON'T: Trust user input
+eval(userInput); // NEVER
+```
 
-## Compliance
+#### Security Checklist
+- [ ] No sensitive data in logs
+- [ ] All inputs validated
+- [ ] Crypto operations in constant time
+- [ ] Memory cleared after use
+- [ ] Dependencies audited
+- [ ] Security headers configured
+- [ ] CSP policy strict
+- [ ] No eval() or innerHTML
 
-### Standards
-- NIST Post-Quantum Cryptography
-- OWASP Mobile Top 10
-- WCAG 2.2 AA Accessibility
-- GDPR Privacy by Design
+### For Users
 
-### Audits
-- Quarterly dependency scanning
-- Annual security audit
-- Continuous fuzzing
-- Bug bounty program (planned)
+#### Current Security Limitations
+1. **No persistence** - Data lost on refresh
+2. **No real encryption** - Only UI mockups
+3. **No network security** - Local only
+4. **Not audited** - Alpha software
+
+#### Future Security Features
+1. Strong passphrase (12+ chars, 128+ bits entropy)
+2. Biometric authentication option
+3. Hardware key support (WebAuthn)
+4. Secure backups with recovery codes
+
+---
+
+## Vulnerability Disclosure
+
+### ⚠️ Not Accepting Reports Yet
+As this is early alpha software with known security limitations, we are not accepting vulnerability reports at this time.
+
+### Future Process (When Beta)
+1. Dedicated security contact
+2. 90-day disclosure timeline
+3. CVE assignment for valid issues
+4. Security advisory publication
+
+---
 
 ## Security Roadmap
 
-### Phase 1 (Current)
-- ✅ Post-quantum crypto
-- ✅ E2E encryption
-- ✅ Secure storage
-- ✅ Basic plugin security
+### Phase 1: Foundation (Current)
+- [x] Basic crypto primitives
+- [x] Plugin sandboxing
+- [ ] Persistent encrypted storage
+- [ ] Real message encryption
 
-### Phase 2 (Q2 2024)
-- [ ] Hardware security key support
-- [ ] Group messaging (MLS)
-- [ ] Advanced threat detection
-- [ ] Security audit
+### Phase 2: Core Security (Q1 2025)
+- [ ] Post-quantum algorithms
+- [ ] E2E messaging protocol
+- [ ] Key management system
+- [ ] Security audit preparation
 
-### Phase 3 (Q3 2024)
-- [ ] Zero-knowledge proofs
-- [ ] Decentralized identity
-- [ ] Homomorphic encryption for search
-- [ ] Bug bounty launch
+### Phase 3: Advanced Security (Q2 2025)
+- [ ] Hardware key support
+- [ ] Formal verification of crypto
+- [ ] External security audit
+- [ ] Bug bounty program
 
-## Appendix
+### Phase 4: Production Ready (Q3 2025)
+- [ ] All security features complete
+- [ ] Passed security audit
+- [ ] Incident response plan
+- [ ] Security maintenance process
 
-### Cryptographic Parameters
+---
 
-| Algorithm | Parameters | Security Level |
-|-----------|------------|----------------|
-| Kyber-1024 | n=1024, k=4, q=3329 | 256-bit classical |
-| Dilithium-3 | n=256, k=6, l=5 | 192-bit classical |
-| XChaCha20-Poly1305 | 256-bit key, 192-bit nonce | 256-bit |
-| Argon2id | N=2^17, r=8, p=1 | 128-bit |
-| X25519 | 256-bit keys | 128-bit |
+## Appendix: Security Resources
 
-### Security Checklist
+### Standards & References
+- [NIST Post-Quantum Cryptography](https://csrc.nist.gov/projects/post-quantum-cryptography)
+- [OWASP Application Security](https://owasp.org/www-project-application-security-verification-standard/)
+- [RFC 9180 - Hybrid Public Key Encryption](https://www.rfc-editor.org/rfc/rfc9180.html)
 
-- [ ] All dependencies updated
-- [ ] Security headers configured
-- [ ] CSP policy implemented
-- [ ] Rate limiting enabled
-- [ ] Audit logging active
-- [ ] Backup encryption verified
-- [ ] Key rotation scheduled
-- [ ] Security training completed
+### Security Tools
+```bash
+# Dependency scanning
+npm audit
+npx snyk test
+
+# Static analysis  
+npx eslint --ext .ts,.js,.svelte src/
+npx semgrep --config=auto
+
+# Dynamic analysis
+npx zap-cli quick-scan http://localhost:3000
+```
+
+---
+
+*Last Updated: December 2024*  
+*Version: 2.0 - Accurate Security Status*

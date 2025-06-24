@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { auth } from '$lib/stores/auth';
 	import { vault } from '$lib/stores/vault';
+	import { toasts } from '$lib/stores/toasts';
+	import { onMount } from 'svelte';
 	
 	let exportData = false;
 	let changePassphrase = false;
@@ -8,6 +10,9 @@
 	let confirmPassphrase = '';
 	let error = '';
 	let success = '';
+	let autoLockTimeout = $auth.autoLockTimeout;
+	let theme = 'dark';
+	let notifications = true;
 	
 	async function handleExportData() {
 		try {
@@ -24,10 +29,9 @@
 			a.click();
 			URL.revokeObjectURL(url);
 			
-			success = 'Data exported successfully';
-			setTimeout(() => success = '', 3000);
+			toasts.success('Data exported successfully');
 		} catch (err) {
-			error = 'Failed to export data';
+			toasts.error('Failed to export data');
 		}
 	}
 	
@@ -53,15 +57,45 @@
 			// Use auth store to change passphrase
 			await auth.changePassphrase(newPassphrase);
 			
-			success = 'Passphrase changed successfully';
+			toasts.success('Passphrase changed successfully');
 			changePassphrase = false;
 			newPassphrase = '';
 			confirmPassphrase = '';
-			setTimeout(() => success = '', 3000);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to change passphrase';
+			toasts.error(error);
 		}
 	}
+	
+	async function updateSettings() {
+		try {
+			const settings = await vault.getSettings();
+			await vault.updateSettings({
+				...settings,
+				theme,
+				notifications,
+				autoLockTimeout
+			});
+			
+			// Update auth store auto-lock timeout
+			auth.setAutoLockTimeout(autoLockTimeout);
+			
+			toasts.success('Settings saved');
+		} catch (err) {
+			toasts.error('Failed to save settings');
+		}
+	}
+	
+	onMount(async () => {
+		try {
+			const settings = await vault.getSettings();
+			theme = settings.theme || 'dark';
+			notifications = settings.notifications ?? true;
+			autoLockTimeout = settings.autoLockTimeout || $auth.autoLockTimeout;
+		} catch (err) {
+			console.error('Failed to load settings:', err);
+		}
+	});
 </script>
 
 <div class="settings">
@@ -114,6 +148,20 @@
 			
 			<div class="setting-item">
 				<div class="setting-info">
+					<h3>Auto-lock Timeout</h3>
+					<p>Automatically lock vault after inactivity</p>
+				</div>
+				<select bind:value={autoLockTimeout} on:change={updateSettings}>
+					<option value={5}>5 minutes</option>
+					<option value={15}>15 minutes</option>
+					<option value={30}>30 minutes</option>
+					<option value={60}>1 hour</option>
+					<option value={0}>Never</option>
+				</select>
+			</div>
+			
+			<div class="setting-item">
+				<div class="setting-info">
 					<h3>Two-Factor Authentication</h3>
 					<p>Add an extra layer of security to your account</p>
 				</div>
@@ -139,7 +187,12 @@
 					<h3>Clear Local Data</h3>
 					<p>Remove all data from this device (irreversible)</p>
 				</div>
-				<button class="danger" on:click={() => confirm('Are you sure?') && auth.logout()}>
+				<button class="danger" on:click={() => {
+					if (confirm('Are you sure? This will delete all your data from this device.')) {
+						auth.logout();
+						toasts.info('All data cleared from this device');
+					}
+				}}>
 					Clear Data
 				</button>
 			</div>
@@ -153,10 +206,10 @@
 					<h3>Theme</h3>
 					<p>Choose your preferred color scheme</p>
 				</div>
-				<select disabled>
-					<option>Dark (Default)</option>
-					<option>Light</option>
-					<option>Auto</option>
+				<select bind:value={theme} on:change={updateSettings}>
+					<option value="dark">Dark (Default)</option>
+					<option value="light">Light (Coming Soon)</option>
+					<option value="auto">Auto (Coming Soon)</option>
 				</select>
 			</div>
 		</section>

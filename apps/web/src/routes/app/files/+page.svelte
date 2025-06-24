@@ -3,6 +3,7 @@
 	import { files, filesList, uploadProgress, totalStorageUsed } from '$lib/stores/files';
 	import { contactsList } from '$lib/stores/contacts';
 	import type { FileMetadata } from '$lib/stores/files';
+	import { toasts } from '$lib/stores/toasts';
 	
 	let searchQuery = '';
 	let selectedFiles = new Set<string>();
@@ -54,9 +55,10 @@
 		try {
 			const tags = extractTagsFromFilename(file.name);
 			await files.uploadFile(file, tags);
+			toasts.success(`${file.name} uploaded successfully`);
 		} catch (error) {
 			console.error('Failed to upload file:', error);
-			alert(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			toasts.error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	}
 	
@@ -90,9 +92,10 @@
 			a.download = file.name;
 			a.click();
 			URL.revokeObjectURL(url);
+			toasts.success(`${file.name} downloaded successfully`);
 		} catch (error) {
 			console.error('Failed to download file:', error);
-			alert(`Failed to download ${file.name}`);
+			toasts.error(`Failed to download ${file.name}`);
 		}
 	}
 	
@@ -102,9 +105,10 @@
 				await files.deleteFile(file.id);
 				selectedFiles.delete(file.id);
 				selectedFiles = selectedFiles; // Trigger reactivity
+				toasts.success(`${file.name} deleted successfully`);
 			} catch (error) {
 				console.error('Failed to delete file:', error);
-				alert(`Failed to delete ${file.name}`);
+				toasts.error(`Failed to delete ${file.name}`);
 			}
 		}
 	}
@@ -117,11 +121,13 @@
 			
 			try {
 				await Promise.all(promises);
+				const count = selectedFiles.size;
 				selectedFiles.clear();
 				selectedFiles = selectedFiles; // Trigger reactivity
+				toasts.success(`${count} files deleted successfully`);
 			} catch (error) {
 				console.error('Failed to delete files:', error);
-				alert('Some files could not be deleted');
+				toasts.error('Some files could not be deleted');
 			}
 		}
 	}
@@ -137,12 +143,13 @@
 		
 		try {
 			await files.shareFile(fileToShare.id, Array.from(selectedContacts));
+			toasts.success(`${fileToShare.name} shared with ${selectedContacts.size} contact${selectedContacts.size > 1 ? 's' : ''}`);
 			showShareModal = false;
 			fileToShare = null;
 			selectedContacts.clear();
 		} catch (error) {
 			console.error('Failed to share file:', error);
-			alert('Failed to share file');
+			toasts.error('Failed to share file');
 		}
 	}
 	
@@ -281,6 +288,8 @@
 	<div 
 		class="files-content"
 		class:drag-over={dragOver}
+		role="region"
+		aria-label="File drop zone"
 		on:drop={handleDrop}
 		on:dragover={handleDragOver}
 		on:dragleave={handleDragLeave}
@@ -402,10 +411,22 @@
 
 <!-- Share Modal -->
 {#if showShareModal && fileToShare}
-	<div class="modal-overlay" on:click={() => showShareModal = false}>
-		<div class="modal" on:click|stopPropagation>
+	<div 
+		class="modal-overlay" 
+		role="dialog" 
+		aria-modal="true" 
+		aria-labelledby="modal-title"
+		on:click={() => showShareModal = false}
+		on:keydown={(e) => e.key === 'Escape' && (showShareModal = false)}
+	>
+		<div 
+			class="modal" 
+			role="document"
+			on:click|stopPropagation
+			on:keydown|stopPropagation
+		>
 			<div class="modal-header">
-				<h3>Share "{fileToShare.name}"</h3>
+				<h3 id="modal-title">Share "{fileToShare.name}"</h3>
 				<button class="close-button" on:click={() => showShareModal = false}>×</button>
 			</div>
 			

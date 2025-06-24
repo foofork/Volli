@@ -1,414 +1,658 @@
 # 🏗️ Volli System Architecture
 
-## Overview
+## Executive Summary
 
-Volli is a post-quantum secure, local-first, privacy-first messaging platform built on a zero-trust architecture. This document outlines the technical architecture, component interactions, and design decisions.
+Volli is a privacy-first messaging platform designed for post-quantum security and local-first operation. This document provides a comprehensive architectural overview, distinguishing between current implementation and planned features.
+
+## Table of Contents
+1. [Architecture Principles](#architecture-principles)
+2. [Current State Architecture](#current-state-architecture)
+3. [Target Architecture](#target-architecture)
+4. [Component Details](#component-details)
+5. [Data Flow](#data-flow)
+6. [Performance & Modularity Standards](#performance--modularity-standards)
+7. [Security Architecture](#security-architecture)
+8. [Technology Stack](#technology-stack)
+9. [Deployment Architecture](#deployment-architecture)
+10. [Architecture Decision Records](#architecture-decision-records)
+
+---
 
 ## Architecture Principles
 
-1. **Local-First**: All data operations work offline; network is only for sync
-2. **Zero-Trust**: Servers never see plaintext or key material
-3. **Post-Quantum Security**: Kyber-1024 (KEM) + Dilithium-3 (signatures) in hybrid mode
-4. **Extensible**: WASM plugins with capability-based security
-5. **Cross-Platform**: Single codebase for web, mobile, and desktop
+### Core Tenets
+1. **Local-First**: All operations work offline; network is only for sync
+2. **Zero-Trust**: No plaintext or key material on servers
+3. **Privacy by Design**: Minimal metadata, end-to-end encryption
+4. **Modularity**: Small, focused components with clear boundaries
+5. **Performance**: Sub-100ms operations, <500 lines per file
 
-## High-Level Architecture
+### Design Principles
+- **Progressive Enhancement**: Basic features work everywhere
+- **Fail Secure**: Security failures result in denial, not exposure
+- **Explicit Over Implicit**: Clear data flow and dependencies
+- **Testability**: 95%+ test coverage requirement
+- **Documentation**: Code is self-documenting with types
 
+---
+
+## Current State Architecture
+
+### What's Actually Built
+```mermaid
+graph TB
+    subgraph "Web Application (In-Memory Only)"
+        WEB[Web UI<br/>SvelteKit]
+        STORES[Svelte Stores<br/>In-Memory]
+    end
+    
+    subgraph "Core Packages (Built, Not Integrated)"
+        ID[identity-core<br/>Classical Crypto Only]
+        VAULT[vault-core<br/>SQL.js Storage]
+        SYNC[sync-ipfs<br/>IPFS Implementation]
+        PLUGIN[plugins<br/>WASM Runtime]
+    end
+    
+    subgraph "Placeholder/Mock"
+        PQ[Post-Quantum<br/>TODO Placeholders]
+        NET[Network Layer<br/>Mock Only]
+    end
+    
+    WEB --> STORES
+    
+    style PQ fill:#ffcccc
+    style NET fill:#ffcccc
+    style ID fill:#ccffcc
+    style VAULT fill:#ccffcc
+    style SYNC fill:#ccffcc
+    style PLUGIN fill:#ccffcc
+```
+
+### Current Limitations
+- **No Persistence**: Data lost on page refresh
+- **No Real Crypto**: Web app uses mock encryption
+- **No Networking**: Messages don't leave the browser
+- **No Mobile/Desktop**: Only web UI exists
+- **Package Isolation**: Core packages not connected to UI
+
+---
+
+## Target Architecture
+
+### Complete System Design
 ```mermaid
 graph TB
     subgraph "Client Applications"
-        WEB[Web App<br/>SvelteKit]
-        MOBILE[Mobile App<br/>Capacitor]
-        DESKTOP[Desktop App<br/>Tauri]
+        WEB[Web App<br/>SvelteKit + PWA]
+        MOBILE[Mobile Apps<br/>Capacitor]
+        DESKTOP[Desktop App<br/>Tauri/Electron]
     end
     
-    subgraph "Core Layer"
-        UI[UI Kit<br/>@volli/ui-kit]
-        MSG[Messaging<br/>@volli/messaging]
-        VAULT[Vault Core<br/>@volli/vault-core]
-        ID[Identity Core<br/>@volli/identity-core]
-        PLUGIN[Plugin Runtime<br/>@volli/plugins]
+    subgraph "Application Layer"
+        UI[UI Components<br/>Shared Library]
+        STATE[State Management<br/>Reactive Stores]
+        API[API Layer<br/>Service Interfaces]
     end
     
-    subgraph "Storage & Sync"
-        SQLITE[SQLite<br/>sql.js]
-        IDB[IndexedDB]
-        CRDT[Automerge 2<br/>CRDT Engine]
-        SYNC[IPFS Sync<br/>@volli/sync-ipfs]
+    subgraph "Core Services"
+        MSG[Messaging Service]
+        CONTACT[Contact Service]
+        FILE[File Service]
+        SYNC[Sync Service]
     end
     
     subgraph "Security Layer"
-        CRYPTO[Crypto Library<br/>liboqs-js + libsodium]
-        SEARCH[FlexSearch<br/>Encrypted Index]
+        ID[Identity Core<br/>PQ + Classical]
+        CRYPTO[Crypto Service<br/>Encryption/Signing]
+        KM[Key Management<br/>Derivation/Storage]
     end
     
-    subgraph "External Services"
-        IPFS[IPFS Network]
-        RELAY[HTTPS Relay<br/>Fallback]
-        S3[S3 Backup<br/>Optional]
+    subgraph "Storage Layer"
+        VAULT[Vault Core<br/>Encrypted Storage]
+        IDB[IndexedDB<br/>Browser Storage]
+        SQL[SQLite<br/>Native Storage]
+        CRDT[CRDT Engine<br/>Conflict Resolution]
+    end
+    
+    subgraph "Network Layer"
+        P2P[P2P Service<br/>WebRTC/libp2p]
+        RELAY[Relay Service<br/>Fallback]
+        DISCOVERY[Discovery<br/>Peer Finding]
+    end
+    
+    subgraph "Extension Layer"
+        PLUGIN[Plugin Runtime<br/>WASM Sandbox]
+        PERMS[Permissions<br/>Capability System]
     end
     
     WEB --> UI
     MOBILE --> UI
     DESKTOP --> UI
     
-    UI --> MSG
+    UI --> STATE
+    STATE --> API
+    API --> MSG
+    API --> CONTACT
+    API --> FILE
+    
+    MSG --> CRYPTO
+    MSG --> SYNC
+    CONTACT --> ID
+    FILE --> CRYPTO
+    
+    CRYPTO --> KM
+    ID --> KM
+    
     MSG --> VAULT
-    MSG --> ID
-    MSG --> PLUGIN
+    CONTACT --> VAULT
+    FILE --> VAULT
     
-    VAULT --> SQLITE
     VAULT --> IDB
+    VAULT --> SQL
     VAULT --> CRDT
-    VAULT --> SEARCH
     
-    ID --> CRYPTO
-    VAULT --> CRYPTO
-    
-    CRDT --> SYNC
-    SYNC --> IPFS
+    SYNC --> P2P
     SYNC --> RELAY
+    P2P --> DISCOVERY
     
-    VAULT --> S3
+    API --> PLUGIN
+    PLUGIN --> PERMS
 ```
+
+---
 
 ## Component Details
 
 ### 1. Identity Core (`@volli/identity-core`)
 
-Manages cryptographic identities and key lifecycle.
+**Current State**: Classical crypto only (X25519, Ed25519)  
+**Target State**: Post-quantum (Kyber-1024, Dilithium-3) with hybrid mode
 
-**Responsibilities:**
-- Post-quantum key generation (Kyber-1024 + Dilithium-3)
-- Hybrid mode with X25519 until 2027
-- Subkey derivation for sessions
-- QR code generation for pairing
-- Key revocation and rotation
+#### Responsibilities
+- Identity generation and management
+- Key derivation and rotation
+- Device pairing protocols
+- Signature generation/verification
 
-**Key APIs:**
+#### Key Interfaces
 ```typescript
 interface IdentityCore {
-  generateIdentity(): Promise<Identity>
-  deriveSessionKey(identity: Identity): SessionKey
-  generatePairingQR(identity: Identity): QRData
-  revokeKey(keyId: string): Promise<void>
+  // Identity Management
+  generateIdentity(params: IdentityParams): Promise<Identity>
+  importIdentity(data: IdentityData): Promise<Identity>
+  exportIdentity(id: string): Promise<IdentityData>
+  
+  // Key Operations
+  deriveSessionKey(identity: Identity, purpose: KeyPurpose): SessionKey
+  rotateKeys(identity: Identity): Promise<Identity>
+  
+  // Device Pairing
+  generatePairingCode(): PairingCode
+  completePairing(code: PairingCode, pin: string): Promise<Identity>
+}
+
+interface Identity {
+  id: string
+  publicKey: PublicKey
+  privateKey: PrivateKey
+  algorithm: 'classical' | 'pq' | 'hybrid'
+  created: number
+  rotationSchedule?: KeyRotation
 }
 ```
 
+#### Performance Requirements
+- Key generation: < 200ms (classical), < 500ms (PQ)
+- Signature operations: < 50ms
+- Memory usage: < 10MB per identity
+
 ### 2. Vault Core (`@volli/vault-core`)
 
-Encrypted local storage with CRDT synchronization.
+**Current State**: SQL.js implementation exists but not integrated  
+**Target State**: Multi-backend support with encryption
 
-**Responsibilities:**
-- Encrypted SQLite storage (XChaCha20-Poly1305)
-- Automerge adapter for conflict-free sync
-- Search index management
-- Backup/restore operations
-- Contact verification and management
-- Encrypted file storage (10MB limit per file)
+#### Responsibilities
+- Encrypted local storage
+- CRDT-based synchronization
+- Data migration and versioning
+- Query and indexing
 
-**Storage Schema:**
-```sql
--- Core tables
-CREATE TABLE messages (
-  id TEXT PRIMARY KEY,
-  thread_id TEXT,
-  sender_id TEXT,
-  content_encrypted BLOB,
-  timestamp INTEGER,
-  crdt_clock TEXT
-);
-
-CREATE TABLE contacts (
-  id TEXT PRIMARY KEY,
-  public_key BLOB,
-  display_name_encrypted BLOB,
-  trust_level INTEGER,
-  verified BOOLEAN DEFAULT FALSE,
-  created_at INTEGER,
-  last_seen INTEGER,
-  avatar_encrypted BLOB,
-  notes_encrypted BLOB
-);
-
-CREATE TABLE files (
-  id TEXT PRIMARY KEY,
-  name_encrypted BLOB,
-  size INTEGER,
-  type TEXT,
-  content_encrypted BLOB,
-  uploaded_at INTEGER,
-  checksum TEXT,
-  tags_encrypted BLOB,
-  shared_with TEXT -- JSON array of contact IDs
-);
-
-CREATE TABLE vault_metadata (
-  key TEXT PRIMARY KEY,
-  value BLOB
-);
-```
-
-### 3. Messaging (`@volli/messaging`)
-
-Message handling and cryptographic operations.
-
-**Responsibilities:**
-- Message schema definitions
-- Encryption/decryption helpers
-- Thread management
-- File sharing with encryption
-- Contact-based message routing
-- Offline message queue
-
-**Message Types:**
+#### Storage Architecture
 ```typescript
-type MessageSchema = 
-  | { type: 'chat.message', content: string, attachments?: FileRef[] }
-  | { type: 'file.share', file: FileRef, caption?: string, sharedWith: string[] }
-  | { type: 'thread.update', updates: ThreadUpdate[] }
-  | { type: 'contact.verify', contactId: string, verificationData: string }
-  | { type: 'file.request', fileId: string, requesterId: string }
+interface VaultCore {
+  // Storage Operations
+  initialize(config: VaultConfig): Promise<Vault>
+  store<T>(collection: string, item: T): Promise<string>
+  retrieve<T>(collection: string, id: string): Promise<T>
+  query<T>(collection: string, filter: Filter): Promise<T[]>
+  
+  // Sync Operations
+  getChanges(since: Timestamp): Promise<Change[]>
+  applyChanges(changes: Change[]): Promise<void>
+  resolveConflicts(strategy: ConflictStrategy): Promise<void>
+}
+
+interface VaultConfig {
+  backend: 'indexeddb' | 'sqlite' | 'memory'
+  encryption: EncryptionConfig
+  sync?: SyncConfig
+  migrations?: Migration[]
+}
 ```
 
-**File Sharing Flow:**
-1. File encrypted with random key
-2. Key encrypted for each recipient
-3. File metadata + encrypted keys stored
-4. Recipients decrypt with their private key
+#### Storage Schema
+```sql
+-- Core tables with encryption
+CREATE TABLE objects (
+  id TEXT PRIMARY KEY,
+  collection TEXT NOT NULL,
+  data_encrypted BLOB NOT NULL,
+  nonce BLOB NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  deleted_at INTEGER,
+  crdt_clock TEXT,
+  INDEX idx_collection (collection),
+  INDEX idx_updated (updated_at)
+);
 
-### 4. IPFS Sync (`@volli/sync-ipfs`)
+CREATE TABLE metadata (
+  key TEXT PRIMARY KEY,
+  value_encrypted BLOB NOT NULL,
+  nonce BLOB NOT NULL
+);
+```
 
-Peer-to-peer synchronization layer.
+### 3. Messaging Service
 
-**Responsibilities:**
-- IPFS node management
-- HTTPS relay fallback
-- Conflict resolution
-- Network state handling
+**Current State**: Mock implementation only  
+**Target State**: Full E2E encrypted messaging
 
-**Sync Protocol:**
-1. Generate content-addressed diff
-2. Publish to IPFS DHT
-3. Fallback to relay if P2P fails
-4. Apply received diffs via CRDT
+#### Architecture
+```typescript
+interface MessagingService {
+  // Message Operations
+  sendMessage(params: SendParams): Promise<Message>
+  receiveMessage(data: EncryptedData): Promise<Message>
+  
+  // Conversation Management
+  createConversation(contacts: Contact[]): Promise<Conversation>
+  loadConversation(id: string): Promise<Conversation>
+  
+  // Sync & Delivery
+  queueForDelivery(message: Message): Promise<void>
+  processDeliveryQueue(): Promise<DeliveryReport[]>
+}
 
-### 5. Plugin System (`@volli/plugins`)
+interface Message {
+  id: string
+  conversationId: string
+  content: string
+  attachments?: Attachment[]
+  timestamp: number
+  signature: Signature
+  deliveryStatus: DeliveryStatus
+}
+```
 
-WASM-based plugin runtime with capability security.
+### 4. Plugin System
 
-**Responsibilities:**
-- WASM module loading (Wasmer-JS)
-- Permission enforcement
-- Audit logging
-- Resource sandboxing
+**Current State**: WASM runtime implemented  
+**Target State**: Full ecosystem with marketplace
 
-**Plugin Manifest:**
-```json
-{
-  "name": "summarizer",
-  "version": "1.0.0",
-  "capabilities": {
-    "vault.read": ["messages"],
-    "vault.write": ["summaries"],
-    "network": false
+#### Security Model
+```typescript
+interface PluginRuntime {
+  // Lifecycle
+  loadPlugin(wasm: ArrayBuffer, manifest: Manifest): Promise<Plugin>
+  unloadPlugin(id: string): Promise<void>
+  
+  // Execution
+  executeFunction(pluginId: string, fn: string, args: any[]): Promise<any>
+  
+  // Permissions
+  checkPermission(pluginId: string, capability: Capability): boolean
+  grantPermission(pluginId: string, capability: Capability): void
+}
+
+interface Manifest {
+  name: string
+  version: string
+  capabilities: {
+    required: Capability[]
+    optional: Capability[]
+  }
+  resources: {
+    memory: number  // bytes
+    cpu: number     // milliseconds per call
+    storage: number // bytes
   }
 }
 ```
 
-## Web Application Architecture
+---
 
-The web application implements a reactive store-based architecture using Svelte.
+## Data Flow
 
-### Store Architecture
-
+### Message Send Flow
 ```mermaid
-graph LR
-    subgraph "UI Layer"
-        COMP[Svelte Components]
-    end
+sequenceDiagram
+    participant UI
+    participant Store
+    participant Crypto
+    participant Vault
+    participant Network
+    participant Recipient
     
-    subgraph "Store Layer"
-        AUTH[Auth Store]
-        VAULT[Vault Store]
-        MSG[Messages Store]
-        CONTACT[Contacts Store]
-        FILES[Files Store]
-    end
+    UI->>Store: sendMessage(content)
+    Store->>Crypto: encrypt(content, recipientKey)
+    Crypto-->>Store: encryptedData
+    Store->>Vault: store(message)
+    Vault-->>Store: messageId
+    Store->>Network: queue(encryptedData)
+    Store-->>UI: optimisticUpdate
     
-    subgraph "Core Services"
-        CRYPTO[Crypto Service]
-        DB[IndexedDB]
-    end
-    
-    COMP --> AUTH
-    COMP --> MSG
-    COMP --> CONTACT
-    COMP --> FILES
-    
-    AUTH --> VAULT
-    MSG --> VAULT
-    CONTACT --> VAULT
-    FILES --> VAULT
-    
-    VAULT --> CRYPTO
-    VAULT --> DB
+    Note over Network: When online
+    Network->>Recipient: deliver(encryptedData)
+    Recipient-->>Network: ack
+    Network-->>Store: deliveryConfirmation
+    Store-->>UI: updateStatus
 ```
 
-### Store Responsibilities
+### File Storage Flow
+```mermaid
+sequenceDiagram
+    participant UI
+    participant FileService
+    participant Crypto
+    participant Vault
+    participant ChunkStore
+    
+    UI->>FileService: uploadFile(file)
+    FileService->>FileService: validateSize(<10MB)
+    FileService->>FileService: chunkFile(1MB chunks)
+    
+    loop For each chunk
+        FileService->>Crypto: encryptChunk(data)
+        Crypto-->>FileService: encryptedChunk
+        FileService->>ChunkStore: store(chunk)
+    end
+    
+    FileService->>Vault: storeMetadata(fileInfo)
+    FileService-->>UI: uploadProgress
+    FileService-->>UI: fileId
+```
 
-1. **Auth Store**: Identity lifecycle, passphrase validation, auto-lock
-2. **Vault Store**: Encrypted persistence, data access control
-3. **Messages Store**: Conversation management, encryption/decryption
-4. **Contacts Store**: Contact verification, public key management
-5. **Files Store**: File encryption, sharing permissions, storage limits
+---
 
-### Data Flow Example - Sending a File
+## Performance & Modularity Standards
 
-1. User selects file in UI component
-2. Files store validates size (< 10MB)
-3. Generates random encryption key
-4. Encrypts file content
-5. Stores encrypted blob in vault
-6. Creates shareable reference
-7. Message store sends file reference
-8. Recipients decrypt with their keys
+### Code Organization
+
+#### File Size Limits
+- **Maximum file size**: 500 lines (enforced by linter)
+- **Ideal file size**: 100-300 lines
+- **Maximum function size**: 50 lines
+- **Maximum complexity**: Cyclomatic complexity < 10
+
+#### Module Structure
+```
+src/
+├── lib/
+│   ├── services/         # Business logic (100-300 lines each)
+│   ├── stores/           # State management (100-200 lines each)
+│   ├── components/       # UI components (50-150 lines each)
+│   ├── utils/            # Helpers (50-100 lines each)
+│   └── types/            # TypeScript types (interfaces only)
+├── routes/               # Route handlers (50-100 lines each)
+└── tests/                # Mirrors src structure
+```
+
+### Performance Budgets
+
+#### Client-Side Metrics
+| Metric | Target | Maximum |
+|--------|--------|---------|
+| Initial Load | < 100KB | 200KB |
+| Time to Interactive | < 2s | 3s |
+| First Contentful Paint | < 1s | 1.5s |
+| API Response Time | < 100ms | 200ms |
+| Memory Usage | < 50MB | 100MB |
+
+#### Operation Performance
+| Operation | Target | Maximum |
+|-----------|--------|---------|
+| Message Encrypt/Decrypt | < 50ms | 100ms |
+| File Chunk Encryption | < 100ms | 200ms |
+| Database Query | < 20ms | 50ms |
+| CRDT Merge | < 50ms | 100ms |
+| Plugin Execution | < 100ms | 500ms |
+
+### Code Quality Metrics
+
+#### Enforced by CI/CD
+```yaml
+quality_gates:
+  coverage:
+    statements: 95%
+    branches: 90%
+    functions: 95%
+    lines: 95%
+  
+  complexity:
+    max_cyclomatic: 10
+    max_cognitive: 15
+    max_file_lines: 500
+    max_function_lines: 50
+  
+  duplication:
+    max_duplicate_lines: 20
+    max_duplicate_blocks: 2
+  
+  dependencies:
+    max_bundle_size: 200KB
+    tree_shaking: required
+    security_audit: required
+```
+
+### Monitoring & Observability
+
+#### Performance Monitoring
+```typescript
+interface PerformanceMonitor {
+  // Timing
+  startTimer(operation: string): Timer
+  endTimer(timer: Timer): void
+  
+  // Metrics
+  recordMetric(name: string, value: number): void
+  recordError(error: Error, context: Context): void
+  
+  // Reporting
+  getMetrics(): Metrics
+  generateReport(): PerformanceReport
+}
+```
+
+---
 
 ## Security Architecture
 
-### Cryptographic Stack
+### Threat Model
 
+#### In-Scope Threats
+1. **Network Adversaries**: Eavesdropping, MITM attacks
+2. **Compromised Servers**: Zero-trust design
+3. **Device Theft**: Encrypted at rest
+4. **Quantum Computing**: Post-quantum algorithms
+5. **Malicious Plugins**: Sandboxed execution
+
+#### Out-of-Scope Threats
+1. **Compromised OS**: Kernel-level attacks
+2. **Hardware Attacks**: Side-channel, cold boot
+3. **Social Engineering**: User deception
+4. **Legal Compulsion**: Warrant canaries
+
+### Security Layers
+
+```mermaid
+graph TB
+    subgraph "Application Security"
+        CSP[Content Security Policy]
+        SRI[Subresource Integrity]
+        CORS[CORS Policy]
+    end
+    
+    subgraph "Data Security"
+        E2E[E2E Encryption]
+        REST[Encryption at Rest]
+        SIG[Digital Signatures]
+    end
+    
+    subgraph "Network Security"
+        TLS[TLS 1.3]
+        PINNING[Certificate Pinning]
+        ONION[Onion Routing]
+    end
+    
+    subgraph "Platform Security"
+        SANDBOX[Process Sandbox]
+        PERMS[Permission System]
+        AUDIT[Audit Logging]
+    end
 ```
-Application Layer
-    ↓
-Message Encryption (XChaCha20-Poly1305)
-    ↓
-Key Agreement (Kyber-1024 + X25519 hybrid)
-    ↓
-Digital Signatures (Dilithium-3 + Ed25519 hybrid)
-    ↓
-Key Derivation (Argon2id)
-    ↓
-Random Generation (libsodium CSPRNG)
-```
 
-### Trust Model
+---
 
-1. **Device Trust**: Multi-device pairing via QR + PIN
-2. **Contact Trust**: Fingerprint verification on first contact
-3. **Plugin Trust**: Capability-based permissions
-4. **Network Trust**: End-to-end encryption, metadata minimization
+## Technology Stack
 
-## Performance Architecture
+### Current Stack
 
-### Optimization Strategies
+| Layer | Technology | Status | Notes |
+|-------|------------|--------|-------|
+| Frontend | SvelteKit 2.0 | ✅ Active | Type-safe, performant |
+| State | Svelte Stores | ⚠️ In-memory | Needs persistence |
+| Crypto | libsodium.js | ✅ Active | Classical only |
+| Storage | In-memory | ❌ Temporary | No persistence |
+| Network | None | ❌ Missing | Mock only |
+| Testing | Vitest | ✅ Active | 98.9% coverage |
 
-1. **Local-First Performance**
-   - All operations < 50ms on mid-tier devices
-   - SQLite for ACID guarantees
-   - FlexSearch for instant search
+### Target Stack (Research Phase)
 
-2. **Efficient Sync**
-   - Binary CRDT format (Automerge 2)
-   - Delta compression
-   - Selective sync based on viewport
+| Layer | Options | Decision Criteria |
+|-------|---------|-------------------|
+| Storage | Dexie.js, LocalForage, PouchDB | Performance, size, encryption |
+| P2P | WebRTC, libp2p, Gun.js | NAT traversal, reliability |
+| CRDT | Yjs, Automerge | Performance, conflict resolution |
+| PQ Crypto | liboqs, pqc-js, kyber-crystals | WASM support, performance |
+| Desktop | Tauri, Electron | Security, bundle size |
+| Mobile | Capacitor, React Native | Code reuse, performance |
 
-3. **UI Responsiveness**
-   - Virtual scrolling for large lists
-   - Web Workers for crypto operations
-   - Progressive enhancement
+---
 
 ## Deployment Architecture
 
 ### Web Deployment
-```
-CloudFlare CDN
-    ↓
-Static SvelteKit Build
-    ↓
-Service Worker (offline support)
-    ↓
-IndexedDB + sql.js
-```
-
-### Mobile Deployment
-```
-App Store / Play Store
-    ↓
-Capacitor Shell
-    ↓
-WebView + Native Plugins
-    ↓
-Native SQLite
-```
-
-### Desktop Deployment
-```
-Direct Download / App Stores
-    ↓
-Tauri Shell
-    ↓
-WebView + Rust Backend
-    ↓
-Native SQLite
+```mermaid
+graph LR
+    subgraph "Client"
+        BROWSER[Browser]
+        SW[Service Worker]
+        IDB[IndexedDB]
+    end
+    
+    subgraph "CDN"
+        CF[Cloudflare]
+        ASSETS[Static Assets]
+    end
+    
+    subgraph "Backend (Future)"
+        RELAY[Relay Server]
+        STUN[STUN/TURN]
+    end
+    
+    BROWSER --> CF
+    CF --> ASSETS
+    SW --> IDB
+    BROWSER --> RELAY
+    BROWSER --> STUN
 ```
 
-## Development Architecture
+### Desktop/Mobile Deployment
+- **Desktop**: Direct download, auto-updater
+- **Mobile**: App stores with OTA updates
+- **Updates**: Delta updates for efficiency
 
-### Monorepo Structure
+---
+
+## Architecture Decision Records
+
+### ADR-001: Local-First Architecture
+**Status**: Accepted  
+**Context**: Users need privacy and offline functionality  
+**Decision**: All data stored locally, sync is optional  
+**Consequences**: Complex sync, better privacy
+
+### ADR-002: WASM Plugin System
+**Status**: Accepted  
+**Context**: Need extensibility without compromising security  
+**Decision**: WASM sandbox with capability model  
+**Consequences**: Performance overhead, strong security
+
+### ADR-003: Post-Quantum Crypto
+**Status**: Planned  
+**Context**: Quantum computers threaten current crypto  
+**Decision**: Hybrid classical + PQ approach  
+**Consequences**: Larger keys, slower operations
+
+### ADR-004: Browser Storage Strategy
+**Status**: Under Review  
+**Context**: Need persistent encrypted storage  
+**Decision**: TBD - Evaluating IndexedDB libraries  
+**Consequences**: TBD
+
+---
+
+## Appendix: Development Guidelines
+
+### Code Review Checklist
+- [ ] File size < 500 lines
+- [ ] Function complexity < 10
+- [ ] Test coverage > 95%
+- [ ] TypeScript strict mode
+- [ ] No any types
+- [ ] Performance budget met
+- [ ] Security review passed
+- [ ] Documentation updated
+
+### Performance Testing
+```bash
+# Run performance benchmarks
+npm run perf:benchmark
+
+# Profile bundle size
+npm run perf:bundle
+
+# Memory profiling
+npm run perf:memory
+
+# Load testing
+npm run perf:load
 ```
-volli/
-├── apps/
-│   ├── web/          # SvelteKit app
-│   ├── mobile/       # Capacitor config
-│   └── desktop/      # Tauri config
-├── packages/
-│   ├── identity-core/
-│   ├── vault-core/
-│   ├── messaging/
-│   ├── sync-ipfs/
-│   ├── plugins/
-│   └── ui-kit/
-├── plugins/          # Example plugins
-├── docs/
-│   └── adr/         # Architecture Decision Records
-└── tools/           # Build tools
+
+### Security Testing
+```bash
+# Dependency audit
+npm audit
+
+# OWASP scan
+npm run security:scan
+
+# Fuzzing
+npm run security:fuzz
 ```
 
-### Build Pipeline
-1. TypeScript compilation
-2. WASM plugin compilation
-3. Capability table generation
-4. Bundle optimization
-5. Platform-specific builds
+---
 
-## Scalability Considerations
-
-### Horizontal Scaling
-- Stateless relay servers
-- IPFS node clustering
-- CDN for static assets
-
-### Data Scaling
-- Pagination for message history
-- Selective sync windows
-- Archive old messages locally
-
-### Plugin Scaling
-- Lazy loading of plugins
-- Resource quotas per plugin
-- Background execution limits
-
-## Future Architecture Considerations
-
-### Phase 2 Features
-- Encrypted push notifications
-- Group messaging (MLS protocol)
-- Voice/video calls (WebRTC + PQ-KEM)
-- Federation protocol
-
-### Migration Path
-- Gradual PQ crypto adoption
-- Plugin API versioning
-- Storage format migrations
-- Network protocol upgrades
+*Last Updated: December 2024*  
+*Version: 2.0 - Complete Rewrite for Accuracy*

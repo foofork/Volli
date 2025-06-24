@@ -28,5 +28,9 @@
     "typescript": "^5.0.0",
     "vite": "^4.4.0",
     "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@volli/integration": "workspace:*",
+    "dexie": "^3.2.4"
   }
 }

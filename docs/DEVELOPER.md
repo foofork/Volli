@@ -351,6 +351,246 @@ npm run format:check
 npm run format
 ```
 
+## Code Organization & Modularity
+
+### File Size Limits
+
+To maintain a modular and performant codebase, we enforce strict file size limits:
+
+| File Type | Max Lines | Ideal Lines | Notes |
+|-----------|-----------|-------------|-------|
+| Components | 500 | 100-300 | Split large components |
+| Services | 500 | 200-400 | Use composition |
+| Stores | 300 | 100-200 | Keep state minimal |
+| Utils | 200 | 50-150 | Single responsibility |
+| Tests | 500 | 100-400 | Mirror source structure |
+
+### Module Structure
+
+```
+src/
+├── lib/
+│   ├── services/         # Business logic layer
+│   │   ├── crypto/       # Crypto operations (split by algorithm)
+│   │   ├── storage/      # Storage adapters
+│   │   └── network/      # Network protocols
+│   ├── stores/           # State management
+│   │   ├── auth.ts       # < 200 lines
+│   │   ├── vault.ts      # < 300 lines
+│   │   └── index.ts      # Barrel exports only
+│   ├── components/       # UI components
+│   │   ├── atoms/        # Basic components (< 100 lines)
+│   │   ├── molecules/    # Composite components (< 200 lines)
+│   │   └── organisms/    # Complex components (< 300 lines)
+│   └── utils/            # Pure functions only
+├── routes/               # Route handlers (< 100 lines)
+└── tests/                # Test files
+```
+
+### Enforcing Modularity
+
+Add to your `eslint.config.js`:
+```javascript
+{
+  rules: {
+    'max-lines': ['error', {
+      max: 500,
+      skipBlankLines: true,
+      skipComments: true
+    }],
+    'max-lines-per-function': ['error', {
+      max: 50,
+      skipBlankLines: true,
+      skipComments: true
+    }],
+    'complexity': ['error', 10],
+    'max-depth': ['error', 3],
+    'max-nested-callbacks': ['error', 3]
+  }
+}
+```
+
+## Performance Standards
+
+### Performance Budgets
+
+All operations must meet these performance targets:
+
+| Operation | Target | Maximum | Measurement |
+|-----------|--------|---------|-------------|
+| Page Load | < 2s | 3s | Lighthouse |
+| First Paint | < 1s | 1.5s | Web Vitals |
+| API Response | < 100ms | 200ms | Server timing |
+| Crypto Op | < 50ms | 100ms | Performance API |
+| DB Query | < 20ms | 50ms | Query profiler |
+| Bundle Size | < 100KB | 200KB | Webpack analyzer |
+
+### Performance Monitoring
+
+#### Client-Side Performance
+```typescript
+// Use the Performance Monitor utility
+import { perfMon } from '$lib/utils/performance';
+
+// Measure operations
+const timer = perfMon.startTimer('crypto.encrypt');
+const encrypted = await encrypt(data);
+perfMon.endTimer(timer);
+
+// Track metrics
+perfMon.recordMetric('bundle.size', bundleSize);
+perfMon.recordMetric('memory.heap', performance.memory.usedJSHeapSize);
+
+// Generate reports
+const report = perfMon.generateReport();
+console.table(report.operations);
+```
+
+#### Automated Performance Testing
+```bash
+# Run performance benchmarks
+npm run perf:benchmark
+
+# CI/CD integration
+npm run perf:ci -- --fail-on-regression
+```
+
+### Bundle Optimization
+
+#### Code Splitting Strategy
+```typescript
+// Route-based splitting
+const ContactsPage = lazy(() => import('./routes/contacts'));
+const FilesPage = lazy(() => import('./routes/files'));
+
+// Feature-based splitting
+const CryptoWorker = lazy(() => import('./workers/crypto'));
+const SyncEngine = lazy(() => import('./services/sync'));
+```
+
+#### Tree Shaking Checklist
+- [ ] Use ES6 imports/exports
+- [ ] Mark packages as `sideEffects: false`
+- [ ] Avoid namespace imports (`import * as`)
+- [ ] Use production builds of dependencies
+- [ ] Enable module concatenation
+
+### Memory Management
+
+#### Prevent Memory Leaks
+```typescript
+// ❌ Bad: Listener not cleaned up
+onMount(() => {
+  window.addEventListener('resize', handleResize);
+});
+
+// ✅ Good: Proper cleanup
+onMount(() => {
+  window.addEventListener('resize', handleResize);
+  return () => window.removeEventListener('resize', handleResize);
+});
+
+// ❌ Bad: Large object references
+let cache = new Map();
+function addToCache(key, value) {
+  cache.set(key, value); // Grows indefinitely
+}
+
+// ✅ Good: Bounded cache with WeakMap
+const cache = new WeakMap();
+const cacheSize = new Map();
+const MAX_CACHE = 100;
+
+function addToCache(key, value) {
+  if (cacheSize.size >= MAX_CACHE) {
+    const firstKey = cacheSize.keys().next().value;
+    cacheSize.delete(firstKey);
+    cache.delete(firstKey);
+  }
+  cache.set(key, value);
+  cacheSize.set(key, Date.now());
+}
+```
+
+#### Memory Profiling
+```bash
+# Profile memory usage
+npm run profile:memory
+
+# Analyze heap snapshots
+npm run profile:heap
+```
+
+## Security Best Practices
+
+### Input Validation
+
+Always validate and sanitize user input:
+
+```typescript
+// ❌ Bad: Direct use of user input
+const message = userInput;
+vault.store(message);
+
+// ✅ Good: Validate and sanitize
+import { z } from 'zod';
+
+const messageSchema = z.object({
+  content: z.string().max(10000).trim(),
+  attachments: z.array(z.string().url()).max(10).optional()
+});
+
+const validated = messageSchema.parse(userInput);
+vault.store(validated);
+```
+
+### Secure Coding Guidelines
+
+1. **Never log sensitive data**
+   ```typescript
+   // ❌ Bad
+   console.log('User password:', password);
+   
+   // ✅ Good
+   console.log('User authenticated:', !!password);
+   ```
+
+2. **Use crypto.getRandomValues() for randomness**
+   ```typescript
+   // ❌ Bad
+   const id = Math.random().toString(36);
+   
+   // ✅ Good
+   const array = new Uint8Array(16);
+   crypto.getRandomValues(array);
+   const id = Array.from(array, b => b.toString(16)).join('');
+   ```
+
+3. **Constant-time comparisons for secrets**
+   ```typescript
+   // ❌ Bad
+   if (token === storedToken) { }
+   
+   // ✅ Good
+   import { timingSafeEqual } from 'crypto';
+   if (timingSafeEqual(Buffer.from(token), Buffer.from(storedToken))) { }
+   ```
+
+### Dependency Security
+
+```bash
+# Regular security audits
+npm audit
+npm audit fix
+
+# Check for known vulnerabilities
+npx snyk test
+
+# Update dependencies safely
+npx npm-check-updates -u
+npm test
+```
+
 ## Building for Production
 
 ### Web Build

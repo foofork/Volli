@@ -25,7 +25,9 @@
     "turbo": "^1.10.0",
     "vitest": "^1.0.0",
     "@vitest/coverage-v8": "^1.0.0",
-    "jsdom": "^23.0.0"
+    "jsdom": "^23.0.0",
+    "dexie": "^3.2.4",
+    "fake-indexeddb": "^4.0.2"
   },
   "engines": {
     "node": ">=18.0.0",

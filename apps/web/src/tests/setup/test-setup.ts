@@ -1,15 +1,21 @@
+// Set up IndexedDB globals first
+import './indexeddb-setup';
+
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import { mockCrypto } from './crypto-mock';
-import { mockIndexedDB } from './db-mock';
+import { clearAllDatabases } from './db-mock';
+import { initCrypto } from '@volli/vault-core';
+import { initializeCore } from '$lib/stores/core';
+import { indexedDB } from './indexeddb-setup';
 
 // Setup global mocks
-beforeAll(() => {
+beforeAll(async () => {
+  // Initialize libsodium crypto
+  await initCrypto();
+  
   // Mock crypto API
   mockCrypto();
-  
-  // Mock IndexedDB
-  mockIndexedDB();
   
   // Polyfill File.arrayBuffer if not available
   if (!File.prototype.arrayBuffer) {
@@ -59,10 +65,20 @@ beforeAll(() => {
 });
 
 // Clean up after each test
-afterEach(() => {
+afterEach(async () => {
   vi.clearAllMocks();
   localStorage.clear();
   sessionStorage.clear();
+  
+  // Clear IndexedDB databases
+  if (global.indexedDB) {
+    const databases = await indexedDB.databases();
+    for (const db of databases) {
+      if (db.name) {
+        indexedDB.deleteDatabase(db.name);
+      }
+    }
+  }
 });
 
 // Suppress console errors in tests

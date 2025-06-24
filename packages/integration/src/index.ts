@@ -1,0 +1,164 @@
+import { initCrypto, encryptData, decryptData, deriveKeyFromPassword, generateSalt } from '@volli/vault-core';
+import { createIdentity } from '@volli/identity-core';
+import { MessageManager } from '@volli/messaging';
+import { VolliDB, Vault as VaultRecord } from './database';
+import { MessagingService } from './messaging';
+
+export * from './database';
+export * from './messaging';
+
+export class VolliCore {
+  private db: VolliDB;
+  private _messaging: MessagingService | null = null;
+  private currentVault: VaultRecord | null = null;
+  private vaultKey: Uint8Array | null = null;
+  
+  constructor() {
+    this.db = new VolliDB();
+  }
+  
+  async initialize() {
+    await this.db.open();
+    await initCrypto();
+    
+    // Check if already initialized
+    const initialized = await this.db.config.get('initialized');
+    if (!initialized) {
+      await this.db.config.add({ key: 'initialized', value: true });
+    }
+    
+    return !!initialized;
+  }
+  
+  async createVault(password: string) {
+    // Create identity
+    const result = await createIdentity();
+    
+    // Generate salt and derive key from password
+    const salt = generateSalt();
+    const vaultKey = deriveKeyFromPassword(password, salt);
+    
+    // Encrypt private key
+    const privateKeyData = new TextEncoder().encode(JSON.stringify(result.privateKey));
+    const { ciphertext, nonce } = encryptData(privateKeyData, vaultKey);
+    
+    // Store encrypted private key with salt and nonce
+    const encryptedPrivateKey = JSON.stringify({
+      ciphertext: Array.from(ciphertext),
+      nonce: Array.from(nonce),
+      salt: Array.from(salt)
+    });
+    
+    // Store vault record in database
+    const vaultRecord: VaultRecord = {
+      id: result.identity.id,
+      publicKey: JSON.stringify(result.identity.publicKey),
+      encryptedPrivateKey,
+      createdAt: Date.now()
+    };
+    
+    await this.db.vaults.add(vaultRecord);
+    
+    // Set as current vault
+    this.currentVault = vaultRecord;
+    this.vaultKey = vaultKey;
+    await this.db.config.put({ key: 'currentVaultId', value: result.identity.id });
+    
+    return result.identity.id;
+  }
+  
+  async unlockVault(password: string) {
+    // Get vault from DB
+    const vaults = await this.db.vaults.toArray();
+    if (vaults.length === 0) {
+      throw new Error('No vault found');
+    }
+    
+    const vault = vaults[0]; // For now, use first vault
+    
+    try {
+      // Parse encrypted data
+      const encryptedData = JSON.parse(vault.encryptedPrivateKey);
+      const ciphertext = new Uint8Array(encryptedData.ciphertext);
+      const nonce = new Uint8Array(encryptedData.nonce);
+      const salt = new Uint8Array(encryptedData.salt);
+      
+      // Derive key from password
+      const vaultKey = deriveKeyFromPassword(password, salt);
+      
+      // Try to decrypt to verify password
+      const decrypted = decryptData(ciphertext, nonce, vaultKey);
+      
+      // If successful, set as current vault
+      this.currentVault = vault;
+      this.vaultKey = vaultKey;
+      await this.db.config.put({ key: 'currentVaultId', value: vault.id });
+      
+      return vault;
+    } catch (error) {
+      throw new Error('Invalid password');
+    }
+  }
+  
+  async lockVault() {
+    this.currentVault = null;
+    this.vaultKey = null;
+    await this.db.config.delete('currentVaultId');
+  }
+  
+  get messaging(): MessagingService {
+    if (!this._messaging) {
+      this._messaging = new MessagingService(this.db, this);
+    }
+    return this._messaging;
+  }
+  
+  async getCurrentVault(): Promise<VaultRecord | null> {
+    if (this.currentVault) {
+      return this.currentVault;
+    }
+    
+    const currentVaultId = await this.db.config.get('currentVaultId');
+    if (currentVaultId?.value) {
+      this.currentVault = await this.db.vaults.get(currentVaultId.value) || null;
+      return this.currentVault;
+    }
+    
+    return null;
+  }
+  
+  // Crypto methods for messaging service
+  async encrypt(data: string): Promise<string> {
+    if (!this.vaultKey) {
+      throw new Error('Vault is locked');
+    }
+    
+    const dataBytes = new TextEncoder().encode(data);
+    const { ciphertext, nonce } = encryptData(dataBytes, this.vaultKey);
+    
+    return JSON.stringify({
+      ciphertext: Array.from(ciphertext),
+      nonce: Array.from(nonce)
+    });
+  }
+  
+  async decrypt(encryptedData: string): Promise<string> {
+    if (!this.vaultKey) {
+      throw new Error('Vault is locked');
+    }
+    
+    const { ciphertext, nonce } = JSON.parse(encryptedData);
+    const decrypted = decryptData(
+      new Uint8Array(ciphertext),
+      new Uint8Array(nonce),
+      this.vaultKey
+    );
+    
+    return new TextDecoder().decode(decrypted);
+  }
+  
+  // Expose database for development/debugging
+  get database(): VolliDB {
+    return this.db;
+  }
+}

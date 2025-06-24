@@ -11,9 +11,9 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@volli/vault-core": "^0.1.0",
-    "@volli/identity-core": "^0.1.0",
-    "@volli/messaging": "^0.1.0",
+    "@volli/vault-core": "workspace:*",
+    "@volli/identity-core": "workspace:*",
+    "@volli/messaging": "workspace:*",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

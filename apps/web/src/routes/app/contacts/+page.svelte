@@ -2,13 +2,26 @@
 	import { onMount } from 'svelte';
 	import { contacts, contactsList } from '$lib/stores/contacts';
 	import type { Contact } from '$lib/stores/contacts';
+	import { toasts } from '$lib/stores/toasts';
+	import { messages } from '$lib/stores/messages';
+	import { goto } from '$app/navigation';
 	
 	let searchQuery = '';
+	let debouncedSearchQuery = '';
 	let showAddForm = false;
 	let newContactName = '';
 	let newContactPublicKey = '';
 	let isAdding = false;
 	let error = '';
+	let searchTimeout: NodeJS.Timeout;
+	
+	// Debounce search for better performance
+	$: {
+		clearTimeout(searchTimeout);
+		searchTimeout = setTimeout(() => {
+			debouncedSearchQuery = searchQuery;
+		}, 150);
+	}
 	
 	onMount(() => {
 		// Contacts are loaded by the layout when vault is unlocked
@@ -27,25 +40,51 @@
 		error = '';
 	}
 	
+	function validatePublicKey(key: string): boolean {
+		// Basic validation - check if it looks like a valid key format
+		if (!key) return false;
+		
+		// Check if it's a hex string (64 characters for 32-byte key)
+		const hexPattern = /^[0-9a-fA-F]{64}$/;
+		if (hexPattern.test(key)) return true;
+		
+		// Check if it's base64 encoded (44 characters with padding)
+		const base64Pattern = /^[A-Za-z0-9+/]{43}=$/;
+		if (base64Pattern.test(key)) return true;
+		
+		// For demo purposes, accept mock keys
+		if (key.startsWith('pk_')) return true;
+		
+		return false;
+	}
+	
 	async function addContact() {
 		if (!newContactName.trim()) {
 			error = 'Contact name is required';
 			return;
 		}
 		
-		// For demo purposes, we'll generate a mock public key
-		const mockPublicKey = newContactPublicKey.trim() || 
-			`pk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		let publicKey = newContactPublicKey.trim();
+		
+		// If no public key provided, generate a mock one
+		if (!publicKey) {
+			publicKey = `pk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		} else if (!validatePublicKey(publicKey)) {
+			error = 'Invalid public key format. Expected 64-character hex string or 44-character base64 string.';
+			return;
+		}
 		
 		isAdding = true;
 		error = '';
 		
 		try {
-			await contacts.addContact(newContactName.trim(), mockPublicKey);
+			await contacts.addContact(newContactName.trim(), publicKey);
+			toasts.success(`Contact "${newContactName.trim()}" added successfully!`);
 			resetForm();
 			showAddForm = false;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to add contact';
+			toasts.error(error);
 		} finally {
 			isAdding = false;
 		}
@@ -55,8 +94,10 @@
 		if (confirm('Are you sure you want to delete this contact?')) {
 			try {
 				await contacts.deleteContact(id);
+				toasts.success('Contact deleted successfully');
 			} catch (err) {
 				console.error('Failed to delete contact:', err);
+				toasts.error('Failed to delete contact');
 			}
 		}
 	}
@@ -64,14 +105,33 @@
 	async function toggleVerified(contact: Contact) {
 		try {
 			await contacts.updateContact(contact.id, { verified: !contact.verified });
+			if (!contact.verified) {
+				toasts.success(`${contact.name} marked as verified`);
+			} else {
+				toasts.info(`${contact.name} verification removed`);
+			}
 		} catch (err) {
 			console.error('Failed to update contact:', err);
+			toasts.error('Failed to update contact');
+		}
+	}
+	
+	async function startConversation(contact: Contact) {
+		try {
+			// Create or get existing conversation with this contact
+			const conversationId = await messages.createConversation([contact.publicKey]);
+			messages.setActiveConversation(conversationId);
+			toasts.success(`Started conversation with ${contact.name}`);
+			goto('/app'); // Navigate to messages
+		} catch (err) {
+			console.error('Failed to start conversation:', err);
+			toasts.error('Failed to start conversation');
 		}
 	}
 	
 	$: filteredContacts = $contactsList.filter(contact => 
-		contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-		(contact.notes && contact.notes.toLowerCase().includes(searchQuery.toLowerCase()))
+		contact.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+		(contact.notes && contact.notes.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
 	);
 </script>
 
@@ -136,11 +196,11 @@
 				<p>Loading contacts...</p>
 			</div>
 		{:else if filteredContacts.length === 0}
-			{#if searchQuery}
+			{#if debouncedSearchQuery}
 				<div class="empty-state">
 					<div class="empty-icon">🔍</div>
 					<h2>No results found</h2>
-					<p>No contacts match your search for "{searchQuery}"</p>
+					<p>No contacts match your search for "{debouncedSearchQuery}"</p>
 				</div>
 			{:else}
 				<div class="empty-state">
@@ -168,6 +228,13 @@
 						{/if}
 					</div>
 					<div class="contact-actions">
+						<button 
+							class="icon-button message-button" 
+							title="Start conversation"
+							on:click={() => startConversation(contact)}
+						>
+							💬
+						</button>
 						<button 
 							class="icon-button verify-button" 
 							title={contact.verified ? 'Remove verification' : 'Mark as verified'}
@@ -477,6 +544,16 @@
 	.icon-button:hover {
 		background: rgba(255, 255, 255, 0.1);
 		color: #fff;
+	}
+	
+	.message-button {
+		background: rgba(59, 130, 246, 0.1);
+		color: #3B82F6;
+	}
+	
+	.message-button:hover {
+		background: rgba(59, 130, 246, 0.2);
+		color: #3B82F6;
 	}
 	
 	.verify-button {

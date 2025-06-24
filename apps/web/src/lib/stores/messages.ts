@@ -1,23 +1,9 @@
 import { writable, derived, get } from 'svelte/store';
 import { authStore } from './auth';
-import { vaultStore } from './vault';
+import { core } from './core';
+import type { Message } from '@volli/integration';
 
 // Local type definitions
-interface Message {
-	id: string;
-	conversationId: string;
-	content: string;
-	sender: string;
-	timestamp: number;
-	delivered: boolean;
-	read: boolean;
-	encrypted: boolean;
-	encryptedPayloads?: Array<{
-		recipientId: string;
-		encryptedContent: string;
-	}>;
-}
-
 interface Conversation {
 	id: string;
 	participants: string[];
@@ -28,14 +14,14 @@ interface Conversation {
 }
 
 interface MessagesState {
-	conversations: Conversation[];
+	conversations: Map<string, Message[]>;
 	activeConversation: string | null;
 	syncStatus: 'idle' | 'syncing' | 'synced' | 'error';
 	isLoading: boolean;
 	error: string | null;
 }
 
-// Mock network store (in real app, this would be a real implementation)
+// Mock network store (will be replaced with real P2P later)
 const networkStore = {
 	isOnline: false,
 	getSyncEndpoint: async () => ({
@@ -44,7 +30,7 @@ const networkStore = {
 	})
 };
 
-// Mock message queue (in real app, use IndexedDB)
+// Message queue for offline support
 const messageQueue = {
 	pending: [] as Message[],
 	enqueue(message: Message) {
@@ -53,21 +39,14 @@ const messageQueue = {
 	async getPending() {
 		return this.pending;
 	},
-	markDelivered(messageId: string) {
+	markDelivered(messageId: number) {
 		this.pending = this.pending.filter(m => m.id !== messageId);
-	}
-};
-
-// Mock contact store
-const contactStore = {
-	async getPublicKey(identityId: string): Promise<string> {
-		return `public-key-${identityId}`;
 	}
 };
 
 function createMessagesStore() {
 	const { subscribe, set, update } = writable<MessagesState>({
-		conversations: [],
+		conversations: new Map(),
 		activeConversation: null,
 		syncStatus: 'idle',
 		isLoading: false,
@@ -75,50 +54,34 @@ function createMessagesStore() {
 	});
 
 	async function loadConversations(): Promise<void> {
-		const vaultState = get(vaultStore);
-		if (!vaultState.isUnlocked) {
+		const authState = get(authStore);
+		if (!authState.vaultUnlocked) {
 			throw new Error('Vault must be unlocked');
 		}
 
 		update(state => ({ ...state, isLoading: true, error: null }));
 
 		try {
-			// Get all conversations from vault
-			const vaultData = await (vaultStore as any).getDecryptedVault();
-			const conversations: Conversation[] = [];
+			// Get all conversation IDs
+			const conversationIds = await core.messaging.getConversations();
+			const conversationsMap = new Map<string, Message[]>();
 
-			// Convert vault conversations to store format
-			for (const [convId, messages] of Object.entries(vaultData.conversations)) {
+			// Load messages for each conversation
+			for (const conversationId of conversationIds) {
+				const messages = await core.messaging.getMessages(conversationId);
 				if (messages.length > 0) {
-					const participants = Array.from(new Set(messages.map((m: Message) => m.sender)));
-					const conversation: Conversation = {
-						id: convId,
-						participants,
-						messages,
-						createdAt: messages[0].timestamp,
-						lastActivity: messages[messages.length - 1].timestamp,
-						unreadCount: 0
-					};
-					conversations.push(conversation);
+					conversationsMap.set(conversationId, messages);
 				}
 			}
 
-			// Sort by most recent activity (handle case where messages array is a different type)
-			conversations.sort((a, b) => {
-				const aTime = a.lastActivity || a.createdAt;
-				const bTime = b.lastActivity || b.createdAt;
-				return bTime - aTime;
-			});
-
 			update(state => ({
 				...state,
-				conversations,
+				conversations: conversationsMap,
 				isLoading: false
 			}));
 
 			// Trigger sync if online
-			if ((messagesStore as any).networkStore?.isOnline || networkStore.isOnline) {
-				// Don't await to avoid blocking
+			if (networkStore.isOnline) {
 				syncMessages().catch(console.error);
 			}
 		} catch (error) {
@@ -126,39 +89,30 @@ function createMessagesStore() {
 			update(state => ({
 				...state,
 				isLoading: false,
-				error: `Failed to load conversations: ${errorMessage}`
+				error: errorMessage
 			}));
 			throw error;
 		}
 	}
 
-	async function createConversation(participants: string[]): Promise<Conversation> {
+	async function createConversation(participants: string[]): Promise<string> {
 		if (participants.length === 0) {
 			throw new Error('Conversation must have participants');
 		}
 
-		const currentUser = get(authStore).currentIdentity?.id || 'test-identity-123';
-		const conversation: Conversation = {
-			id: `conv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-			participants: [currentUser, ...participants],
-			messages: [],
-			createdAt: Date.now(),
-			lastActivity: Date.now(),
-			unreadCount: 0
-		};
+		// Generate conversation ID based on participants
+		const currentUser = get(authStore).currentIdentity?.id || 'unknown';
+		const allParticipants = [currentUser, ...participants].sort();
+		const conversationId = `conv-${allParticipants.join('-')}`;
 
+		// Set as active conversation
 		update(state => ({
 			...state,
-			conversations: [conversation, ...state.conversations],
-			activeConversation: conversation.id
+			activeConversation: conversationId,
+			conversations: new Map(state.conversations).set(conversationId, [])
 		}));
 
-		// Save to vault
-		const vaultData = await (vaultStore as any).getDecryptedVault();
-		vaultData.conversations[conversation.id] = [];
-		await (vaultStore as any).saveVault(vaultData);
-
-		return conversation;
+		return conversationId;
 	}
 
 	async function sendMessage(content: string): Promise<void> {
@@ -168,121 +122,73 @@ function createMessagesStore() {
 			throw new Error('No active conversation');
 		}
 
-		const conversation = state.conversations.find(c => c.id === state.activeConversation);
-		if (!conversation) {
-			throw new Error('Conversation not found');
+		const currentVault = await core.getCurrentVault();
+		if (!currentVault) {
+			throw new Error('No vault available');
 		}
 
-		// Encrypt message for each participant
-		const encryptedPayloads: Array<{ recipientId: string; encryptedContent: string }> = [];
-		const currentUser = get(authStore).currentIdentity?.id || 'test-identity-123';
+		try {
+			// Send message through core
+			const message = await core.messaging.sendMessage(
+				state.activeConversation,
+				content,
+				currentVault
+			);
 
-		for (const participant of conversation.participants) {
-			if (participant !== currentUser) {
-				const publicKey = await ((messagesStore as any).contactStore || contactStore).getPublicKey(participant);
-				const encryptedContent = await ((messagesStore as any).encryptForRecipient || encryptForRecipient)(content, publicKey);
-				encryptedPayloads.push({
-					recipientId: participant,
-					encryptedContent
-				});
+			// Update local state
+			update(s => {
+				const messages = s.conversations.get(state.activeConversation) || [];
+				messages.push(message);
+				s.conversations.set(state.activeConversation, messages);
+				return { ...s, conversations: new Map(s.conversations) };
+			});
+
+			// Queue for network delivery if online
+			if (networkStore.isOnline) {
+				try {
+					await deliverMessage(message);
+				} catch (error) {
+					messageQueue.enqueue(message);
+				}
+			} else {
+				messageQueue.enqueue(message);
 			}
-		}
-
-		// Create message
-		const message: Message = {
-			id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-			conversationId: conversation.id,
-			sender: currentUser,
-			content,
-			encryptedPayloads,
-			timestamp: Date.now(),
-			delivered: false,
-			read: false,
-			encrypted: true
-		};
-
-		// Add to conversation
-		conversation.messages.push(message);
-		conversation.lastActivity = Date.now();
-
-		// Update state
-		update(s => ({ ...s, conversations: [...s.conversations] }));
-
-		// Save to vault
-		await vaultStore.sendMessage(conversation.id, content);
-
-		// Queue for delivery
-		const network = (messagesStore as any).networkStore || networkStore;
-		const queue = (messagesStore as any).messageQueue || messageQueue;
-		
-		if (network.isOnline) {
-			try {
-				await ((messagesStore as any).deliverMessage || deliverMessage)(message);
-			} catch (error) {
-				// Queue for retry
-				queue.enqueue(message);
-			}
-		} else {
-			queue.enqueue(message);
+		} catch (error) {
+			throw new Error(`Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	}
 
 	async function markAsRead(conversationId: string): Promise<void> {
-		update(state => {
-			const conversation = state.conversations.find(c => c.id === conversationId);
-			if (conversation) {
-				conversation.unreadCount = 0;
+		const messages = get({ subscribe }).conversations.get(conversationId) || [];
+		
+		// Mark all messages in conversation as read
+		for (const message of messages) {
+			if (message.id && message.status !== 'read') {
+				await core.messaging.markAsRead(message.id);
 			}
-			return { ...state };
-		});
+		}
+
+		// Update unread count (stored in component state)
 	}
 
 	async function syncMessages(): Promise<void> {
 		update(state => ({ ...state, syncStatus: 'syncing' }));
 
 		try {
-			const endpoint = await ((messagesStore as any).networkStore || networkStore).getSyncEndpoint();
-			const currentUser = get(authStore).currentIdentity?.id || 'test-identity-123';
-
-			// Get last sync timestamp
-			const lastSync = localStorage.getItem('volli-last-sync');
-			const since = lastSync ? parseInt(lastSync) : 0;
-
-			// Fetch new messages
-			const newMessages = await endpoint.getMessages({
-				identityId: currentUser,
-				since
-			});
-
-			// Process each message
-			for (const encryptedMessage of newMessages) {
-				const message = await ((messagesStore as any).decryptIncomingMessage || decryptIncomingMessage)(encryptedMessage);
-				
-				// Find or create conversation
-				const conversation = findOrCreateConversationSync(message.conversationId);
-				
-				// Add message if not duplicate
-				if (!conversation.messages.find(m => m.id === message.id)) {
-					conversation.messages.push(message);
-					conversation.unreadCount++;
-					conversation.lastActivity = message.timestamp;
-				}
-			}
-
-			// Send pending messages
-			const queue = (messagesStore as any).messageQueue || messageQueue;
-			const pendingMessages = await queue.getPending();
+			// This will be implemented when P2P is ready
+			// For now, just process pending queue
+			const pendingMessages = await messageQueue.getPending();
+			
 			for (const message of pendingMessages) {
 				try {
-					await ((messagesStore as any).deliverMessage || deliverMessage)(message);
-					queue.markDelivered(message.id);
+					await deliverMessage(message);
+					if (message.id) {
+						messageQueue.markDelivered(message.id);
+					}
 				} catch (error) {
 					console.error('Failed to deliver message:', error);
 				}
 			}
-
-			// Update sync timestamp
-			localStorage.setItem('volli-last-sync', Date.now().toString());
 
 			update(state => ({ ...state, syncStatus: 'synced' }));
 		} catch (error) {
@@ -299,104 +205,83 @@ function createMessagesStore() {
 	}
 
 	async function searchMessages(query: string): Promise<Message[]> {
-		const state = get({ subscribe });
-		const results: Message[] = [];
-		const lowerQuery = query.toLowerCase();
-
-		for (const conversation of state.conversations) {
-			results.push(...conversation.messages.filter(msg =>
-				msg.content.toLowerCase().includes(lowerQuery)
-			));
-		}
-
-		return results;
+		// Use core database search
+		return core.database.messages
+			.filter(msg => msg.content.toLowerCase().includes(query.toLowerCase()))
+			.toArray();
 	}
 
-	function findOrCreateConversation(participants: string[]): Conversation {
+	function getConversationMessages(conversationId: string): Message[] {
 		const state = get({ subscribe });
-		const sortedParticipants = [...participants].sort();
+		return state.conversations.get(conversationId) || [];
+	}
+
+	async function deleteMessage(messageId: number): Promise<void> {
+		await core.messaging.deleteMessage(messageId);
 		
-		// Find existing conversation with same participants
-		const existing = state.conversations.find(conv => {
-			const sortedConvParticipants = [...conv.participants].sort();
-			return JSON.stringify(sortedConvParticipants) === JSON.stringify(sortedParticipants);
+		// Update local state
+		update(state => {
+			state.conversations.forEach((messages, conversationId) => {
+				const filtered = messages.filter(m => m.id !== messageId);
+				if (filtered.length !== messages.length) {
+					state.conversations.set(conversationId, filtered);
+				}
+			});
+			return { ...state, conversations: new Map(state.conversations) };
 		});
-
-		if (existing) {
-			return existing;
-		}
-
-		// Create new conversation
-		const conversation: Conversation = {
-			id: `conv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-			participants,
-			messages: [],
-			createdAt: Date.now(),
-			lastActivity: Date.now(),
-			unreadCount: 0
-		};
-
-		update(s => ({
-			...s,
-			conversations: [conversation, ...s.conversations]
-		}));
-
-		return conversation;
 	}
 
-	function findOrCreateConversationSync(conversationId: string): Conversation {
-		const state = get({ subscribe });
-		let conversation = state.conversations.find(c => c.id === conversationId);
+	async function deleteConversation(conversationId: string): Promise<void> {
+		await core.messaging.deleteConversation(conversationId);
 		
-		if (!conversation) {
-			conversation = {
-				id: conversationId,
-				participants: [],
-				messages: [],
-				createdAt: Date.now(),
-				lastActivity: Date.now(),
-				unreadCount: 0
-			};
-			
-			update(s => ({
-				...s,
-				conversations: [conversation!, ...s.conversations]
-			}));
-		}
-		
-		return conversation;
-	}
-
-	function getConversation(conversationId: string): Conversation | undefined {
-		const state = get({ subscribe });
-		return state.conversations.find(c => c.id === conversationId);
-	}
-
-	async function encryptForRecipient(content: string, publicKey: string): Promise<string> {
-		// Mock encryption (in real app, use Web Crypto API)
-		return `encrypted:${content}:with:${publicKey}`;
-	}
-
-	async function decryptIncomingMessage(encryptedMessage: any): Promise<Message> {
-		// Mock decryption (in real app, use Web Crypto API)
-		return encryptedMessage;
+		// Update local state
+		update(state => {
+			state.conversations.delete(conversationId);
+			if (state.activeConversation === conversationId) {
+				state.activeConversation = null;
+			}
+			return { ...state, conversations: new Map(state.conversations) };
+		});
 	}
 
 	async function deliverMessage(message: Message): Promise<void> {
-		// Mock delivery (in real app, use P2P or relay)
+		// Mock delivery - will be replaced with P2P
 		const endpoint = await networkStore.getSyncEndpoint();
 		await endpoint.sendMessage(message);
 	}
 
 	function reset() {
 		set({
-			conversations: [],
+			conversations: new Map(),
 			activeConversation: null,
 			syncStatus: 'idle',
 			isLoading: false,
 			error: null
 		});
 		messageQueue.pending = [];
+	}
+
+	// Build conversation objects from messages
+	function getConversations(): Conversation[] {
+		const state = get({ subscribe });
+		const conversations: Conversation[] = [];
+
+		state.conversations.forEach((messages, conversationId) => {
+			if (messages.length > 0) {
+				const participants = Array.from(new Set(messages.map(m => m.senderId)));
+				conversations.push({
+					id: conversationId,
+					participants,
+					messages,
+					createdAt: messages[0].timestamp,
+					lastActivity: messages[messages.length - 1].timestamp,
+					unreadCount: messages.filter(m => m.status === 'pending' || m.status === 'sent').length
+				});
+			}
+		});
+
+		// Sort by most recent activity
+		return conversations.sort((a, b) => b.lastActivity - a.lastActivity);
 	}
 
 	// Expose internal methods for testing
@@ -409,17 +294,14 @@ function createMessagesStore() {
 		syncMessages,
 		setActiveConversation,
 		searchMessages,
-		findOrCreateConversation,
-		getConversation,
+		getConversationMessages,
+		deleteMessage,
+		deleteConversation,
+		getConversations,
 		reset,
 		// Internal methods exposed for testing
 		networkStore,
-		messageQueue,
-		contactStore,
-		encryptForRecipient,
-		decryptIncomingMessage,
-		deliverMessage,
-		findOrCreateConversationSync
+		messageQueue
 	};
 
 	return store;
@@ -428,12 +310,18 @@ function createMessagesStore() {
 export const messagesStore = createMessagesStore();
 export const messages = messagesStore; // Backward compatibility
 
-// Derived stores for backward compatibility
+// Derived stores
+export const conversations = derived(
+	messagesStore,
+	$messages => messagesStore.getConversations()
+);
+
 export const activeConversation = derived(
 	messagesStore,
 	$messages => {
 		if (!$messages.activeConversation) return null;
-		return $messages.conversations.find(c => c.id === $messages.activeConversation) || null;
+		const convs = messagesStore.getConversations();
+		return convs.find(c => c.id === $messages.activeConversation) || null;
 	}
 );
 
@@ -441,7 +329,6 @@ export const activeMessages = derived(
 	messagesStore,
 	$messages => {
 		if (!$messages.activeConversation) return [];
-		const conversation = $messages.conversations.find(c => c.id === $messages.activeConversation);
-		return conversation?.messages || [];
+		return $messages.conversations.get($messages.activeConversation) || [];
 	}
 );

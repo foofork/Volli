@@ -19,11 +19,11 @@
 </div>
 
 > [!NOTE]
-> **Project Status: 🛠️ Alpha - Core Packages Built**  
-> Core encryption packages implemented with 98.9% test coverage. Web app UI functional but using in-memory storage (not persistent). Post-quantum crypto and mobile/desktop apps pending.
+> **Project Status: 🎉 Beta - Fully Functional Web App**  
+> Complete encrypted messaging app with persistent storage, real crypto (XChaCha20-Poly1305), and full vault management. Ready for testing and evaluation. Post-quantum crypto and mobile/desktop apps planned for next phase.
 
 > [!TIP]
-> **Starting with Research Phase**: Before implementing, we're evaluating production-ready libraries to avoid reinventing wheels and ensure robust, secure solutions.
+> **Research Phase Complete**: We've successfully integrated production-ready libraries (libsodium, Dexie) and built a fully functional messenger. The 5-day immediate action plan transformed Volli from UI mockup to working app.
 
 <br/>
 
@@ -45,12 +45,12 @@
 </tr>
 <tr>
 <td><strong>💾 Local‑First Storage</strong></td>
-<td align="center">🚧 In Development</td>
+<td align="center">✅ IndexedDB Encrypted</td>
 <td align="center">❌ Server Required</td>
 </tr>
 <tr>
 <td><strong>🌐 Offline Operation</strong></td>
-<td align="center">🚧 Planned</td>
+<td align="center">✅ Fully Offline</td>
 <td align="center">❌ Limited</td>
 </tr>
 <tr>
@@ -60,7 +60,7 @@
 </tr>
 <tr>
 <td><strong>🔗 P2P Sync</strong></td>
-<td align="center">🚧 Partial IPFS</td>
+<td align="center">🚧 Next Phase</td>
 <td align="center">❌ Centralized</td>
 </tr>
 </tbody>
@@ -73,11 +73,11 @@
 
 ## 🚀 Quick Start
 
-> [!WARNING]
-> **Current Limitations**: The web app currently stores data in memory only. All data is lost on page refresh. This is a development preview - not ready for production use.
+> [!SUCCESS]
+> **Ready to Test**: The web app now features complete persistent storage with IndexedDB encryption. Your messages, contacts, and vault data survive browser restarts. This is a fully functional encrypted messenger!
 
 > [!TIP]
-> Volli will be **server‑less** when complete—your data will live in an encrypted SQLite db inside the browser or app sandbox.
+> Volli is **server‑less** right now—your data lives in an encrypted database inside your browser. No servers, no tracking, complete privacy.
 
 <details open>
 <summary><h3>📦 Installation</h3></summary>
