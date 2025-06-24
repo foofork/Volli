@@ -4,8 +4,14 @@
 	import { auth, isAuthenticated } from '$lib/stores/auth';
 	import { vault } from '$lib/stores/vault';
 	import { messages } from '$lib/stores/messages';
+	import { PassphraseInput } from '$lib/components';
+	import { contacts } from '$lib/stores/contacts';
+	import { files } from '$lib/stores/files';
 	
 	let isReady = false;
+	let unlockPassphrase = '';
+	let unlockError = '';
+	let isUnlocking = false;
 	
 	onMount(async () => {
 		// Initialize auth
@@ -20,6 +26,8 @@
 				await vault.initialize();
 				if ($vault.isUnlocked) {
 					await messages.loadConversations();
+					await contacts.loadContacts();
+					await files.loadFiles();
 				}
 				isReady = true;
 			}
@@ -28,64 +36,137 @@
 		return unsubscribe;
 	});
 	
+	async function handleUnlock() {
+		if (!unlockPassphrase) {
+			unlockError = 'Please enter your passphrase';
+			return;
+		}
+		
+		isUnlocking = true;
+		unlockError = '';
+		
+		try {
+			const success = await auth.unlockVault(unlockPassphrase);
+			if (success) {
+				unlockPassphrase = '';
+				await messages.loadConversations();
+				await contacts.loadContacts();
+				await files.loadFiles();
+			} else {
+				unlockError = 'Incorrect passphrase';
+			}
+		} catch (err) {
+			unlockError = err instanceof Error ? err.message : 'Failed to unlock vault';
+		} finally {
+			isUnlocking = false;
+		}
+	}
+	
+	async function handleLock() {
+		auth.lockVault();
+		messages.reset();
+		contacts.reset();
+		files.reset();
+	}
+	
 	async function handleLogout() {
-		await vault.lock();
-		await auth.logout();
+		auth.logout();
 		goto('/');
 	}
 </script>
 
 {#if isReady}
-	<div class="app-layout">
-		<aside class="sidebar">
-			<div class="sidebar-header">
+	{#if !$vault.isUnlocked}
+		<div class="unlock-screen">
+			<div class="unlock-card">
 				<h1>🔐 Volli</h1>
-				<button class="icon-button" title="New conversation">
-					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-						<path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-					</svg>
-				</button>
+				<h2>Unlock Your Vault</h2>
+				<p>Enter your passphrase to decrypt your messages</p>
+				
+				<form on:submit|preventDefault={handleUnlock}>
+					<PassphraseInput
+						bind:value={unlockPassphrase}
+						label="Passphrase"
+						placeholder="Enter your passphrase"
+						disabled={isUnlocking}
+						showStrength={false}
+					/>
+					
+					{#if unlockError}
+						<div class="error">{unlockError}</div>
+					{/if}
+					
+					<button type="submit" disabled={isUnlocking || !unlockPassphrase}>
+						{isUnlocking ? 'Unlocking...' : 'Unlock Vault'}
+					</button>
+				</form>
+				
+				<div class="unlock-footer">
+					<button class="text-button" on:click={handleLogout}>
+						Sign out
+					</button>
+				</div>
 			</div>
-			
-			<nav class="nav-menu">
-				<a href="/app" class="nav-item" class:active={true}>
-					<span class="icon">💬</span>
-					<span>Messages</span>
-				</a>
-				<a href="/app/contacts" class="nav-item">
-					<span class="icon">👥</span>
-					<span>Contacts</span>
-				</a>
-				<a href="/app/files" class="nav-item">
-					<span class="icon">📁</span>
-					<span>Files</span>
-				</a>
-				<a href="/app/settings" class="nav-item">
-					<span class="icon">⚙️</span>
-					<span>Settings</span>
-				</a>
-			</nav>
-			
-			<div class="sidebar-footer">
-				<div class="user-info">
-					<div class="avatar">👤</div>
-					<div class="user-details">
-						<div class="user-name">{$auth.identity?.id.slice(0, 8)}</div>
-						<div class="user-status">🟢 Secure</div>
+		</div>
+	{:else}
+		<div class="app-layout">
+			<aside class="sidebar">
+				<div class="sidebar-header">
+					<h1>🔐 Volli</h1>
+					<button class="icon-button" title="New conversation">
+						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+							<path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+						</svg>
+					</button>
+				</div>
+				
+				<nav class="nav-menu">
+					<a href="/app" class="nav-item" class:active={true}>
+						<span class="icon">💬</span>
+						<span>Messages</span>
+					</a>
+					<a href="/app/contacts" class="nav-item">
+						<span class="icon">👥</span>
+						<span>Contacts</span>
+					</a>
+					<a href="/app/files" class="nav-item">
+						<span class="icon">📁</span>
+						<span>Files</span>
+					</a>
+					<a href="/app/settings" class="nav-item">
+						<span class="icon">⚙️</span>
+						<span>Settings</span>
+					</a>
+				</nav>
+				
+				<div class="sidebar-footer">
+					<div class="user-info">
+						<div class="avatar">👤</div>
+						<div class="user-details">
+							<div class="user-name">{$auth.currentIdentity?.displayName}</div>
+							<div class="user-status">🟢 Secure</div>
+						</div>
+					</div>
+					<div class="footer-actions">
+						<button class="icon-button" on:click={handleLock} title="Lock vault">
+							<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+								<path d="M5 9V7a5 5 0 0110 0v2m-9 0h8a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4a2 2 0 012-2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
+						</button>
+						<button class="icon-button" on:click={handleLogout} title="Logout">
+							<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+								<path d="M7 3H4a1 1 0 00-1 1v12a1 1 0 001 1h3M14 10l3-3m0 0l-3-3m3 3H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+							</svg>
+						</button>
 					</div>
 				</div>
-				<button class="icon-button" on:click={handleLogout} title="Logout">
-					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-						<path d="M7 3H4a1 1 0 00-1 1v12a1 1 0 001 1h3M14 10l3-3m0 0l-3-3m3 3H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-					</svg>
-				</button>
-			</div>
-		</aside>
-		
-		<main class="main-content">
-			<slot />
-		</main>
-	</div>
+			</aside>
+			
+			<main class="main-content">
+				<slot />
+			</main>
+		</div>
+	{/if}
 {:else}
 	<div class="loading">
 		<div class="spinner"></div>
@@ -191,6 +272,12 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+		justify-content: space-between;
+	}
+	
+	.footer-actions {
+		display: flex;
+		gap: 0.5rem;
 	}
 	
 	.user-info {
@@ -259,6 +346,106 @@
 		font-size: 1.1rem;
 	}
 	
+	/* Unlock Screen Styles */
+	.unlock-screen {
+		min-height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 2rem;
+		background: #0a0a0a;
+	}
+	
+	.unlock-card {
+		width: 100%;
+		max-width: 450px;
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 16px;
+		padding: 3rem;
+		backdrop-filter: blur(10px);
+		text-align: center;
+	}
+	
+	.unlock-card h1 {
+		font-size: 3rem;
+		margin: 0 0 1rem;
+		background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+	
+	.unlock-card h2 {
+		margin: 0 0 0.5rem;
+		color: #fff;
+		font-size: 1.5rem;
+	}
+	
+	.unlock-card p {
+		color: #888;
+		margin-bottom: 2rem;
+	}
+	
+	.unlock-card form {
+		text-align: left;
+	}
+	
+	.unlock-card button[type="submit"] {
+		width: 100%;
+		padding: 0.75rem;
+		background: #3B82F6;
+		color: white;
+		border: none;
+		border-radius: 8px;
+		font-weight: 600;
+		font-size: 1rem;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		margin-top: 1rem;
+	}
+	
+	.unlock-card button[type="submit"]:hover:not(:disabled) {
+		background: #2563EB;
+	}
+	
+	.unlock-card button[type="submit"]:disabled {
+		opacity: 0.7;
+		cursor: not-allowed;
+	}
+	
+	.error {
+		background: rgba(239, 68, 68, 0.1);
+		border: 1px solid rgba(239, 68, 68, 0.3);
+		color: #EF4444;
+		padding: 0.75rem;
+		border-radius: 8px;
+		margin: 1rem 0;
+		font-size: 0.9rem;
+		text-align: center;
+	}
+	
+	.unlock-footer {
+		margin-top: 2rem;
+		padding-top: 2rem;
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
+	}
+	
+	.text-button {
+		background: none;
+		border: none;
+		color: #3B82F6;
+		cursor: pointer;
+		font-size: 0.9rem;
+		padding: 0.5rem;
+		transition: color 0.3s ease;
+	}
+	
+	.text-button:hover {
+		color: #2563EB;
+		text-decoration: underline;
+	}
+	
 	@media (max-width: 768px) {
 		.sidebar {
 			width: 80px;
@@ -274,6 +461,10 @@
 		
 		.user-details {
 			display: none;
+		}
+		
+		.footer-actions {
+			flex-direction: column;
 		}
 	}
 </style>

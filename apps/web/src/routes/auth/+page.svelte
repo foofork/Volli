@@ -1,17 +1,28 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/stores/auth';
+	import { PassphraseInput } from '$lib/components';
 	import { onMount } from 'svelte';
 	
 	let displayName = '';
+	let passphrase = '';
+	let confirmPassphrase = '';
 	let isCreating = false;
 	let error = '';
+	let step: 'identity' | 'passphrase' = 'identity';
+	let passphraseStrength: any = null;
 	
 	onMount(async () => {
+		// Initialize auth
+		await auth.initialize();
+		
 		// Check if already authenticated
 		const unsubscribe = auth.subscribe(state => {
-			if (state.isAuthenticated) {
+			if (state.isAuthenticated && state.vaultUnlocked) {
 				goto('/app');
+			} else if (state.currentIdentity && !state.vaultUnlocked) {
+				// Identity exists but vault not created/unlocked
+				step = 'passphrase';
 			}
 		});
 		
@@ -28,12 +39,47 @@
 		error = '';
 		
 		try {
-			await auth.createIdentity(displayName);
-			// Navigation handled by subscription
+			await auth.createIdentity(displayName.trim());
+			step = 'passphrase';
+			error = '';
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to create identity';
+		} finally {
 			isCreating = false;
 		}
+	}
+	
+	async function handleCreateVault() {
+		if (!passphrase) {
+			error = 'Please enter a passphrase';
+			return;
+		}
+		
+		if (passphrase !== confirmPassphrase) {
+			error = 'Passphrases do not match';
+			return;
+		}
+		
+		if (!passphraseStrength || passphraseStrength.entropy < 60) {
+			error = 'Passphrase is too weak. Please choose a stronger passphrase.';
+			return;
+		}
+		
+		isCreating = true;
+		error = '';
+		
+		try {
+			await auth.createVaultWithPassphrase(passphrase);
+			// Navigation handled by subscription
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Failed to create vault';
+		} finally {
+			isCreating = false;
+		}
+	}
+	
+	function handlePassphraseStrength(event: CustomEvent) {
+		passphraseStrength = event.detail;
 	}
 </script>
 
@@ -48,39 +94,88 @@
 			<p>Post-quantum secure messaging</p>
 		</div>
 		
-		<form on:submit|preventDefault={handleCreateIdentity}>
-			<h2>Create Your Identity</h2>
-			<p class="description">
-				Your identity is stored locally and encrypted with post-quantum cryptography.
-				No personal data is ever sent to any server.
-			</p>
-			
-			<div class="form-group">
-				<label for="displayName">Display Name</label>
-				<input
-					id="displayName"
-					type="text"
-					bind:value={displayName}
-					placeholder="Enter your name"
-					disabled={isCreating}
-					required
-				/>
-			</div>
-			
-			{#if error}
-				<div class="error">{error}</div>
-			{/if}
-			
-			<button type="submit" disabled={isCreating}>
-				{isCreating ? 'Creating...' : 'Create Identity'}
-			</button>
-			
-			<div class="security-note">
-				<p>🔒 Your keys are generated locally</p>
-				<p>🌐 Works 100% offline</p>
-				<p>🚫 No tracking or analytics</p>
-			</div>
-		</form>
+		{#if step === 'identity'}
+			<form on:submit|preventDefault={handleCreateIdentity}>
+				<h2>Create Your Identity</h2>
+				<p class="description">
+					Your identity is stored locally and encrypted with post-quantum cryptography.
+					No personal data is ever sent to any server.
+				</p>
+				
+				<div class="form-group">
+					<label for="displayName">Display Name</label>
+					<input
+						id="displayName"
+						type="text"
+						bind:value={displayName}
+						placeholder="Enter your name"
+						disabled={isCreating}
+						required
+					/>
+				</div>
+				
+				{#if error}
+					<div class="error">{error}</div>
+				{/if}
+				
+				<button type="submit" disabled={isCreating}>
+					{isCreating ? 'Creating...' : 'Create Identity'}
+				</button>
+				
+				<div class="security-note">
+					<p>🔒 Your keys are generated locally</p>
+					<p>🌐 Works 100% offline</p>
+					<p>🚫 No tracking or analytics</p>
+				</div>
+			</form>
+		{:else}
+			<form on:submit|preventDefault={handleCreateVault}>
+				<h2>Secure Your Vault</h2>
+				<p class="description">
+					Create a strong passphrase to encrypt your vault. This passphrase will be required
+					to unlock your messages and cannot be recovered if lost.
+				</p>
+				
+				<div class="form-group">
+					<PassphraseInput
+						bind:value={passphrase}
+						label="Passphrase"
+						placeholder="Enter a strong passphrase"
+						disabled={isCreating}
+						on:strength={handlePassphraseStrength}
+					/>
+				</div>
+				
+				<div class="form-group">
+					<label for="confirmPassphrase">Confirm Passphrase</label>
+					<input
+						id="confirmPassphrase"
+						type="password"
+						bind:value={confirmPassphrase}
+						placeholder="Confirm your passphrase"
+						disabled={isCreating}
+						required
+					/>
+				</div>
+				
+				{#if error}
+					<div class="error">{error}</div>
+				{/if}
+				
+				<button 
+					type="submit" 
+					disabled={isCreating || !passphrase || !passphraseStrength || passphraseStrength.entropy < 60}
+				>
+					{isCreating ? 'Creating Vault...' : 'Create Secure Vault'}
+				</button>
+				
+				<div class="security-note">
+					<p>⚠️ Remember your passphrase!</p>
+					<p>🔐 It cannot be recovered</p>
+					<p>💾 Store it somewhere safe</p>
+				</div>
+			</form>
+		{/if}
 	</div>
 </main>
 

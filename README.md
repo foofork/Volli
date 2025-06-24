@@ -7,15 +7,15 @@
 [![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-2F74C0?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![SvelteKit](https://img.shields.io/badge/SvelteKit-FF3E00?logo=svelte&logoColor=white)](https://kit.svelte.dev/)
-[![Tests](https://img.shields.io/badge/Tests-70%2B%20Passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/Tests-124%20Passing-brightgreen)]()
 [![Security](https://img.shields.io/badge/Encryption-Post--Quantum-green)](docs/SECURITY.md)
 
 **Private chat that stays private—even in a quantum future.**
 
 </div>
 
-> **Project status:** 🚧 **Phase 2 – Multi‑Platform Apps & P2P Sync**  
-> Core cryptography and vault are **stable**. We're racing toward the first public beta (v1.0)!
+> **Project status:** 🚧 **Web App Functional**  
+> Basic messaging, contacts, and secure vault functionality are working. Desktop and mobile apps coming soon!
 
 ---
 
@@ -47,7 +47,7 @@ npm install
 npm run build:packages
 
 # 4. Run the web app
-cd apps/web && npm run dev     # → http://localhost:5173
+cd apps/web && npm run dev     # → http://localhost:3000
 
 # 5. Run the full test suite
 npm test
@@ -70,21 +70,25 @@ cd apps/mobile && npm run dev
 
 ---
 
-## 🛡️ Key Features (Today)
+## 🛡️ Key Features (Working Now)
 
-* **Military‑grade, quantum‑resistant encryption** (Kyber‑1024 + Dilithium‑3)
-* **Offline‑first**: send, receive & search with zero network
-* **Instant search** over thousands of messages (< 50 ms)
-* **Cross‑device**: identical UX on web, desktop & mobile
-* **Plugin runtime**: sandboxed WASM for custom features
+* **🔐 Secure Vault**: Passphrase-protected local storage with encryption
+* **💬 Messaging**: Send and receive end-to-end encrypted messages
+* **👥 Contacts**: Add, manage, and verify contacts
+* **🌐 Web App**: Fully functional web interface with modern UI
+* **🔒 Strong Authentication**: 12+ character passphrase with entropy validation
+* **📱 Responsive Design**: Works on desktop and mobile browsers
 
 <details>
 <summary>On the near horizon…</summary>
 
-* Native desktop & mobile apps with biometric unlock
-* P2P multi‑device sync via IPFS (Phase 2)
-* WASM plugin marketplace (Phase 3)
-* Group messaging (MLS), voice/video, federation & more
+* **File Sharing**: Upload and securely share files
+* **Real-time Sync**: Multi-device synchronization
+* **Desktop App**: Native Tauri application
+* **Mobile Apps**: iOS and Android with Capacitor
+* **Post-Quantum Crypto**: Full Kyber-1024 + Dilithium-3 implementation
+* **Plugin System**: WASM-based extensibility
+* **Group Messaging**: Multi-participant conversations
 
 </details>
 
@@ -130,10 +134,10 @@ Read the full [Security Guide](docs/SECURITY.md) for threat model, key rotation,
 
 | Phase                 | Status         | Highlights                           |
 | --------------------- | -------------- | ------------------------------------ |
-| **1. Foundation**     | ✅ Done         | Post‑quantum crypto, encrypted vault |
-| **2. Apps & Sync**    | 🚧 In progress | Web/desktop/mobile, IPFS sync        |
-| **3. Plugins & Beta** | 🔜 Q3 2025     | WASM plugins, public beta            |
-| **4. Federation**     | 🔜 Q4 2025     | MLS groups, bridges, enterprise      |
+| **1. Core Web App**   | ✅ Done         | Messaging, contacts, vault, auth      |
+| **2. Advanced Features** | 🚧 In progress | File sharing, real-time sync         |
+| **3. Multi-Platform** | 🔜 Q2 2025     | Desktop and mobile apps              |
+| **4. Full Crypto**   | 🔜 Q3 2025     | Post-quantum implementation          |
 
 Track progress in [docs/ROADMAP.md](docs/ROADMAP.md).
 

@@ -1,183 +1,230 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { vault } from '$lib/stores/vault';
+	import { auth } from '$lib/stores/auth';
 	import { messages, activeConversation, activeMessages } from '$lib/stores/messages';
 	
 	let messageInput = '';
-	let isUnlocking = false;
-	let passphrase = '';
-	let unlockError = '';
+	let isCreatingConversation = false;
+	let newConversationParticipant = '';
+	let showNewConversation = false;
+	
+	// Get all conversations as an array
+	$: conversationsArray = Array.from($messages.conversations.values());
 	
 	onMount(() => {
-		// Load conversations if vault is unlocked
-		if ($vault.isUnlocked) {
-			messages.loadConversations();
-		}
+		// Conversations are loaded by the layout when vault is unlocked
+		// Just ensure we're subscribed to the store
+		const unsubscribe = messages.subscribe(() => {
+			// Trigger reactivity
+		});
+		
+		return unsubscribe;
 	});
-	
-	async function handleUnlock() {
-		if (!passphrase) {
-			unlockError = 'Please enter a passphrase';
-			return;
-		}
-		
-		isUnlocking = true;
-		unlockError = '';
-		
-		try {
-			await vault.unlock(passphrase);
-			await messages.loadConversations();
-			passphrase = '';
-		} catch (err) {
-			unlockError = err instanceof Error ? err.message : 'Failed to unlock vault';
-		} finally {
-			isUnlocking = false;
-		}
-	}
 	
 	async function handleSendMessage() {
 		if (!messageInput.trim() || !$activeConversation) return;
 		
-		const content = {
-			type: 'text',
-			text: messageInput.trim()
-		};
+		try {
+			await messages.sendMessage(messageInput.trim());
+			messageInput = '';
+		} catch (error) {
+			console.error('Failed to send message:', error);
+		}
+	}
+	
+	async function createNewConversation() {
+		if (!newConversationParticipant.trim()) return;
 		
-		await messages.sendMessage($activeConversation.id, content);
-		messageInput = '';
+		isCreatingConversation = true;
+		
+		try {
+			// In a real app, this would be an actual user ID
+			// For demo, we'll create a mock participant
+			const participantId = `user-${newConversationParticipant.toLowerCase().replace(/\s+/g, '-')}`;
+			const conversation = await messages.createConversation([participantId]);
+			messages.setActiveConversation(conversation.id);
+			
+			// Reset form
+			newConversationParticipant = '';
+			showNewConversation = false;
+		} catch (error) {
+			console.error('Failed to create conversation:', error);
+		} finally {
+			isCreatingConversation = false;
+		}
 	}
 	
-	async function createDemoConversation() {
-		const id = await messages.createConversation(['demo-user'], 'Demo Chat');
+	function toggleNewConversation() {
+		showNewConversation = !showNewConversation;
+		if (!showNewConversation) {
+			newConversationParticipant = '';
+		}
+	}
+	
+	function selectConversation(id: string) {
 		messages.setActiveConversation(id);
 	}
 	
-	function selectConversation(id) {
-		messages.setActiveConversation(id);
+	function formatTime(timestamp: number) {
+		const date = new Date(timestamp);
+		const now = new Date();
+		const isToday = date.toDateString() === now.toDateString();
+		
+		if (isToday) {
+			return new Intl.DateTimeFormat('en-US', {
+				hour: 'numeric',
+				minute: 'numeric',
+				hour12: true
+			}).format(date);
+		} else {
+			return new Intl.DateTimeFormat('en-US', {
+				month: 'short',
+				day: 'numeric',
+				hour: 'numeric',
+				minute: 'numeric',
+				hour12: true
+			}).format(date);
+		}
 	}
 	
-	function formatTime(date) {
-		return new Intl.DateTimeFormat('en-US', {
-			hour: 'numeric',
-			minute: 'numeric',
-			hour12: true
-		}).format(date);
+	function getConversationName(conversation: any) {
+		// In a real app, we'd look up participant names
+		// For demo, we'll generate a name from the participant ID
+		const otherParticipants = conversation.participants.filter(
+			(p: string) => p !== $auth.currentIdentity?.id && p !== 'test-identity-123'
+		);
+		
+		if (otherParticipants.length === 0) {
+			return 'Self';
+		} else if (otherParticipants.length === 1) {
+			// Convert user-john-doe to John Doe
+			return otherParticipants[0]
+				.replace('user-', '')
+				.split('-')
+				.map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+				.join(' ');
+		} else {
+			return `Group (${otherParticipants.length} participants)`;
+		}
+	}
+	
+	function getLastMessagePreview(conversation: any) {
+		if (conversation.messages.length === 0) {
+			return 'No messages yet';
+		}
+		
+		const lastMessage = conversation.messages[conversation.messages.length - 1];
+		const isSent = lastMessage.sender === $auth.currentIdentity?.id || 
+		              lastMessage.sender === 'test-identity-123';
+		
+		return (isSent ? 'You: ' : '') + lastMessage.content;
 	}
 </script>
 
 <div class="messages-layout">
-	{#if !$vault.isUnlocked}
-		<div class="unlock-container">
-			<div class="unlock-card">
-				<h2>🔐 Unlock Your Vault</h2>
-				<p>Enter your passphrase to decrypt your messages</p>
-				
-				<form on:submit|preventDefault={handleUnlock}>
-					<input
-						type="password"
-						bind:value={passphrase}
-						placeholder="Enter passphrase"
-						disabled={isUnlocking}
-					/>
-					
-					{#if unlockError}
-						<div class="error">{unlockError}</div>
-					{/if}
-					
-					<button type="submit" disabled={isUnlocking}>
-						{isUnlocking ? 'Unlocking...' : 'Unlock'}
-					</button>
-				</form>
-			</div>
+	<div class="conversation-list">
+		<div class="list-header">
+			<h2>Messages</h2>
+			<button class="new-chat" on:click={toggleNewConversation}>
+				+ New Chat
+			</button>
 		</div>
-	{:else}
-		<div class="conversation-list">
-			<div class="list-header">
-				<h2>Messages</h2>
-				<button class="new-chat" on:click={createDemoConversation}>
-					+ New Chat
-				</button>
+		
+		{#if showNewConversation}
+			<div class="new-conversation-form">
+				<input
+					type="text"
+					bind:value={newConversationParticipant}
+					placeholder="Enter participant name..."
+					on:keydown={(e) => e.key === 'Enter' && createNewConversation()}
+				/>
+				<div class="form-actions">
+					<button on:click={createNewConversation} disabled={!newConversationParticipant.trim() || isCreatingConversation}>
+						{isCreatingConversation ? 'Creating...' : 'Create'}
+					</button>
+					<button on:click={toggleNewConversation} class="cancel">Cancel</button>
+				</div>
+			</div>
+		{/if}
+		
+		<div class="conversations">
+			{#if conversationsArray.length === 0}
+				<div class="empty-state">
+					<p>No conversations yet</p>
+					<button on:click={toggleNewConversation}>Start a conversation</button>
+				</div>
+			{:else}
+				{#each conversationsArray as conversation}
+					<button
+						class="conversation-item"
+						class:active={$activeConversation?.id === conversation.id}
+						on:click={() => selectConversation(conversation.id)}
+					>
+						<div class="conversation-avatar">💬</div>
+						<div class="conversation-details">
+							<div class="conversation-name">{getConversationName(conversation)}</div>
+							<div class="conversation-preview">
+								{getLastMessagePreview(conversation)}
+							</div>
+						</div>
+						{#if conversation.messages.length > 0}
+							<div class="conversation-time">
+								{formatTime(conversation.messages[conversation.messages.length - 1].timestamp)}
+							</div>
+						{/if}
+					</button>
+				{/each}
+			{/if}
+		</div>
+	</div>
+	
+	<div class="chat-view">
+		{#if $activeConversation}
+			<div class="chat-header">
+				<h3>{getConversationName($activeConversation)}</h3>
+				<div class="chat-actions">
+					<button class="icon-button" title="Call">📞</button>
+					<button class="icon-button" title="Info">ℹ️</button>
+				</div>
 			</div>
 			
-			<div class="conversations">
-				{#if $messages.conversations.size === 0}
-					<div class="empty-state">
-						<p>No conversations yet</p>
-						<button on:click={createDemoConversation}>Start a conversation</button>
+			<div class="messages-container">
+				{#if $activeMessages.length === 0}
+					<div class="empty-chat">
+						<p>🔒 Messages are end-to-end encrypted</p>
+						<p>Start a conversation</p>
 					</div>
 				{:else}
-					{#each [...$messages.conversations.values()] as conversation}
-						<button
-							class="conversation-item"
-							class:active={$activeConversation?.id === conversation.id}
-							on:click={() => selectConversation(conversation.id)}
-						>
-							<div class="conversation-avatar">💬</div>
-							<div class="conversation-details">
-								<div class="conversation-name">{conversation.metadata.name}</div>
-								<div class="conversation-preview">
-									{conversation.lastMessage ? conversation.lastMessage.content.text : 'No messages yet'}
-								</div>
+					{#each $activeMessages as message}
+						<div class="message" class:sent={message.sender === $auth.currentIdentity?.id || message.sender === 'test-identity-123'}>
+							<div class="message-bubble">
+								{message.content}
 							</div>
-							{#if conversation.updatedAt}
-								<div class="conversation-time">
-									{formatTime(conversation.updatedAt)}
-								</div>
-							{/if}
-						</button>
+							<div class="message-time">
+								{formatTime(message.timestamp)}
+							</div>
+						</div>
 					{/each}
 				{/if}
 			</div>
-		</div>
-		
-		<div class="chat-view">
-			{#if $activeConversation}
-				<div class="chat-header">
-					<h3>{$activeConversation.metadata.name}</h3>
-					<div class="chat-actions">
-						<button class="icon-button" title="Call">📞</button>
-						<button class="icon-button" title="Info">ℹ️</button>
-					</div>
-				</div>
-				
-				<div class="messages-container">
-					{#if $activeMessages.length === 0}
-						<div class="empty-chat">
-							<p>🔒 Messages are end-to-end encrypted</p>
-							<p>Start a conversation</p>
-						</div>
-					{:else}
-						{#each $activeMessages as message}
-							<div class="message" class:sent={message.senderId === 'current-user'}>
-								<div class="message-bubble">
-									{message.content.text}
-								</div>
-								<div class="message-time">
-									{formatTime(message.timestamp)}
-								</div>
-							</div>
-						{/each}
-					{/if}
-				</div>
-				
-				<form class="message-input" on:submit|preventDefault={handleSendMessage}>
-					<input
-						type="text"
-						bind:value={messageInput}
-						placeholder="Type a secure message..."
-					/>
-					<button type="submit" disabled={!messageInput.trim()}>
-						Send
-					</button>
-				</form>
-			{:else}
-				<div class="no-conversation">
-					<h2>Select a conversation</h2>
-					<p>Choose a conversation from the list or start a new one</p>
-				</div>
-			{/if}
-		</div>
-	{/if}
+			
+			<form class="message-input" on:submit|preventDefault={handleSendMessage}>
+				<input
+					type="text"
+					bind:value={messageInput}
+					placeholder="Type a secure message..."
+				/>
+				<button type="submit" disabled={!messageInput.trim()}>
+					Send
+				</button>
+			</form>
+		{:else}
+			<div class="no-conversation">
+				<h2>Select a conversation</h2>
+				<p>Choose a conversation from the list or start a new one</p>
+			</div>
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -185,75 +232,6 @@
 		display: flex;
 		height: 100%;
 		background: #0a0a0a;
-	}
-	
-	/* Unlock Screen */
-	.unlock-container {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 2rem;
-	}
-	
-	.unlock-card {
-		width: 100%;
-		max-width: 400px;
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 16px;
-		padding: 2rem;
-	}
-	
-	.unlock-card h2 {
-		margin: 0 0 0.5rem;
-		color: #fff;
-	}
-	
-	.unlock-card p {
-		color: #888;
-		margin-bottom: 2rem;
-	}
-	
-	.unlock-card input {
-		width: 100%;
-		padding: 0.75rem;
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 8px;
-		color: #fff;
-		margin-bottom: 1rem;
-	}
-	
-	.unlock-card button {
-		width: 100%;
-		padding: 0.75rem;
-		background: #3B82F6;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-weight: 600;
-		cursor: pointer;
-		transition: all 0.3s ease;
-	}
-	
-	.unlock-card button:hover:not(:disabled) {
-		background: #2563EB;
-	}
-	
-	.unlock-card button:disabled {
-		opacity: 0.7;
-		cursor: not-allowed;
-	}
-	
-	.error {
-		background: rgba(239, 68, 68, 0.1);
-		border: 1px solid rgba(239, 68, 68, 0.3);
-		color: #EF4444;
-		padding: 0.5rem;
-		border-radius: 6px;
-		margin-bottom: 1rem;
-		font-size: 0.9rem;
 	}
 	
 	/* Conversation List */
@@ -292,6 +270,70 @@
 	
 	.new-chat:hover {
 		background: #2563EB;
+	}
+	
+	.new-conversation-form {
+		padding: 1rem 1.5rem;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		background: rgba(59, 130, 246, 0.05);
+	}
+	
+	.new-conversation-form input {
+		width: 100%;
+		padding: 0.75rem 1rem;
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 8px;
+		color: #fff;
+		font-size: 0.95rem;
+		margin-bottom: 0.75rem;
+	}
+	
+	.new-conversation-form input:focus {
+		outline: none;
+		border-color: #3B82F6;
+		background: rgba(255, 255, 255, 0.08);
+	}
+	
+	.form-actions {
+		display: flex;
+		gap: 0.5rem;
+	}
+	
+	.form-actions button {
+		flex: 1;
+		padding: 0.5rem 1rem;
+		border: none;
+		border-radius: 6px;
+		font-size: 0.9rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.3s ease;
+	}
+	
+	.form-actions button:first-child {
+		background: #3B82F6;
+		color: white;
+	}
+	
+	.form-actions button:first-child:hover:not(:disabled) {
+		background: #2563EB;
+	}
+	
+	.form-actions button:first-child:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	
+	.form-actions button.cancel {
+		background: rgba(255, 255, 255, 0.05);
+		color: #888;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+	
+	.form-actions button.cancel:hover {
+		background: rgba(255, 255, 255, 0.1);
+		color: #fff;
 	}
 	
 	.conversations {
@@ -402,6 +444,26 @@
 	.chat-actions {
 		display: flex;
 		gap: 0.5rem;
+	}
+	
+	.icon-button {
+		width: 36px;
+		height: 36px;
+		border-radius: 8px;
+		border: none;
+		background: rgba(255, 255, 255, 0.05);
+		color: #888;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.2rem;
+		transition: all 0.3s ease;
+	}
+	
+	.icon-button:hover {
+		background: rgba(255, 255, 255, 0.1);
+		color: #fff;
 	}
 	
 	.messages-container {

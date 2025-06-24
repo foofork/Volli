@@ -1,30 +1,126 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { contacts, contactsList } from '$lib/stores/contacts';
+	import type { Contact } from '$lib/stores/contacts';
 	
-	let contacts = [];
 	let searchQuery = '';
+	let showAddForm = false;
+	let newContactName = '';
+	let newContactPublicKey = '';
+	let isAdding = false;
+	let error = '';
 	
 	onMount(() => {
-		// Load contacts from vault when implemented
+		// Contacts are loaded by the layout when vault is unlocked
 	});
 	
-	function addContact() {
-		// Implement add contact functionality
-		alert('Add contact feature coming soon!');
+	function toggleAddForm() {
+		showAddForm = !showAddForm;
+		if (!showAddForm) {
+			resetForm();
+		}
 	}
 	
-	$: filteredContacts = contacts.filter(contact => 
-		contact.name.toLowerCase().includes(searchQuery.toLowerCase())
+	function resetForm() {
+		newContactName = '';
+		newContactPublicKey = '';
+		error = '';
+	}
+	
+	async function addContact() {
+		if (!newContactName.trim()) {
+			error = 'Contact name is required';
+			return;
+		}
+		
+		// For demo purposes, we'll generate a mock public key
+		const mockPublicKey = newContactPublicKey.trim() || 
+			`pk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		
+		isAdding = true;
+		error = '';
+		
+		try {
+			await contacts.addContact(newContactName.trim(), mockPublicKey);
+			resetForm();
+			showAddForm = false;
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Failed to add contact';
+		} finally {
+			isAdding = false;
+		}
+	}
+	
+	async function deleteContact(id: string) {
+		if (confirm('Are you sure you want to delete this contact?')) {
+			try {
+				await contacts.deleteContact(id);
+			} catch (err) {
+				console.error('Failed to delete contact:', err);
+			}
+		}
+	}
+	
+	async function toggleVerified(contact: Contact) {
+		try {
+			await contacts.updateContact(contact.id, { verified: !contact.verified });
+		} catch (err) {
+			console.error('Failed to update contact:', err);
+		}
+	}
+	
+	$: filteredContacts = $contactsList.filter(contact => 
+		contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+		(contact.notes && contact.notes.toLowerCase().includes(searchQuery.toLowerCase()))
 	);
 </script>
 
 <div class="contacts">
 	<div class="contacts-header">
 		<h1>Contacts</h1>
-		<button class="primary" on:click={addContact}>
+		<button class="primary" on:click={toggleAddForm}>
 			+ Add Contact
 		</button>
 	</div>
+	
+	{#if showAddForm}
+		<div class="add-contact-form">
+			<h3>Add New Contact</h3>
+			
+			<div class="form-group">
+				<label for="contactName">Name</label>
+				<input
+					id="contactName"
+					type="text"
+					bind:value={newContactName}
+					placeholder="Enter contact name"
+					disabled={isAdding}
+				/>
+			</div>
+			
+			<div class="form-group">
+				<label for="publicKey">Public Key (optional)</label>
+				<input
+					id="publicKey"
+					type="text"
+					bind:value={newContactPublicKey}
+					placeholder="Paste public key or leave empty for demo"
+					disabled={isAdding}
+				/>
+			</div>
+			
+			{#if error}
+				<div class="error">{error}</div>
+			{/if}
+			
+			<div class="form-actions">
+				<button on:click={addContact} disabled={!newContactName.trim() || isAdding}>
+					{isAdding ? 'Adding...' : 'Add Contact'}
+				</button>
+				<button class="secondary" on:click={toggleAddForm}>Cancel</button>
+			</div>
+		</div>
+	{/if}
 	
 	<div class="search-bar">
 		<input
@@ -35,13 +131,25 @@
 	</div>
 	
 	<div class="contacts-list">
-		{#if contacts.length === 0}
-			<div class="empty-state">
-				<div class="empty-icon">👥</div>
-				<h2>No contacts yet</h2>
-				<p>Add contacts to start secure conversations</p>
-				<button on:click={addContact}>Add your first contact</button>
+		{#if $contacts.isLoading}
+			<div class="loading-state">
+				<p>Loading contacts...</p>
 			</div>
+		{:else if filteredContacts.length === 0}
+			{#if searchQuery}
+				<div class="empty-state">
+					<div class="empty-icon">🔍</div>
+					<h2>No results found</h2>
+					<p>No contacts match your search for "{searchQuery}"</p>
+				</div>
+			{:else}
+				<div class="empty-state">
+					<div class="empty-icon">👥</div>
+					<h2>No contacts yet</h2>
+					<p>Add contacts to start secure conversations</p>
+					<button on:click={toggleAddForm}>Add your first contact</button>
+				</div>
+			{/if}
 		{:else}
 			{#each filteredContacts as contact}
 				<div class="contact-item">
@@ -50,17 +158,31 @@
 					</div>
 					<div class="contact-info">
 						<div class="contact-name">{contact.name}</div>
-						<div class="contact-status">
+						<div class="contact-status" class:verified={contact.verified}>
 							{contact.verified ? '✓ Verified' : 'Unverified'}
 						</div>
+						{#if contact.lastSeen}
+							<div class="contact-last-seen">
+								Last seen {new Date(contact.lastSeen).toLocaleDateString()}
+							</div>
+						{/if}
 					</div>
-					<button class="icon-button">
-						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-							<circle cx="5" cy="10" r="1.5" fill="currentColor"/>
-							<circle cx="10" cy="10" r="1.5" fill="currentColor"/>
-							<circle cx="15" cy="10" r="1.5" fill="currentColor"/>
-						</svg>
-					</button>
+					<div class="contact-actions">
+						<button 
+							class="icon-button verify-button" 
+							title={contact.verified ? 'Remove verification' : 'Mark as verified'}
+							on:click={() => toggleVerified(contact)}
+						>
+							{contact.verified ? '✓' : '?'}
+						</button>
+						<button 
+							class="icon-button delete-button" 
+							title="Delete contact"
+							on:click={() => deleteContact(contact.id)}
+						>
+							🗑️
+						</button>
+					</div>
 				</div>
 			{/each}
 		{/if}
@@ -90,6 +212,103 @@
 		color: #fff;
 	}
 	
+	.add-contact-form {
+		padding: 1.5rem 2rem;
+		background: rgba(59, 130, 246, 0.05);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	}
+	
+	.add-contact-form h3 {
+		margin: 0 0 1.5rem;
+		color: #fff;
+		font-size: 1.25rem;
+	}
+	
+	.form-group {
+		margin-bottom: 1rem;
+	}
+	
+	.form-group label {
+		display: block;
+		margin-bottom: 0.5rem;
+		color: #ccc;
+		font-weight: 500;
+		font-size: 0.9rem;
+	}
+	
+	.form-group input {
+		width: 100%;
+		padding: 0.75rem 1rem;
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 8px;
+		color: #fff;
+		font-size: 1rem;
+		transition: all 0.3s ease;
+	}
+	
+	.form-group input:focus {
+		outline: none;
+		border-color: #3B82F6;
+		background: rgba(255, 255, 255, 0.08);
+	}
+	
+	.form-group input:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	
+	.form-actions {
+		display: flex;
+		gap: 1rem;
+		margin-top: 1.5rem;
+	}
+	
+	.form-actions button {
+		flex: 1;
+		padding: 0.75rem 1.5rem;
+		border: none;
+		border-radius: 8px;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.3s ease;
+	}
+	
+	.form-actions button:first-child {
+		background: #3B82F6;
+		color: white;
+	}
+	
+	.form-actions button:first-child:hover:not(:disabled) {
+		background: #2563EB;
+	}
+	
+	.form-actions button:first-child:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	
+	.form-actions button.secondary {
+		background: transparent;
+		color: #888;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+	
+	.form-actions button.secondary:hover {
+		background: rgba(255, 255, 255, 0.05);
+		color: #fff;
+	}
+	
+	.error {
+		background: rgba(239, 68, 68, 0.1);
+		border: 1px solid rgba(239, 68, 68, 0.3);
+		color: #EF4444;
+		padding: 0.75rem;
+		border-radius: 8px;
+		margin: 1rem 0;
+		font-size: 0.9rem;
+	}
+	
 	.search-bar {
 		padding: 1rem 2rem;
 		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -115,6 +334,14 @@
 		flex: 1;
 		overflow-y: auto;
 		padding: 1rem;
+	}
+	
+	.loading-state {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 200px;
+		color: #666;
 	}
 	
 	.empty-state {
@@ -198,7 +425,23 @@
 	
 	.contact-status {
 		font-size: 0.9rem;
+		color: #888;
+	}
+	
+	.contact-status.verified {
 		color: #4ADE80;
+	}
+	
+	.contact-last-seen {
+		font-size: 0.8rem;
+		color: #666;
+		margin-top: 0.25rem;
+	}
+	
+	.contact-actions {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
 	}
 	
 	button.primary {
@@ -228,10 +471,31 @@
 		align-items: center;
 		justify-content: center;
 		transition: all 0.3s ease;
+		font-size: 1rem;
 	}
 	
 	.icon-button:hover {
 		background: rgba(255, 255, 255, 0.1);
 		color: #fff;
+	}
+	
+	.verify-button {
+		background: rgba(74, 222, 128, 0.1);
+		color: #4ADE80;
+	}
+	
+	.verify-button:hover {
+		background: rgba(74, 222, 128, 0.2);
+		color: #4ADE80;
+	}
+	
+	.delete-button {
+		background: rgba(239, 68, 68, 0.1);
+		color: #EF4444;
+	}
+	
+	.delete-button:hover {
+		background: rgba(239, 68, 68, 0.2);
+		color: #EF4444;
 	}
 </style>

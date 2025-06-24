@@ -266,6 +266,25 @@ function createVaultStore() {
 		return results;
 	}
 
+	async function storeData(key: string, data: any): Promise<void> {
+		const vault = await getDecryptedVault();
+		
+		// Store data in vault with dynamic key
+		(vault as any)[key] = data;
+		await saveVault(vault);
+	}
+	
+	async function getData(key: string): Promise<any> {
+		const vault = await getDecryptedVault();
+		return (vault as any)[key];
+	}
+	
+	async function removeData(key: string): Promise<void> {
+		const vault = await getDecryptedVault();
+		delete (vault as any)[key];
+		await saveVault(vault);
+	}
+
 	function reset() {
 		vaultData = {
 			version: 1,
@@ -321,6 +340,9 @@ function createVaultStore() {
 		getSettings,
 		searchContacts,
 		searchMessages,
+		storeData,
+		getData,
+		removeData,
 		reset,
 		// Expose internal methods for other stores
 		getDecryptedVault,

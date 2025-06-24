@@ -302,6 +302,31 @@ function createAuthStore() {
 		vaultKey = null;
 	}
 
+	async function changePassphrase(newPassphrase: string): Promise<void> {
+		const state = get({ subscribe });
+		if (!state.currentIdentity || !state.vaultUnlocked) {
+			throw new Error('Must be authenticated with unlocked vault');
+		}
+		
+		// Validate new passphrase
+		const strength = validatePassphraseStrength(newPassphrase);
+		if (newPassphrase.length < 12 || strength.entropy < 60) {
+			throw new Error('Passphrase too weak. Minimum 12 characters with good entropy required');
+		}
+		
+		// Update stored passphrase
+		vaultPassphrase = newPassphrase;
+		
+		// In a real app, this would re-encrypt the vault with the new passphrase
+		// For now, we just update the mock storage
+		mockDB.vaults.set(state.currentIdentity.id, {
+			id: state.currentIdentity.id,
+			passphrase: newPassphrase,
+			data: {},
+			createdAt: Date.now()
+		});
+	}
+
 	function logout(): void {
 		// Clear all state
 		set(initialState);
@@ -398,6 +423,7 @@ function createAuthStore() {
 		createVaultWithPassphrase,
 		unlockVault,
 		lockVault,
+		changePassphrase,
 		logout,
 		checkSession,
 		updateLastActivity,

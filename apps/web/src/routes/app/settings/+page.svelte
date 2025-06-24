@@ -12,8 +12,7 @@
 	async function handleExportData() {
 		try {
 			const data = {
-				identity: $auth.identity,
-				device: $auth.device,
+				identity: $auth.currentIdentity,
 				exportedAt: new Date().toISOString()
 			};
 			
@@ -45,15 +44,14 @@
 			return;
 		}
 		
-		if (newPassphrase.length < 8) {
-			error = 'Passphrase must be at least 8 characters';
+		if (newPassphrase.length < 12) {
+			error = 'Passphrase must be at least 12 characters';
 			return;
 		}
 		
 		try {
-			// Re-encrypt vault with new passphrase
-			await vault.lock();
-			await vault.unlock(newPassphrase);
+			// Use auth store to change passphrase
+			await auth.changePassphrase(newPassphrase);
 			
 			success = 'Passphrase changed successfully';
 			changePassphrase = false;
@@ -61,7 +59,7 @@
 			confirmPassphrase = '';
 			setTimeout(() => success = '', 3000);
 		} catch (err) {
-			error = 'Failed to change passphrase';
+			error = err instanceof Error ? err.message : 'Failed to change passphrase';
 		}
 	}
 </script>
@@ -181,7 +179,7 @@
 				</div>
 				<div class="info-item">
 					<span class="label">Identity</span>
-					<span class="value">{$auth.identity?.id.slice(0, 12)}...</span>
+					<span class="value">{$auth.currentIdentity?.id.slice(0, 12)}...</span>
 				</div>
 			</div>
 		</section>
