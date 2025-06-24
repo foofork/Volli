@@ -1,6 +1,9 @@
 // Mock libsodium-wrappers for testing
 import { vi } from 'vitest';
 
+// Store encrypted data info for validation
+const encryptedDataStore = new Map<string, { keyHash: number }>();
+
 // Mock sodium constants and functions
 export const mockSodium = {
   ready: Promise.resolve(),
@@ -58,6 +61,10 @@ export const mockSodium = {
       keySum += key[i];
     }
     
+    // Store key hash for later validation
+    const ciphertextId = Array.from(encrypted.slice(0, 8)).join(',');
+    encryptedDataStore.set(ciphertextId, { keyHash: keySum });
+    
     // Mock auth tag based on key
     for (let i = message.length + 4; i < encrypted.length; i++) {
       encrypted[i] = (keySum + i) % 256;
@@ -72,10 +79,19 @@ export const mockSodium = {
       throw new Error('Decryption failed');
     }
     
-    // Verify auth tag matches what would be generated with this key
+    // Get stored key hash for this ciphertext
+    const ciphertextId = Array.from(ciphertext.slice(0, 8)).join(',');
+    const storedInfo = encryptedDataStore.get(ciphertextId);
+    
+    // Calculate current key hash
     let keySum = 0;
     for (let i = 0; i < key.length; i++) {
       keySum += key[i];
+    }
+    
+    // Verify key matches what was used for encryption
+    if (storedInfo && storedInfo.keyHash !== keySum) {
+      throw new Error('Decryption failed');
     }
     
     // Check auth tag (last 12 bytes)

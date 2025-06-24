@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { get } from 'svelte/store';
 import { vaultStore } from './vault';
 import { authStore } from './auth';
+import { core, resetCore } from './core';
+import { cleanupDatabases } from '../../tests/setup/db-cleanup';
 import { createMockDatabase, clearAllDatabases } from '../../tests/setup/db-mock';
 import { factories, fixtures } from '../../tests/setup/test-utils';
 
@@ -26,13 +28,13 @@ describe('VaultStore', () => {
   });
 
   describe('Vault Lock State', () => {
-    it('should sync with auth store vault state', () => {
+    it('should sync with auth store vault state', async () => {
       expect(get(vaultStore).isUnlocked).toBe(true);
       
       authStore.lockVault();
       expect(get(vaultStore).isUnlocked).toBe(false);
       
-      authStore.unlockVault(fixtures.validPassphrase);
+      await authStore.unlockVault(fixtures.validPassphrase);
       expect(get(vaultStore).isUnlocked).toBe(true);
     });
   });
@@ -124,11 +126,11 @@ describe('VaultStore', () => {
       const message = await vaultStore.sendMessage(conversationId, content);
       
       expect(message).toBeDefined();
-      expect(message.id).toBeDefined();
       expect(message.conversationId).toBe(conversationId);
       expect(message.content).toBe(content);
       expect(message.timestamp).toBeDefined();
-      expect(message.encrypted).toBe(true);
+      expect(message.senderId).toBeDefined();
+      expect(message.status).toBeDefined();
     });
 
     it('should add message to existing conversation', async () => {
@@ -332,31 +334,36 @@ describe('VaultStore', () => {
   
   describe('Error Handling', () => {
     it('should handle vault not available error', async () => {
-      // Directly set vault data to null in the store
-      (vaultStore as any).vaultData = null;
+      // Lock the vault to make it unavailable
+      authStore.lockVault();
       
-      await expect(vaultStore.getContacts()).rejects.toThrow('Vault data not available');
-      
-      // Restore vault data
-      vaultStore.reset();
+      await expect(vaultStore.getContacts()).rejects.toThrow('Vault is locked');
     });
 
     it('should handle save failures gracefully', async () => {
-      // Mock the saveVaultData method on authStore
-      (authStore as any).saveVaultData = vi.fn().mockRejectedValue(new Error('Save failed'));
+      // Mock the database add method to fail
+      const originalAdd = core.database.contacts.add;
+      core.database.contacts.add = vi.fn().mockRejectedValue(new Error('Database error'));
       
       const contact = factories.contact();
-      await expect(vaultStore.addContact(contact)).rejects.toThrow('Save failed');
+      await expect(vaultStore.addContact(contact)).rejects.toThrow('Database error');
       
-      // Clean up mock
-      delete (authStore as any).saveVaultData;
+      // Restore
+      core.database.contacts.add = originalAdd;
     });
   });
 
   describe('Search Functionality', () => {
     beforeEach(async () => {
-      // Reset vault to clear any existing data
+      // Clean up database before each test
+      await cleanupDatabases();
+      await resetCore();
+      
+      // Reset stores
+      authStore.logout();
       vaultStore.reset();
+      
+      // Create fresh identity and vault
       await authStore.createIdentity('Test User');
       await authStore.createVaultWithPassphrase(fixtures.validPassphrase);
       
