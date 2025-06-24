@@ -1,21 +1,20 @@
-// Set up IndexedDB globals first
-import './indexeddb-setup';
-
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import { mockCrypto } from './crypto-mock';
-import { clearAllDatabases } from './db-mock';
-import { initCrypto } from '@volli/vault-core';
-import { initializeCore } from '$lib/stores/core';
-import { indexedDB } from './indexeddb-setup';
+import { cleanupDatabases } from './db-cleanup';
+import { initializeCore, resetCore } from '$lib/stores/core';
 
 // Setup global mocks
 beforeAll(async () => {
-  // Initialize libsodium crypto
-  await initCrypto();
-  
   // Mock crypto API
   mockCrypto();
+  
+  // Import and initialize crypto
+  const { initCrypto } = await import('@volli/vault-core');
+  await initCrypto();
+  
+  // Initialize core after crypto is ready
+  await initializeCore();
   
   // Polyfill File.arrayBuffer if not available
   if (!File.prototype.arrayBuffer) {
@@ -64,21 +63,35 @@ beforeAll(async () => {
   }));
 });
 
+// Set up before each test
+beforeEach(async () => {
+  // Ensure core is initialized
+  await initializeCore();
+});
+
 // Clean up after each test
 afterEach(async () => {
+  // Reset stores first
+  const { authStore } = await import('$lib/stores/auth');
+  const { vaultStore } = await import('$lib/stores/vault');
+  const { messages } = await import('$lib/stores/messages');
+  const { contacts } = await import('$lib/stores/contacts');
+  
+  authStore.logout();
+  vaultStore.reset();
+  messages.reset();
+  contacts.reset();
+  
+  // Clean up databases
+  await cleanupDatabases();
+  
+  // Reset core
+  resetCore();
+  
+  // Clear mocks and storage
   vi.clearAllMocks();
   localStorage.clear();
   sessionStorage.clear();
-  
-  // Clear IndexedDB databases
-  if (global.indexedDB) {
-    const databases = await indexedDB.databases();
-    for (const db of databases) {
-      if (db.name) {
-        indexedDB.deleteDatabase(db.name);
-      }
-    }
-  }
 });
 
 // Suppress console errors in tests

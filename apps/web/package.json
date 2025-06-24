@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@volli/integration": "workspace:*",
-    "dexie": "^3.2.4"
+    "dexie": "^3.2.4",
+    "libsodium-wrappers": "^0.7.15"
   }
 }

@@ -2,7 +2,7 @@ import { VolliCore } from '@volli/integration';
 import { writable } from 'svelte/store';
 
 // Single instance of core
-export const core = new VolliCore();
+export let core = new VolliCore();
 
 // Reactive status
 export const initialized = writable(false);
@@ -21,4 +21,18 @@ export async function initializeCore() {
   } finally {
     initializing.set(false);
   }
+}
+
+// Reset core for testing
+export function resetCore() {
+  if (core && core.db) {
+    try {
+      core.db.close();
+    } catch (error) {
+      // Ignore errors during close
+    }
+  }
+  core = new VolliCore();
+  initialized.set(false);
+  initializing.set(false);
 }

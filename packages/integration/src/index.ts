@@ -8,7 +8,7 @@ export * from './database';
 export * from './messaging';
 
 export class VolliCore {
-  private db: VolliDB;
+  public db: VolliDB;
   private _messaging: MessagingService | null = null;
   private currentVault: VaultRecord | null = null;
   private vaultKey: Uint8Array | null = null;
@@ -18,7 +18,16 @@ export class VolliCore {
   }
   
   async initialize() {
-    await this.db.open();
+    // Ensure database is open
+    try {
+      await this.db.open();
+    } catch (error: any) {
+      // If already open, that's fine
+      if (!error.message?.includes('already open')) {
+        throw error;
+      }
+    }
+    
     await initCrypto();
     
     // Check if already initialized
