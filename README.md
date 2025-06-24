@@ -224,7 +224,7 @@ graph TD
 </table>
 
 > [!CAUTION]
-> **Security Disclosure**: Report vulnerabilities to security@volli.chat
+> **Security**: This is an early development preview. Security audits pending.
 
 <br/>
 
@@ -318,23 +318,8 @@ volli/
 
 ## 🤝 Contributing
 
-We welcome contributions! See our [Developer Guide](docs/DEVELOPER.md) to get started.
-
-<details>
-<summary><strong>Quick Contribution Guide</strong></summary>
-
-<br/>
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feat/amazing-feature`)
-3. Write tests first (TDD approach)
-4. Implement your changes
-5. Ensure tests pass (`npm test`)
-6. Commit (`git commit -m 'feat: add amazing feature'`)
-7. Push (`git push origin feat/amazing-feature`)
-8. Open a Pull Request
-
-</details>
+> [!NOTE]
+> **Not accepting contributions at this time.** This project is in early development. Check back later for contribution guidelines.
 
 <br/>
 
