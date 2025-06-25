@@ -8,12 +8,34 @@
 	import { contacts } from '$lib/stores/contacts';
 	import { files } from '$lib/stores/files';
 	import { toasts } from '$lib/stores/toasts';
+	import { networkStore } from '@volli/integration';
 	import VaultErrorFallback from '$lib/components/VaultErrorFallback.svelte';
 	
 	let isReady = false;
 	let unlockPassphrase = '';
 	let unlockError = '';
 	let isUnlocking = false;
+	
+	async function connectToSignaling() {
+		try {
+			const currentIdentity = $auth.currentIdentity;
+			if (!currentIdentity || !currentIdentity.publicKey) {
+				console.warn('No identity available for signaling connection');
+				return;
+			}
+			
+			await networkStore.connectToSignaling(
+				'ws://localhost:8080',
+				currentIdentity.id,
+				currentIdentity.publicKey
+			);
+			
+			toasts.success('Connected to network');
+		} catch (error) {
+			console.error('Failed to connect to signaling:', error);
+			toasts.warning('Network connection failed - continuing offline');
+		}
+	}
 	
 	onMount(async () => {
 		// Initialize auth
@@ -30,6 +52,7 @@
 					await messages.loadConversations();
 					await contacts.loadContacts();
 					await files.loadFiles();
+					await connectToSignaling();
 				}
 				isReady = true;
 			}
@@ -55,6 +78,7 @@
 				await messages.loadConversations();
 				await contacts.loadContacts();
 				await files.loadFiles();
+				await connectToSignaling();
 			} else {
 				unlockError = 'Incorrect passphrase';
 				toasts.error('Incorrect passphrase');

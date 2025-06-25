@@ -37,7 +37,21 @@ graph LR
 
 ---
 
-## 🚨 Launch-Critical Tasks (Blocks user adoption)
+## 🚨 MVP Testing Phase (Immediate Priority)
+
+**Goal**: Get to working end-to-end demo for testing and iteration
+
+| Task | Status | Owner | Documentation | Notes |
+|------|--------|-------|---------------|-------|
+| Local signaling server setup | ✅ Complete | @assistant | [Local Testing Guide](#local-testing-setup) | Server running on :8080 |
+| Web app signaling integration | ✅ Complete | @assistant | [Integration Points](#integration-points) | Auto-connect after vault unlock |
+| Dual contact discovery (hex + signaling) | ✅ Complete | @assistant | [Contact Discovery](#contact-discovery) | Tab interface: username + hex |
+| Real P2P message delivery | ✅ Complete | @assistant | [Message Flow](#message-flow) | NetworkStore integrated |
+| End-to-end testing setup | 🟢 Ready to Test | - | [Testing Guide](#testing-flow) | **Ready for demo!** |
+
+---
+
+## 🚨 Launch-Critical Tasks (Post-MVP)
 
 ### Signaling Server
 | Task | Status | Owner | Documentation | Notes |
@@ -126,6 +140,101 @@ graph LR
 - What's complete
 - What's remaining
 - Any blockers
+
+---
+
+## 🚀 MVP Testing Phase Guide
+
+### Local Testing Setup
+
+#### Start Signaling Server
+```bash
+cd packages/signaling-server
+npm run dev
+# Server will run on ws://localhost:8080
+```
+
+#### Start Web Application
+```bash
+cd apps/web
+npm run dev  
+# App will run on http://localhost:5173
+```
+
+### Integration Points
+
+#### 1. Signaling Connection (Web App Startup)
+**Location**: `apps/web/src/lib/stores/core.ts`
+- Add signaling connection to app initialization
+- Use current user identity + public key
+- Connect to `ws://localhost:8080`
+
+#### 2. Contact Discovery Enhancement
+**Location**: `apps/web/src/routes/app/contacts/+page.svelte`
+- Keep existing hex key validation (never remove!)
+- Add username/email discovery via signaling
+- Show "User found!" vs "User not found" states
+
+#### 3. Message Delivery Integration  
+**Location**: `apps/web/src/lib/stores/messages.ts`
+- Replace mock `deliverMessage` with NetworkStore calls
+- Show message status: "P2P" vs "Queued" vs "Failed"
+- Enable real peer-to-peer messaging
+
+### Contact Discovery
+
+#### Dual Mode Support
+```typescript
+// Support both discovery methods
+if (isValidHexKey(input)) {
+  // Direct hex key entry (power users)
+  await addContactByKey(name, input);
+} else {
+  // Username/email discovery (normal users)  
+  const user = await discoverUser(input);
+  if (user.online) {
+    await addContactByKey(name, user.publicKey);
+  }
+}
+```
+
+#### UX Design
+- **Tab 1**: "Find by Username" (signaling discovery)
+- **Tab 2**: "Enter Public Key" (direct hex entry)
+- **Always available**: QR code scanner/generator
+
+### Message Flow
+
+#### Real P2P Delivery
+```typescript
+async function deliverMessage(message: Message) {
+  // Try direct P2P connection
+  const delivered = await networkStore.sendMessage(message);
+  
+  if (!delivered) {
+    // Queue for retry when peer comes online
+    await messageQueue.enqueue(message);
+  }
+}
+```
+
+### Testing Flow
+
+#### Two-Browser Demo
+1. **Browser 1**: Create identity "Alice" 
+2. **Browser 2**: Create identity "Bob"
+3. **Contact Discovery**:
+   - Alice: Add Bob by hex key
+   - Bob: Find Alice by username
+4. **Messaging**: Send messages both directions
+5. **P2P Verification**: Check connection status in UI
+
+#### Expected Behaviors
+- ✅ Users can find each other via signaling
+- ✅ Messages deliver via direct P2P when online
+- ✅ Messages queue when peer offline
+- ✅ Connection status shows in conversations
+- ✅ Hex key entry still works for power users
 
 ---
 
