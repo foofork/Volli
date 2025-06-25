@@ -6,16 +6,20 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@volli/vault-core": "workspace:*",
     "@volli/identity-core": "workspace:*",
     "@volli/messaging": "workspace:*",
+    "@volli/signaling-server": "workspace:*",
     "dexie": "^3.2.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
   }
 }
