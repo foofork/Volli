@@ -11,6 +11,8 @@
 - **[Architecture](./ADAPTIVE_TRUST_ARCHITECTURE.md)** - System design and patterns
 - **[API Reference](./ADAPTIVE_TRUST_API_REFERENCE.md)** - Interface definitions
 - **[Constants](./ADAPTIVE_TRUST_CONSTANTS.md)** - Shared values and budgets
+- **[Performance Guide](./ADAPTIVE_TRUST_PERFORMANCE_GUIDE.md)** - Optimization strategies
+- **[Security Checklist](./ADAPTIVE_TRUST_SECURITY_CHECKLIST.md)** - Security requirements
 
 ### 🚀 Development
 - **[Quick Reference](./ADAPTIVE_TRUST_QUICK_REFERENCE.md)** - Keep this handy!
