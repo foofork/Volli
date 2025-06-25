@@ -2,7 +2,7 @@
 
 <img src="https://img.shields.io/badge/🔐-Volli-FF3E00?style=for-the-badge&labelColor=2F74C0" alt="Volli" height="60">
 
-# Post‑Quantum Secure, Local‑First Messaging
+# Intelligent Privacy, User Sovereignty, Local‑First Messaging
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License MIT"></a>
@@ -12,18 +12,24 @@
   <a href="docs/SECURITY.md"><img src="https://img.shields.io/badge/Encryption-Post--Quantum-green?style=flat-square&logo=shield&logoColor=white" alt="Security"></a>
 </p>
 
-<h3>Private chat that stays private—even in a quantum future.</h3>
+<h3>The only messenger that adapts to you—not the other way around.</h3>
 
 <br/>
 
 </div>
 
 > [!NOTE]
-> **Project Status: 🚀 Alpha - P2P Messaging Implemented**  
-> Working encrypted messenger with WebRTC P2P communication, persistent storage (IndexedDB), real crypto (XChaCha20-Poly1305), and message queue with retry logic. Manual peer connection required (no signaling server yet).
+> **Project Status: 🚀 Alpha - Building Intelligent Privacy**  
+> Working encrypted messenger with P2P communication, persistent storage, and real crypto. Now developing the Adaptive Trust System—intelligent privacy that adapts to your context while respecting your absolute control.
 
 > [!TIP]
-> **P2P Messaging Live**: WebRTC data channels enable real-time encrypted messaging between peers. Messages are encrypted per-recipient and queued when peers are offline. Next priority: signaling server for automatic peer discovery.
+> **Current Focus**: Adaptive Trust System implementation. This groundbreaking feature balances privacy and performance automatically, learning from your usage patterns while keeping all data local. Your sovereignty rules always override system suggestions.
+
+## 💡 Why Privacy Shouldn't Be Hard
+
+> **The Problem**: Every messaging app makes you choose—either sacrifice privacy for features, or sacrifice usability for security.
+> 
+> **Our Solution**: Volli's Adaptive Trust System intelligently adjusts security based on your context, while your sovereignty rules ensure you're always in control. No more all-or-nothing privacy.
 
 <br/>
 
@@ -63,11 +69,32 @@
 <td align="center">✅ WebRTC P2P</td>
 <td align="center">❌ Centralized</td>
 </tr>
+<tr>
+<td><strong>🎯 Adaptive Trust</strong></td>
+<td align="center">🚧 In Development</td>
+<td align="center">❌ None</td>
+</tr>
+<tr>
+<td><strong>👑 User Sovereignty</strong></td>
+<td align="center">✅ Your Rules First</td>
+<td align="center">❌ Platform Rules</td>
+</tr>
 </tbody>
 </table>
 
 > [!IMPORTANT]
-> **Your messages never hit our servers—because we don't have any.**
+> **Your privacy, your rules, your device—no exceptions, no compromises.**
+
+### 🎯 The Volli Difference: Intelligent Privacy
+
+Unlike other messengers that force you to choose between privacy and convenience, Volli adapts intelligently to your context:
+
+- **☕ Convenience Mode**: For casual chats on trusted networks (< 2% battery)
+- **🛡️ Balanced Mode**: Smart defaults for daily use (< 4% battery)  
+- **🏰 Private Mode**: Maximum security for sensitive content (< 6% battery)
+- **🔒 Air Gap Mode**: Complete offline operation when you need it
+
+**Your Sovereignty**: Set rules once, and Volli respects them forever. No AI profiling, no cloud analytics—just intelligent local processing that puts you in control.
 
 <br/>
 
@@ -137,9 +164,13 @@ cd apps/mobile && npm run dev
 - [ ] **🔐 Post-Quantum Crypto** - Not yet implemented
 - [ ] **📡 Signaling Server** - Manual peer connection required
 
-### 🔜 Coming Soon (Phase 2)
+### 🚧 In Active Development (Phase 2)
 
-- [ ] **🎯 Adaptive Trust System** - Intelligent privacy/performance balance
+- [x] **🎯 Adaptive Trust System** - Architecture complete, implementation started
+  - [x] Research & design documentation complete
+  - [x] API contracts and architecture defined
+  - [ ] Core implementation (current focus)
+  - [ ] UI integration and trust visualization
 - [ ] **📡 Signaling Server** - Automatic peer discovery
 - [ ] **🔄 CRDT Sync** - Conflict resolution for multi-device
 - [ ] **📁 File Sharing** - Encrypted file transfer
@@ -289,8 +320,12 @@ graph TD
 - [x] Per-recipient encryption
 - [x] Network status monitoring
 
-### Phase 2: Advanced Features 🚧 *(CURRENT)*
-- [ ] Adaptive Trust System (intelligent privacy/performance balance)
+### Phase 2: Advanced Features 🚧 *(CURRENT - January 2025)*
+- [x] Adaptive Trust System - Architecture & API design complete
+  - [x] Research: 8 comprehensive studies completed
+  - [x] Architecture: Unified approach with sovereignty rules
+  - [ ] Implementation: TDD development in progress
+  - [ ] UI Integration: Trust mode selector and visualization
 - [ ] Signaling server for peer discovery
 - [ ] CRDT for conflict resolution
 - [ ] File sharing and sync
@@ -380,7 +415,7 @@ volli/
 <br/>
 
 Built with ❤️ for privacy and autonomy  
-**"Privacy is not granted—it's taken back."**
+**"Privacy that adapts to you—not the other way around."**
 
 <br/>
 
