@@ -42,7 +42,7 @@ graph LR
 ### Signaling Server
 | Task | Status | Owner | Documentation | Notes |
 |------|--------|-------|---------------|-------|
-| WebSocket signaling server | 🟢 Available | - | [Signaling Plan](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md#phase-1-mvp-signaling-weeks-1-3) | Core functionality |
+| WebSocket signaling server | 🔴 In Progress | @assistant | [Signaling Plan](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md#phase-1-mvp-signaling-weeks-1-3) | Core functionality |
 | Client integration | 🚧 Blocked | - | [Network Store](./P2P_NETWORKING.md#network-store) | Needs server first |
 | Production deployment | 🚧 Blocked | - | [Deployment](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md#deployment-strategy) | Needs server first |
 
