@@ -19,11 +19,11 @@
 </div>
 
 > [!NOTE]
-> **Project Status: 🚀 Alpha - Building Intelligent Privacy**  
-> Working encrypted messenger with P2P communication, persistent storage, and real crypto. Now developing the Adaptive Trust System—intelligent privacy that adapts to your context while respecting your absolute control.
+> **Project Status: 🚀 MVP Ready - Testing Phase**  
+> Fully functional encrypted messenger with WebRTC P2P communication, signaling server for peer discovery, and encrypted local storage. Ready for real-world testing!
 
 > [!TIP]
-> **Current Focus**: Adaptive Trust System implementation. This groundbreaking feature balances privacy and performance automatically, learning from your usage patterns while keeping all data local. Your sovereignty rules always override system suggestions.
+> **Current Focus**: Stabilization and user testing. The core messaging system is complete with signaling server. Next: Deploy and test with real users, then implement the Adaptive Trust "Go Dark" feature for seamless server-to-P2P transitions.
 
 > [!IMPORTANT]
 > **Want to Contribute?** Check out our [Task Board](docs/TASK_BOARD.md) to find available work!
@@ -48,34 +48,34 @@
 </thead>
 <tbody>
 <tr>
-<td><strong>🔮 Post‑Quantum Crypto</strong></td>
-<td align="center">🚧 Planned</td>
-<td align="center">❌ Not Yet</td>
-</tr>
-<tr>
-<td><strong>💾 Local‑First Storage</strong></td>
-<td align="center">✅ IndexedDB Encrypted</td>
+<td><strong>🔗 P2P Messaging</strong></td>
+<td align="center">✅ WebRTC Direct</td>
 <td align="center">❌ Server Required</td>
 </tr>
 <tr>
+<td><strong>💾 Local‑First Storage</strong></td>
+<td align="center">✅ Encrypted Vault</td>
+<td align="center">⚠️ Cloud Backup</td>
+</tr>
+<tr>
 <td><strong>🌐 Offline Operation</strong></td>
-<td align="center">✅ Fully Offline</td>
+<td align="center">✅ Message Queue</td>
 <td align="center">❌ Limited</td>
 </tr>
 <tr>
-<td><strong>🧩 Plugin Ecosystem</strong></td>
-<td align="center">✅ WASM Runtime Ready</td>
+<td><strong>🟣 "Go Dark" Mode</strong></td>
+<td align="center">🚧 Next Feature</td>
 <td align="center">❌ None</td>
 </tr>
 <tr>
-<td><strong>🔗 P2P Messaging</strong></td>
-<td align="center">✅ WebRTC P2P</td>
-<td align="center">❌ Centralized</td>
+<td><strong>🎯 Connection Trust</strong></td>
+<td align="center">✅ Visual Indicators</td>
+<td align="center">❌ Hidden</td>
 </tr>
 <tr>
-<td><strong>🎯 Adaptive Trust</strong></td>
-<td align="center">🚧 In Development</td>
-<td align="center">❌ None</td>
+<td><strong>🔮 Post‑Quantum</strong></td>
+<td align="center">📅 Future</td>
+<td align="center">❌ Not Yet</td>
 </tr>
 <tr>
 <td><strong>👑 User Sovereignty</strong></td>
@@ -88,26 +88,27 @@
 > [!IMPORTANT]
 > **Your privacy, your rules, your device—no exceptions, no compromises.**
 
-### 🎯 The Volli Difference: Intelligent Privacy
+### 🎯 The Volli Difference: Connection-Based Trust
 
-Unlike other messengers that force you to choose between privacy and convenience, Volli adapts intelligently to your context:
+Unlike other messengers that hide how you're connected, Volli shows you exactly what's happening with visual indicators:
 
-- **☕ Convenience Mode**: For casual chats on trusted networks (< 2% battery)
-- **🛡️ Balanced Mode**: Smart defaults for daily use (< 4% battery)  
-- **🏰 Private Mode**: Maximum security for sensitive content (< 6% battery)
-- **🔒 Air Gap Mode**: Complete offline operation when you need it
+- **Direct P2P**: Your messages go directly to your peer, no servers involved
+- **Server-Assisted**: Using the signaling server for discovery, still encrypted
+- **Unverified**: New contact, not yet verified
 
-**Your Sovereignty**: Set rules once, and Volli respects them forever. No AI profiling, no cloud analytics—just intelligent local processing that puts you in control.
+**"Go Dark" Feature**: Start with easy server-assisted connections, then upgrade to full P2P as trust builds. One tap to transition for maximum privacy.
+
+**Your Control**: Every connection remembers your preference. The system learns but never overrides your choices.
 
 <br/>
 
 ## 🚀 Quick Start
 
 > [!SUCCESS]
-> **P2P Messaging Working**: Connect directly to peers using WebRTC data channels. Messages are encrypted, queued when offline, and synced in real-time. Your data persists locally in encrypted IndexedDB storage.
+> **Complete Messaging System**: WebRTC P2P messaging with signaling server for easy peer discovery. Messages are encrypted end-to-end, queued when offline, and your data stays in your encrypted local vault.
 
 > [!TIP]
-> Volli uses **P2P connections**—messages go directly between peers via WebRTC. No servers store your messages. Currently requires manual connection (offer/answer exchange) until signaling server is added.
+> **Two Ways to Connect**: Use the signaling server for easy username-based discovery, or share hex IDs for direct P2P connections. All messages are end-to-end encrypted regardless of connection method.
 
 <details open>
 <summary><h3>📦 Installation</h3></summary>
@@ -117,35 +118,38 @@ Unlike other messengers that force you to choose between privacy and convenience
 git clone https://github.com/foofork/Volli.git
 cd Volli
 
-# Install dependencies
-npm install
+# Install dependencies (requires pnpm)
+pnpm install
 
-# Build packages
-npm run build:packages
+# Start development servers
+pnpm dev
 
-# Run the web app
-cd apps/web && npm run dev     # → http://localhost:3000
+# This starts:
+# - Web app → http://localhost:5173
+# - Signaling server → http://localhost:8080
 
-# Run tests (89.7% coverage)
-npm test
+# Run tests
+pnpm test
 ```
 
 </details>
 
 <details>
-<summary><h3>🖥️ Platform-Specific Builds</h3></summary>
+<summary><h3>🖥️ Platform Support (Coming Soon)</h3></summary>
 
-#### Desktop (Tauri)
+#### Desktop (Tauri) - Planned
 ```bash
-# Requires Rust toolchain
-cd apps/desktop && npm run dev
+# Not yet implemented
+# Target: Month 3-4
 ```
 
-#### Mobile (Capacitor)
+#### Mobile (Capacitor) - Planned
 ```bash
-# Requires Xcode/Android Studio
-cd apps/mobile && npm run dev
+# Not yet implemented  
+# Target: Month 2-3 (PWA wrapper first)
 ```
+
+**Current Status**: Web application only. Mobile and desktop apps are planned but not yet implemented.
 
 </details>
 
@@ -153,34 +157,42 @@ cd apps/mobile && npm run dev
 
 ## ✨ Features
 
-### 🎯 What's Actually Working
+### 🎯 What's Working Today
 
-- [x] **📦 Core Packages** - Encryption libraries with real crypto implementations
-- [x] **🧪 Test Coverage** - 89.7% coverage (113/126 tests passing)
-- [x] **🎨 Web UI** - Full functionality with all screens working
-- [x] **💾 Persistent Storage** - IndexedDB with Dexie, encrypted vault
-- [x] **🔑 Vault System** - Create, unlock, auto-lock with Argon2id KDF
-- [x] **💬 P2P Messaging** - WebRTC data channels for direct peer communication
-- [x] **📨 Message Queue** - Persistent queue with exponential backoff retry
-- [x] **🔐 Recipient Encryption** - Per-recipient message encryption
-- [x] **🧩 Plugin System** - WASM runtime with sandboxing
-- [ ] **🔐 Post-Quantum Crypto** - Not yet implemented
-- [ ] **📡 Signaling Server** - Manual peer connection required
+- [x] **💬 Complete P2P Messaging** - WebRTC with automatic peer discovery
+- [x] **📡 Signaling Server** - WebSocket server for easy peer connections
+- [x] **🔐 End-to-End Encryption** - XChaCha20-Poly1305 for all messages
+- [x] **💾 Encrypted Local Storage** - Vault system with Argon2id KDF
+- [x] **🎨 Full Web Application** - Responsive UI for all features
+- [x] **📨 Message Queue** - Offline support with automatic retry
+- [x] **👥 Contact Management** - Add via username or hex ID
+- [x] **🔑 Identity System** - Cryptographic identity generation
+- [x] **🧪 Test Coverage** - ~80% across core packages
+- [x] **📊 Real-time Status** - Connection and message delivery indicators
 
-### 🚧 In Active Development (Phase 2)
+### 🚧 Coming Next
 
-- [x] **🎯 Adaptive Trust System** - Architecture complete, implementation started
-  - [x] Research & design documentation complete
-  - [x] API contracts and architecture defined
-  - [ ] Core implementation (current focus)
-  - [ ] UI integration and trust visualization
-- [ ] **📡 Signaling Server** - Automatic peer discovery
-- [ ] **🔄 CRDT Sync** - Conflict resolution for multi-device
+**Phase 1: Stabilization (Current)**
+- [ ] **🐛 Fix Build Issues** - Resolve WASM configuration
+- [ ] **✅ Update Tests** - Fix failing test expectations
+- [ ] **🚀 Deploy MVP** - Production signaling server
+
+**Phase 2: Trust Features**
+- [ ] **🟣 "Go Dark" Mode** - Seamless server → P2P transition
+- [ ] **🔄 Connection Memory** - Remember peer preferences
+- [ ] **🎨 Trust UI** - Purple/Blue/Orange indicators
+- [ ] **🔑 Remote Key Exchange** - P2P without meeting
+
+**Phase 3: Platform Expansion**
+- [ ] **📱 Mobile PWA** - Capacitor wrapper for iOS/Android
+- [ ] **🖥️ Desktop App** - Tauri for Windows/Mac/Linux
+- [ ] **👥 Group Messaging** - Multi-party conversations
+
+**Future Features**
+- [ ] **🔄 CRDT Sync** - Multi-device conflict resolution
 - [ ] **📁 File Sharing** - Encrypted file transfer
-- [ ] **🔮 Post-Quantum Crypto** - Kyber-1024 + Dilithium-3
-- [ ] **🖥️ Desktop App** - Native Tauri application
-- [ ] **📱 Mobile Apps** - iOS and Android with Capacitor
-- [ ] **👥 Group Chat** - Multi-participant conversations
+- [ ] **🔮 Post-Quantum** - Future-proof cryptography
+- [ ] **🧩 Plugin Marketplace** - Community extensions
 
 <br/>
 
@@ -276,33 +288,32 @@ graph TD
 </table>
 
 > [!CAUTION]
-> **Alpha Software**: P2P messaging works but requires manual connection setup. Not audited for production use. Post-quantum crypto not yet implemented.
+> **MVP Software**: Not yet audited for production use. Post-quantum crypto planned for future release.
 
 <br/>
 
-## 🎯 Adaptive Trust System
+## 🎯 Connection-Based Trust (Coming Soon)
 
 > [!INFO]
-> **Intelligent Privacy**: Volli adapts its security posture based on your context while respecting your absolute control through sovereignty rules.
+> **Visual Trust Indicators**: See exactly how you're connected to each contact with color-coded security levels.
 
-### Trust Modes
+### Connection Types
 
-| Mode | Icon | Use Case | Performance |
-|------|------|----------|-------------|
-| **Convenience** | ☕ | Casual chats, trusted networks | Fastest |
-| **Balanced** | 🛡️ | Daily communication | Optimal |
-| **Private** | 🏰 | Sensitive content | Secure |
-| **Air Gap** | 🔒 | Maximum security | Local only |
+| Type | Icon | Description |
+|------|------|-------------|
+| **Direct P2P** | 🔒 | Maximum privacy, no servers |
+| **Server-Assisted** | 🔐 | Encrypted via signaling server |
+| **Unverified** | ⚠️ | New contact, not yet trusted |
 
-### Key Features
+### "Go Dark" Feature (Next Release)
 
-- **User Sovereignty**: Your rules always override system suggestions
-- **Context Awareness**: Adapts to network, device, and usage patterns
-- **Performance Budgets**: < 5% battery/CPU impact guaranteed
-- **Privacy First**: No user profiling, all processing local
+- **Progressive Trust**: Start with server connections, upgrade to P2P
+- **One-Tap Transition**: Easy switch to direct connection
+- **Connection Memory**: System remembers your preferences
+- **Remote Key Exchange**: Secure P2P without meeting in person
 
 > [!TIP]
-> See [Adaptive Trust Documentation](docs/adaptive-trust/ADAPTIVE_TRUST_OVERVIEW.md) for implementation details.
+> See [Connection Modes Documentation](docs/adaptive-trust/ADAPTIVE_TRUST_CONNECTION_MODES.md) for details.
 
 <br/>
 
@@ -310,36 +321,36 @@ graph TD
 
 > See [detailed roadmap](docs/ROADMAP.md) for complete timeline and sprint planning.
 
-### Phase 0: Integration ✅ *(COMPLETE)*
-- [x] Add persistent storage (IndexedDB with Dexie)
-- [x] Connect all packages to web app
-- [x] Integrate real encryption (libsodium)
-- [x] Complete vault management system
+### Phase 0: Foundation ✅ *(COMPLETE)*
+- [x] Encrypted storage with IndexedDB
+- [x] Vault system with secure key derivation
+- [x] Core messaging architecture
+- [x] Identity and crypto primitives
 
-### Phase 1: Network Layer ✅ *(COMPLETE - January 2025)*
-- [x] P2P messaging with WebRTC data channels
-- [x] Message queue with persistence and retry
-- [x] Real-time message sync
-- [x] Per-recipient encryption
-- [x] Network status monitoring
+### Phase 1: P2P Messaging ✅ *(COMPLETE)*
+- [x] WebRTC peer connections
+- [x] Signaling server for discovery
+- [x] Message queue with offline support
+- [x] End-to-end encryption
+- [x] Real-time connection status
 
-### Phase 2: Advanced Features 🚧 *(CURRENT - January 2025)*
-- [x] Adaptive Trust System - Architecture & API design complete
-  - [x] Research: 8 comprehensive studies completed
-  - [x] Architecture: Unified approach with sovereignty rules
-  - [ ] Implementation: TDD development in progress
-  - [ ] UI Integration: Trust mode selector and visualization
-- [ ] Signaling server for peer discovery
-- [ ] CRDT for conflict resolution
-- [ ] File sharing and sync
-- [ ] Post-quantum crypto (Kyber/Dilithium)
-- [ ] Multi-device sync
+### Phase 2: MVP Testing 🚧 *(CURRENT)*
+- [x] Complete web application
+- [x] Signaling server implementation
+- [ ] Production deployment
+- [ ] User testing and feedback
+- [ ] Bug fixes and stabilization
 
-### Phase 3: Multi-Platform 🔜
+### Phase 3: Trust Features *(NEXT)*
+- [ ] "Go Dark" mode implementation
+- [ ] Connection preference memory
+- [ ] Visual trust indicators
+- [ ] Remote key exchange protocol
+### Phase 4: Multi-Platform 🔜
+- [ ] Mobile PWA (Capacitor)
 - [ ] Desktop app (Tauri)
-- [ ] iOS app (Capacitor) 
-- [ ] Android app (Capacitor)
 - [ ] Group messaging
+- [ ] Multi-device sync
 
 <br/>
 
@@ -352,12 +363,12 @@ graph TD
 
 | Script | Description |
 |--------|-------------|
-| `npm install` | Install all dependencies |
-| `npm run build:packages` | Build all packages |
-| `npm run test` | Run test suite (89.7% coverage) |
-| `npm run lint` | Lint codebase |
-| `npm run typecheck` | TypeScript validation |
-| `npm run dev` | Start dev servers |
+| `pnpm install` | Install all dependencies |
+| `pnpm build` | Build all packages |
+| `pnpm test` | Run test suite |
+| `pnpm lint` | Lint codebase |
+| `pnpm typecheck` | TypeScript validation |
+| `pnpm dev` | Start web app + signaling server |
 
 </details>
 
@@ -392,11 +403,12 @@ volli/
 
 | 📖 Document | 📝 Description |
 |:------------|:---------------|
-| [**Overview**](docs/OVERVIEW.md) | Project introduction and goals |
+| [**Getting Started**](docs/GETTING_STARTED.md) | Quick setup and first steps |
+| [**Project Status**](docs/PROJECT_STATUS.md) | Current implementation state |
 | [**Architecture**](docs/ARCHITECTURE.md) | System design and components |
 | [**Security**](docs/SECURITY.md) | Cryptography and security model |
-| [**Developer Guide**](docs/DEVELOPER.md) | Setup and development workflow |
-| [**Roadmap**](docs/ROADMAP.md) | Development timeline and milestones |
+| [**Current Tasks**](docs/CURRENT_TASKS.md) | What needs to be done |
+| [**Connection Trust**](docs/adaptive-trust/ADAPTIVE_TRUST_CONNECTION_MODES.md) | Trust model documentation |
 
 </div>
 
@@ -405,7 +417,7 @@ volli/
 ## 🤝 Contributing
 
 > [!NOTE]
-> **Not accepting contributions at this time.** Alpha development in progress. P2P messaging functional but needs signaling infrastructure.
+> **Contributions Welcome!** Check [Current Tasks](docs/CURRENT_TASKS.md) for work items and [Contributing Guide](docs/CONTRIBUTING_WORKFLOW.md) for how to help.
 
 <br/>
 

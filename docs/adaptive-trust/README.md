@@ -3,6 +3,12 @@
 ## Quick Navigation
 
 ### 📚 Start Here
+
+#### Connection-Based Trust Model (Current Direction)
+- **[Connection Modes & Trust](./ADAPTIVE_TRUST_CONNECTION_MODES.md)** - P2P vs Server trust model with visual indicators
+- **[Go Dark UX Flow](./GO_DARK_UX_FLOW.md)** - Detailed UX design for server to P2P transition
+
+#### Environment-Based Trust Model (Alternative Approach)
 1. **[Overview](./ADAPTIVE_TRUST_OVERVIEW.md)** - What is Adaptive Trust?
 2. **[Phasing Plan](./ADAPTIVE_TRUST_PHASING_PLAN.md)** - Rollout strategy and priorities
 3. **[Implementation Guide](./ADAPTIVE_TRUST_IMPLEMENTATION_GUIDE.md)** - How to build it
@@ -21,7 +27,18 @@
 
 ## Key Concepts
 
-### Trust Modes
+### Connection-Based Trust Model (Current)
+Visual indicators for connection security:
+- 🟣 **Purple** - Direct P2P connection (highest privacy)
+- 🔵 **Blue** - Server-assisted connection (encrypted routing)
+- 🟠 **Orange** - Unverified source (caution required)
+
+Key Features:
+- **"Go Dark"** - Transition from server to P2P as trust builds
+- **Connection Memory** - System learns preferred connection methods
+- **Progressive Trust** - Relationships evolve from public to private
+
+### Environment-Based Trust Model (Alternative)
 - ☕ **Convenience** - Fast, minimal privacy
 - 🛡️ **Balanced** - Good privacy/performance balance  
 - 🏰 **Private** - Maximum privacy

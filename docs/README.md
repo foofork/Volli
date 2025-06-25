@@ -1,47 +1,66 @@
 # Volli Documentation
 
+## 🚀 Start Here
+
+### Essential Reads
+- **[Getting Started](./GETTING_STARTED.md)** - Setup and run Volli in minutes
+- **[Project Status](./PROJECT_STATUS.md)** - What's working, what's not (January 2025)
+- **[Current Tasks](./CURRENT_TASKS.md)** - What needs to be done now
+
 ## 📚 Documentation Structure
 
 ### Core Documentation
 - **[Architecture](./ARCHITECTURE.md)** - System architecture overview
-- **[Roadmap](./ROADMAP.md)** - Development timeline and planning
-- **[Security](./SECURITY.md)** - Security model and practices
-- **[Testing](./TESTING.md)** - Testing approach and coverage
-- **[Claude Configuration](./CLAUDE.md)** - SPARC methodology and AI assistance
+- **[Security](./SECURITY.md)** - Security model and encryption details
+- **[P2P Networking](./P2P_NETWORKING.md)** - WebRTC implementation
+- **[Test Status](./TEST_STATUS.md)** - Current test coverage
+- **[Code Quality](./CODE_QUALITY.md)** - Standards and practices
 
 ### Feature Documentation
-- **[Adaptive Trust System](./adaptive-trust/)** - Intelligent privacy/performance balance
-  - [Overview](./adaptive-trust/ADAPTIVE_TRUST_OVERVIEW.md)
+- **[Adaptive Trust System](./adaptive-trust/)** - Connection-based trust model
+  - [Connection Modes](./adaptive-trust/ADAPTIVE_TRUST_CONNECTION_MODES.md) - P2P vs Server model
+  - [Go Dark UX Flow](./adaptive-trust/GO_DARK_UX_FLOW.md) - Server to P2P transition
   - [Implementation Guide](./adaptive-trust/ADAPTIVE_TRUST_IMPLEMENTATION_GUIDE.md)
   - [Architecture](./adaptive-trust/ADAPTIVE_TRUST_ARCHITECTURE.md)
-  - [Performance Guide](./adaptive-trust/ADAPTIVE_TRUST_PERFORMANCE_GUIDE.md)
-  - [Security Checklist](./adaptive-trust/ADAPTIVE_TRUST_SECURITY_CHECKLIST.md)
   - [Research](./adaptive-trust/research/)
 
+### Platform & Deployment
+- **[Signaling Server](./signaling/)** - Peer discovery documentation
+  - [Phasing Plan](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md)
+- **[Multi-Platform Strategy](./platforms/)** - Mobile and desktop plans
+  - [Platform Phasing](./platforms/MULTIPLATFORM_PHASING_PLAN.md)
+
 ### Development Guides
-- **[Core Package Template](./packages/core-template.md)** - Creating new packages
-- **[Integration Template](./apps/sveltekit-integration.md)** - Integrating with apps
+- **[Contributing Workflow](./CONTRIBUTING_WORKFLOW.md)** - How to contribute
+- **[Developer Guide](./DEVELOPER.md)** - Development environment setup
+- **[SPARC Methodology](../CLAUDE.md)** - AI-assisted TDD development
 
-### Research & Planning
-- **[Tech Stack Research](./research/)** - Technology evaluations
-- **[Architecture Decision Records](./architecture/)** - Design decisions
+### Planning & History
+- **[Roadmap](./ROADMAP.md)** - Long-term vision
+- **[Task Board](./TASK_BOARD.md)** - Historical task tracking
+- **[Launch Strategy](./LAUNCH_STRATEGY.md)** - Go-to-market planning
 
-## 🎯 Quick Links
+## 🎯 Quick Links by Role
 
-### For New Contributors
-1. **[Find Work: TASK_BOARD.md](./TASK_BOARD.md)** - Available tasks & how to claim them
-2. Read [Architecture](./ARCHITECTURE.md)
-3. Review [Security Model](./SECURITY.md)
-4. Understand [Testing Approach](./TESTING.md)
+### For New Users
+1. Start with **[Getting Started](./GETTING_STARTED.md)**
+2. Check **[Project Status](./PROJECT_STATUS.md)** to understand current state
+3. Review **[Architecture](./ARCHITECTURE.md)** for system overview
 
-### For Adaptive Trust Implementation
-1. Start with [Adaptive Trust Overview](./adaptive-trust/ADAPTIVE_TRUST_OVERVIEW.md)
-2. Follow [Implementation Guide](./adaptive-trust/ADAPTIVE_TRUST_IMPLEMENTATION_GUIDE.md)
-3. Use [TDD Guide](./adaptive-trust/ADAPTIVE_TRUST_TDD_GUIDE.md)
+### For Contributors
+1. Read **[Contributing Workflow](./CONTRIBUTING_WORKFLOW.md)**
+2. Check **[Current Tasks](./CURRENT_TASKS.md)** for work items
+3. Follow **[Developer Guide](./DEVELOPER.md)** for setup
+
+### For Security Researchers
+1. Review **[Security Model](./SECURITY.md)**
+2. Check **[Adaptive Trust](./adaptive-trust/ADAPTIVE_TRUST_CONNECTION_MODES.md)**
+3. See **[P2P Networking](./P2P_NETWORKING.md)** for protocol details
 
 ### For SPARC Development
-1. Read [Claude Configuration](./CLAUDE.md)
-2. Use `npx claude-flow sparc tdd "feature"` for TDD help
+1. Read **[SPARC Configuration](../CLAUDE.md)**
+2. Use `npx claude-flow sparc tdd "feature"` for TDD assistance
+3. Follow **[Test Status](./TEST_STATUS.md)** for coverage goals
 
 ## 📁 Archive
 
