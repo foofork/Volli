@@ -1,5 +1,9 @@
 # 📚 Volli Documentation Index
 
+## 🎯 Start Here for Contributors
+
+**→ [TASK_BOARD.md](./TASK_BOARD.md) ← Find available work and claim tasks**
+
 ## 📋 Quick Navigation
 
 ### Essential Documents (Root Level)
@@ -8,6 +12,11 @@
 - **[QUICKSTART.md](../QUICKSTART.md)** - Getting started guide
 - **[CLAUDE.md](../CLAUDE.md)** - Claude Code configuration
 
+### 🚀 Launch Strategy (NEW)
+- **[LAUNCH_STRATEGY.md](./LAUNCH_STRATEGY.md)** - Path from demo to product launch
+- **[signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md)** - User discovery rollout
+- **[platforms/MULTIPLATFORM_PHASING_PLAN.md](./platforms/MULTIPLATFORM_PHASING_PLAN.md)** - Mobile/Desktop app strategy
+
 ### Core Documentation
 - **[OVERVIEW.md](./OVERVIEW.md)** - Project vision and goals
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System architecture
@@ -15,6 +24,11 @@
 - **[DEVELOPER.md](./DEVELOPER.md)** - Development guidelines
 - **[CODE_QUALITY.md](./CODE_QUALITY.md)** - Code standards and quality
 - **[ROADMAP.md](./ROADMAP.md)** - Future development plans
+
+### Feature Development Plans
+- **[adaptive-trust/](./adaptive-trust/)** - Adaptive Trust System documentation
+- **[adaptive-trust/ADAPTIVE_TRUST_PHASING_PLAN.md](./adaptive-trust/ADAPTIVE_TRUST_PHASING_PLAN.md)** - Phased rollout strategy
+- **[P2P_NETWORKING.md](./P2P_NETWORKING.md)** - P2P implementation guide
 
 ### Technical Specifications
 - **[specs/encryption.md](./specs/encryption.md)** - Complete encryption specification

@@ -2,14 +2,25 @@
 
 ## Research Overview
 
-This directory contains critical research for Volli's Phase -1 technology evaluation, examining the ideal approaches for building a secure, decentralized messaging platform.
+This directory contains critical research for Volli's technology evaluation, examining the ideal approaches for building a secure, decentralized messaging platform with adaptive trust capabilities.
 
 ## Research Documents
 
+### Core Technology Research
 1. **[IndexedDB Libraries](./indexeddb-libraries.md)** - Persistent storage evaluation
 2. **[P2P Solutions](./p2p-solutions.md)** - Networking and peer-to-peer analysis  
 3. **[Post-Quantum Cryptography](./post-quantum-crypto.md)** - Future-proof security
 4. **[CRDT Libraries](./crdt-libraries.md)** - Distributed data synchronization
+
+### Adaptive Trust System Research
+5. **[Network Trust Classification](./NETWORK_TRUST_CLASSIFICATION.md)** - Methods to identify trusted vs untrusted networks
+6. **[Content Sensitivity Detection](./CONTENT_SENSITIVITY_DETECTION.md)** - Detecting sensitive content without breaking E2E encryption
+7. **[Rule Conflict Resolution](./RULE_CONFLICT_RESOLUTION.md)** - Deterministic conflict resolution strategies
+8. **[Battery-Efficient P2P Discovery](./BATTERY_EFFICIENT_P2P_DISCOVERY.md)** - Adaptive duty cycling strategies
+9. **[Trust Visualization UI Patterns](./TRUST_VISUALIZATION_UI_PATTERNS.md)** - Non-technical security indicators
+10. **[Privacy-Preserving Learning](./PRIVACY_PRESERVING_LEARNING.md)** - Learning without creating profiles
+11. **[P2P Messenger Analysis](./P2P_MESSENGER_ANALYSIS.md)** - Deep analysis of existing P2P messengers
+12. **[Lightweight Performance Monitoring](./LIGHTWEIGHT_PERFORMANCE_MONITORING.md)** - Monitoring without impacting performance
 
 ## ✅ Implementation Status (December 2024)
 
