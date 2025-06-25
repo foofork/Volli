@@ -42,7 +42,7 @@ graph LR
 ### Signaling Server
 | Task | Status | Owner | Documentation | Notes |
 |------|--------|-------|---------------|-------|
-| WebSocket signaling server | 🔴 In Progress | @assistant | [Signaling Plan](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md#phase-1-mvp-signaling-weeks-1-3) | Core functionality |
+| WebSocket signaling server | ✅ Complete | @assistant | [Signaling Plan](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md#phase-1-mvp-signaling-weeks-1-3) | TDD implementation complete |
 | Client integration | 🚧 Blocked | - | [Network Store](./P2P_NETWORKING.md#network-store) | Needs server first |
 | Production deployment | 🚧 Blocked | - | [Deployment](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md#deployment-strategy) | Needs server first |
 
@@ -62,7 +62,7 @@ graph LR
 |------|--------|-------|---------------|-------|
 | Rule Engine | ✅ Complete | @assistant | [Implementation Guide](./adaptive-trust/ADAPTIVE_TRUST_IMPLEMENTATION_GUIDE.md#rule-engine--complete) | Merged in PR #1 |
 | Network Detector | 🟢 Available | - | [Alpha Scope](./adaptive-trust/ADAPTIVE_TRUST_PHASING_PLAN.md#2-network-detector--essential) | WiFi trust only |
-| Trust Manager | 🟢 Available | - | [Alpha Scope](./adaptive-trust/ADAPTIVE_TRUST_PHASING_PLAN.md#1-trust-manager--essential) | Basic decision flow |
+| Trust Manager | 🔴 In Progress | @assistant | [Alpha Scope](./adaptive-trust/ADAPTIVE_TRUST_PHASING_PLAN.md#1-trust-manager--essential) | Basic decision flow |
 | Volli Integration | 🚧 Blocked | - | [Integration](./adaptive-trust/ADAPTIVE_TRUST_PHASING_PLAN.md#3-volli-integration--essential) | Needs Trust Manager |
 
 ### Desktop Apps
@@ -76,6 +76,19 @@ graph LR
 ## 📋 Task Details
 
 ### 🔴 In Progress Tasks
+
+#### WebSocket Signaling Server (COMPLETE)
+**Owner**: @assistant  
+**Started**: 2025-06-25  
+**Progress**:
+- ✅ TDD tests written (13 tests covering all functionality)
+- ✅ SignalingServer class implementation complete
+- ✅ User registration and presence tracking
+- ✅ Offer/Answer relay for WebRTC
+- ✅ Error handling and connection cleanup
+- ✅ All tests passing
+- ✅ Build and typecheck successful
+- ✅ Committed to branch: `feature/signaling-server`
 
 #### Example: Rule Engine (COMPLETE)
 **Owner**: @assistant  
