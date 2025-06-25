@@ -43,7 +43,7 @@ graph LR
 | Task | Status | Owner | Documentation | Notes |
 |------|--------|-------|---------------|-------|
 | WebSocket signaling server | ✅ Complete | @assistant | [Signaling Plan](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md#phase-1-mvp-signaling-weeks-1-3) | TDD implementation complete |
-| Client integration | 🚧 Blocked | - | [Network Store](./P2P_NETWORKING.md#network-store) | Needs server first |
+| Client integration | ✅ Complete | @assistant | [Network Store](./P2P_NETWORKING.md#network-store) | SignalingClient integrated |
 | Production deployment | 🚧 Blocked | - | [Deployment](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md#deployment-strategy) | Needs server first |
 
 ### Mobile Apps
@@ -88,6 +88,19 @@ graph LR
 - ✅ Error handling and connection cleanup
 - ✅ All tests passing
 - ✅ Build and typecheck successful
+- ✅ Committed to branch: `feature/signaling-server`
+
+#### Client Integration (COMPLETE)
+**Owner**: @assistant  
+**Started**: 2025-06-25  
+**Progress**:
+- ✅ SignalingClient class with TDD (15 tests)
+- ✅ WebSocket connection management with reconnection
+- ✅ User registration and discovery
+- ✅ Offer/Answer relay handlers
+- ✅ NetworkStore integration with signaling
+- ✅ Automatic peer discovery before connection
+- ✅ All tests passing and builds successful
 - ✅ Committed to branch: `feature/signaling-server`
 
 #### Example: Rule Engine (COMPLETE)
