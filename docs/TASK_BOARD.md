@@ -43,11 +43,11 @@ graph LR
 
 | Task | Status | Owner | Documentation | Notes |
 |------|--------|-------|---------------|-------|
-| Local signaling server setup | 🔴 In Progress | @assistant | [Local Testing Guide](#local-testing-setup) | Start server locally |
-| Web app signaling integration | 🟢 Available | - | [Integration Points](#integration-points) | Connect UI to signaling |
-| Dual contact discovery (hex + signaling) | 🟢 Available | - | [Contact Discovery](#contact-discovery) | Keep hex keys + add username |
-| Real P2P message delivery | 🟢 Available | - | [Message Flow](#message-flow) | Replace mock delivery |
-| End-to-end testing setup | 🟢 Available | - | [Testing Guide](#testing-flow) | Two-browser demo |
+| Local signaling server setup | ✅ Complete | @assistant | [Local Testing Guide](#local-testing-setup) | Server running on :8080 |
+| Web app signaling integration | ✅ Complete | @assistant | [Integration Points](#integration-points) | Auto-connect after vault unlock |
+| Dual contact discovery (hex + signaling) | ✅ Complete | @assistant | [Contact Discovery](#contact-discovery) | Tab interface: username + hex |
+| Real P2P message delivery | ✅ Complete | @assistant | [Message Flow](#message-flow) | NetworkStore integrated |
+| End-to-end testing setup | 🟢 Ready to Test | - | [Testing Guide](#testing-flow) | **Ready for demo!** |
 
 ---
 
