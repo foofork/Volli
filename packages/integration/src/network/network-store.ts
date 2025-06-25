@@ -1,5 +1,7 @@
 import { writable, get } from 'svelte/store';
 import type { Message } from '../types';
+import { SignalingClient } from './SignalingClient';
+import type { OfferEvent, AnswerEvent } from './SignalingClient';
 
 export interface NetworkState {
   isOnline: boolean;
@@ -23,6 +25,9 @@ class NetworkStore {
 
   private messageHandlers: Set<(message: Message) => void> = new Set();
   private pendingMessages: Map<string, Message[]> = new Map();
+  private signalingClient?: SignalingClient;
+  private userId?: string;
+  private publicKey?: string;
 
   constructor() {
     // Monitor online/offline status
@@ -90,7 +95,58 @@ class NetworkStore {
     return get(this.store).dataChannels.get(peerId);
   }
 
-  async connectToPeer(peerId: string, offer?: RTCSessionDescriptionInit): Promise<void> {
+  async connectToSignaling(url: string, userId: string, publicKey: string): Promise<void> {
+    this.userId = userId;
+    this.publicKey = publicKey;
+    
+    // Update status
+    this.store.update(state => ({ ...state, signalingStatus: 'connecting' }));
+    
+    try {
+      // Create signaling client
+      this.signalingClient = new SignalingClient(url);
+      
+      // Set up event handlers
+      this.signalingClient.on('offer', this.handleIncomingOffer.bind(this));
+      this.signalingClient.on('answer', this.handleIncomingAnswer.bind(this));
+      this.signalingClient.on('error', (error) => {
+        console.error('Signaling error:', error);
+      });
+      this.signalingClient.on('disconnected', () => {
+        this.store.update(state => ({ ...state, signalingStatus: 'disconnected' }));
+      });
+      
+      // Connect and register
+      await this.signalingClient.connect();
+      await this.signalingClient.register(userId, publicKey);
+      
+      // Update status
+      this.store.update(state => ({ ...state, signalingStatus: 'connected' }));
+    } catch (error) {
+      this.store.update(state => ({ ...state, signalingStatus: 'disconnected' }));
+      throw error;
+    }
+  }
+
+  async disconnectFromSignaling(): Promise<void> {
+    if (this.signalingClient) {
+      this.signalingClient.disconnect();
+      this.signalingClient = undefined;
+    }
+    this.store.update(state => ({ ...state, signalingStatus: 'disconnected' }));
+  }
+
+  async connectToPeer(peerId: string): Promise<void> {
+    if (!this.signalingClient || !this.userId) {
+      throw new Error('Not connected to signaling server');
+    }
+    
+    // Check if peer is online
+    const discovery = await this.signalingClient.discoverUser(peerId);
+    if (!discovery.online) {
+      throw new Error(`User ${peerId} is not online`);
+    }
+    
     const state = get(this.store);
     
     // Create peer connection if it doesn't exist
@@ -99,21 +155,58 @@ class NetworkStore {
       peerConnection = this.createPeerConnection(peerId);
       state.peers.set(peerId, peerConnection);
     }
+    
+    // Create an offer
+    const dataChannel = peerConnection.createDataChannel('messages');
+    this.setupDataChannel(peerId, dataChannel);
+    
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    
+    // Send offer via signaling
+    await this.signalingClient.sendOffer(peerId, offer);
+  }
 
-    if (offer) {
-      // Answer an incoming offer
+  private async handleIncomingOffer(event: OfferEvent): Promise<void> {
+    const { from, offer } = event;
+    const state = get(this.store);
+    
+    // Create peer connection if it doesn't exist
+    let peerConnection = state.peers.get(from);
+    if (!peerConnection) {
+      peerConnection = this.createPeerConnection(from);
+      state.peers.set(from, peerConnection);
+    }
+    
+    try {
+      // Set remote description and create answer
       await peerConnection.setRemoteDescription(offer);
       const answer = await peerConnection.createAnswer();
       await peerConnection.setLocalDescription(answer);
-      // In real implementation, send answer back via signaling
-    } else {
-      // Create an offer
-      const dataChannel = peerConnection.createDataChannel('messages');
-      this.setupDataChannel(peerId, dataChannel);
       
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-      // In real implementation, send offer via signaling
+      // Send answer back via signaling
+      if (this.signalingClient) {
+        await this.signalingClient.sendAnswer(from, answer);
+      }
+    } catch (error) {
+      console.error('Error handling offer:', error);
+    }
+  }
+
+  private async handleIncomingAnswer(event: AnswerEvent): Promise<void> {
+    const { from, answer } = event;
+    const state = get(this.store);
+    
+    const peerConnection = state.peers.get(from);
+    if (!peerConnection) {
+      console.error('Received answer for unknown peer:', from);
+      return;
+    }
+    
+    try {
+      await peerConnection.setRemoteDescription(answer);
+    } catch (error) {
+      console.error('Error handling answer:', error);
     }
   }
 
