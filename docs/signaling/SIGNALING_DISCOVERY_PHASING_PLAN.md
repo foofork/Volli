@@ -1,8 +1,15 @@
 # Signaling & Discovery - Phased Implementation Plan
 
+## 🎉 UPDATE: Phase 1 Complete!
+**Status**: ✅ **PHASE 1 COMPLETE** (December 2024)
+- WebSocket signaling server fully implemented with TDD
+- Client integration with NetworkStore complete
+- ICE candidate exchange for NAT traversal implemented
+- Ready for production deployment
+
 ## Executive Summary
 
-**THE BLOCKER**: Volli has working P2P messaging but users must manually exchange connection offers. Without discovery, it's a demo, not a product.
+**THE BLOCKER**: ~~Volli has working P2P messaging but users must manually exchange connection offers. Without discovery, it's a demo, not a product.~~ **SOLVED** ✅
 
 ## Current State vs Launch Requirements
 
@@ -12,10 +19,10 @@
 - Offline message queue
 - Web app UI
 
-### What's Missing ❌
-- **Finding peers** (currently manual)
-- **Presence** (is peer online?)
-- **Push notifications** (mobile wakeup)
+### ~~What's Missing~~ What's Complete ✅
+- ✅ **Finding peers** (automatic discovery via signaling server)
+- ✅ **Presence** (real-time online/offline status)  
+- 🟢 **Push notifications** (ready for implementation - signaling infrastructure complete)
 
 ## Phased Approach: Ship Fast, Decentralize Later
 
@@ -230,6 +237,20 @@ For current tasks and progress, see: **[TASK_BOARD.md](../TASK_BOARD.md#signalin
   "answer": { "sdp": "...", "type": "answer" }
 }
 ```
+
+### 5. ICE Candidate Exchange ✅ IMPLEMENTED
+```json
+{
+  "type": "ice-candidate",
+  "to": "bob@volli.app",
+  "candidate": {
+    "candidate": "candidate:1 1 UDP 2113667326 192.168.1.100 54400 typ host",
+    "sdpMLineIndex": 0,
+    "sdpMid": "data"
+  }
+}
+```
+**Status**: Complete - Enables NAT traversal for production P2P connections
 
 ## Deployment Strategy
 

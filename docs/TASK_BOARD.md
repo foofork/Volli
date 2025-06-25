@@ -43,14 +43,14 @@ graph LR
 | Task | Status | Owner | Documentation | Notes |
 |------|--------|-------|---------------|-------|
 | WebSocket signaling server | ✅ Complete | @assistant | [Signaling Plan](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md#phase-1-mvp-signaling-weeks-1-3) | TDD implementation complete |
-| Client integration | ✅ Complete | @assistant | [Network Store](./P2P_NETWORKING.md#network-store) | SignalingClient integrated |
-| Production deployment | 🚧 Blocked | - | [Deployment](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md#deployment-strategy) | Needs server first |
+| Client integration | ✅ Complete | @assistant | [Network Store](./P2P_NETWORKING.md#network-store) | Full WebRTC + ICE candidates |
+| Production deployment | 🟢 Available | - | [Deployment](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md#deployment-strategy) | Server + client ready |
 
 ### Mobile Apps
 | Task | Status | Owner | Documentation | Notes |
 |------|--------|-------|---------------|-------|
 | Capacitor setup | 🟢 Available | - | [Mobile PWA](./platforms/MULTIPLATFORM_PHASING_PLAN.md#phase-1-mobile-pwa-wrapper-weeks-1-4) | iOS + Android |
-| Push notifications | 🚧 Blocked | - | [Native Features](./platforms/MULTIPLATFORM_PHASING_PLAN.md#native-features-phase-1) | Needs signaling |
+| Push notifications | 🟢 Available | - | [Native Features](./platforms/MULTIPLATFORM_PHASING_PLAN.md#native-features-phase-1) | Signaling server ready |
 | App store assets | 🟢 Available | - | [Assets](./platforms/MULTIPLATFORM_PHASING_PLAN.md#week-3-app-store-assets) | Designer needed |
 
 ---
@@ -94,12 +94,14 @@ graph LR
 **Owner**: @assistant  
 **Started**: 2025-06-25  
 **Progress**:
-- ✅ SignalingClient class with TDD (15 tests)
+- ✅ SignalingClient class with TDD (17 tests)
 - ✅ WebSocket connection management with reconnection
 - ✅ User registration and discovery
 - ✅ Offer/Answer relay handlers
+- ✅ **ICE candidate exchange for NAT traversal**
 - ✅ NetworkStore integration with signaling
 - ✅ Automatic peer discovery before connection
+- ✅ Complete WebRTC peer connection flow
 - ✅ All tests passing and builds successful
 - ✅ Committed to branch: `feature/signaling-server`
 
