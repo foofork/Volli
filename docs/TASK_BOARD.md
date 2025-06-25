@@ -60,7 +60,7 @@ graph LR
 ### Adaptive Trust - Alpha Phase
 | Task | Status | Owner | Documentation | Notes |
 |------|--------|-------|---------------|-------|
-| Rule Engine | ✅ Complete | @assistant | [Implementation Guide](./adaptive-trust/ADAPTIVE_TRUST_IMPLEMENTATION_GUIDE.md#rule-engine--complete) | TDD complete |
+| Rule Engine | ✅ Complete | @assistant | [Implementation Guide](./adaptive-trust/ADAPTIVE_TRUST_IMPLEMENTATION_GUIDE.md#rule-engine--complete) | Merged in PR #1 |
 | Network Detector | 🟢 Available | - | [Alpha Scope](./adaptive-trust/ADAPTIVE_TRUST_PHASING_PLAN.md#2-network-detector--essential) | WiFi trust only |
 | Trust Manager | 🟢 Available | - | [Alpha Scope](./adaptive-trust/ADAPTIVE_TRUST_PHASING_PLAN.md#1-trust-manager--essential) | Basic decision flow |
 | Volli Integration | 🚧 Blocked | - | [Integration](./adaptive-trust/ADAPTIVE_TRUST_PHASING_PLAN.md#3-volli-integration--essential) | Needs Trust Manager |
