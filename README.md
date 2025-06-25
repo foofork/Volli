@@ -8,7 +8,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License MIT"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.3-2F74C0?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="https://kit.svelte.dev/"><img src="https://img.shields.io/badge/SvelteKit-2.0-FF3E00?style=flat-square&logo=svelte&logoColor=white" alt="SvelteKit"></a>
-  <a href="#"><img src="https://img.shields.io/badge/Coverage-98.9%25-brightgreen?style=flat-square" alt="Coverage"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Coverage-89.7%25-brightgreen?style=flat-square" alt="Coverage"></a>
   <a href="docs/SECURITY.md"><img src="https://img.shields.io/badge/Encryption-Post--Quantum-green?style=flat-square&logo=shield&logoColor=white" alt="Security"></a>
 </p>
 
@@ -19,11 +19,11 @@
 </div>
 
 > [!NOTE]
-> **Project Status: 🎉 Beta - Fully Functional Web App**  
-> Complete encrypted messaging app with persistent storage, real crypto (XChaCha20-Poly1305), and full vault management. Ready for testing and evaluation. Post-quantum crypto and mobile/desktop apps planned for next phase.
+> **Project Status: 🚀 Alpha - P2P Messaging Implemented**  
+> Working encrypted messenger with WebRTC P2P communication, persistent storage (IndexedDB), real crypto (XChaCha20-Poly1305), and message queue with retry logic. Manual peer connection required (no signaling server yet).
 
 > [!TIP]
-> **Research Phase Complete**: We've successfully integrated production-ready libraries (libsodium, Dexie) and built a fully functional messenger. The 5-day immediate action plan transformed Volli from UI mockup to working app.
+> **P2P Messaging Live**: WebRTC data channels enable real-time encrypted messaging between peers. Messages are encrypted per-recipient and queued when peers are offline. Next priority: signaling server for automatic peer discovery.
 
 <br/>
 
@@ -59,8 +59,8 @@
 <td align="center">❌ None</td>
 </tr>
 <tr>
-<td><strong>🔗 P2P Sync</strong></td>
-<td align="center">🚧 Next Phase</td>
+<td><strong>🔗 P2P Messaging</strong></td>
+<td align="center">✅ WebRTC P2P</td>
 <td align="center">❌ Centralized</td>
 </tr>
 </tbody>
@@ -74,10 +74,10 @@
 ## 🚀 Quick Start
 
 > [!SUCCESS]
-> **Ready to Test**: The web app now features complete persistent storage with IndexedDB encryption. Your messages, contacts, and vault data survive browser restarts. This is a fully functional encrypted messenger!
+> **P2P Messaging Working**: Connect directly to peers using WebRTC data channels. Messages are encrypted, queued when offline, and synced in real-time. Your data persists locally in encrypted IndexedDB storage.
 
 > [!TIP]
-> Volli is **server‑less** right now—your data lives in an encrypted database inside your browser. No servers, no tracking, complete privacy.
+> Volli uses **P2P connections**—messages go directly between peers via WebRTC. No servers store your messages. Currently requires manual connection (offer/answer exchange) until signaling server is added.
 
 <details open>
 <summary><h3>📦 Installation</h3></summary>
@@ -96,7 +96,7 @@ npm run build:packages
 # Run the web app
 cd apps/web && npm run dev     # → http://localhost:3000
 
-# Run tests (98.9% coverage!)
+# Run tests (89.7% coverage)
 npm test
 ```
 
@@ -126,21 +126,25 @@ cd apps/mobile && npm run dev
 ### 🎯 What's Actually Working
 
 - [x] **📦 Core Packages** - Encryption libraries with real crypto implementations
-- [x] **🧪 Test Coverage** - 98.9% coverage on core packages
-- [x] **🎨 Web UI** - Functional interface (data resets on refresh)
-- [x] **🔑 Authentication Flow** - Passphrase validation logic
+- [x] **🧪 Test Coverage** - 89.7% coverage (113/126 tests passing)
+- [x] **🎨 Web UI** - Full functionality with all screens working
+- [x] **💾 Persistent Storage** - IndexedDB with Dexie, encrypted vault
+- [x] **🔑 Vault System** - Create, unlock, auto-lock with Argon2id KDF
+- [x] **💬 P2P Messaging** - WebRTC data channels for direct peer communication
+- [x] **📨 Message Queue** - Persistent queue with exponential backoff retry
+- [x] **🔐 Recipient Encryption** - Per-recipient message encryption
 - [x] **🧩 Plugin System** - WASM runtime with sandboxing
-- [ ] **💾 Persistent Storage** - Currently in-memory only
-- [ ] **🔐 Post-Quantum Crypto** - Placeholder code only
-- [ ] **🔄 IPFS Sync** - Partially implemented
+- [ ] **🔐 Post-Quantum Crypto** - Not yet implemented
+- [ ] **📡 Signaling Server** - Manual peer connection required
 
-### 🔜 Coming Soon
+### 🔜 Coming Soon (Phase 2)
 
-- [ ] **🔄 Real-time Sync** - Multi-device synchronization
+- [ ] **📡 Signaling Server** - Automatic peer discovery
+- [ ] **🔄 CRDT Sync** - Conflict resolution for multi-device
+- [ ] **📁 File Sharing** - Encrypted file transfer
+- [ ] **🔮 Post-Quantum Crypto** - Kyber-1024 + Dilithium-3
 - [ ] **🖥️ Desktop App** - Native Tauri application
 - [ ] **📱 Mobile Apps** - iOS and Android with Capacitor
-- [ ] **🔮 Full PQ Crypto** - Complete Kyber-1024 + Dilithium-3
-- [ ] **🧩 Plugin System** - WASM-based extensibility
 - [ ] **👥 Group Chat** - Multi-participant conversations
 
 <br/>
@@ -205,12 +209,17 @@ graph TD
 <tbody>
 <tr>
 <td><strong>🔐 Encryption</strong></td>
-<td>Kyber‑1024, XChaCha20</td>
-<td>Post‑quantum confidentiality</td>
+<td>XChaCha20-Poly1305</td>
+<td>Message & storage encryption</td>
+</tr>
+<tr>
+<td><strong>🔑 Key Exchange</strong></td>
+<td>X25519</td>
+<td>ECDH key agreement</td>
 </tr>
 <tr>
 <td><strong>✍️ Signatures</strong></td>
-<td>Dilithium‑3</td>
+<td>Ed25519</td>
 <td>Authentication & integrity</td>
 </tr>
 <tr>
@@ -220,14 +229,19 @@ graph TD
 </tr>
 <tr>
 <td><strong>💾 Storage</strong></td>
-<td>Encrypted SQLite + CRDT</td>
-<td>Local‑first with sync</td>
+<td>IndexedDB (Dexie)</td>
+<td>Encrypted local persistence</td>
+</tr>
+<tr>
+<td><strong>🌐 Network</strong></td>
+<td>WebRTC P2P</td>
+<td>Direct peer connections</td>
 </tr>
 </tbody>
 </table>
 
 > [!CAUTION]
-> **Security**: This is an early development preview. Security audits pending.
+> **Alpha Software**: P2P messaging works but requires manual connection setup. Not audited for production use. Post-quantum crypto not yet implemented.
 
 <br/>
 
@@ -235,33 +249,31 @@ graph TD
 
 > See [detailed roadmap](docs/ROADMAP.md) for complete timeline and sprint planning.
 
-### Phase -1: Research 🔬 *(Starting Now)*
-- [ ] Evaluate production-ready libraries
-- [ ] Benchmark performance options
-- [ ] Validate architecture decisions
+### Phase 0: Integration ✅ *(COMPLETE)*
+- [x] Add persistent storage (IndexedDB with Dexie)
+- [x] Connect all packages to web app
+- [x] Integrate real encryption (libsodium)
+- [x] Complete vault management system
 
-### Phase 0: Integration 🚨 *(Next Priority)*
-- [ ] Add persistent storage (IndexedDB)
-- [ ] Connect existing packages to web app
-- [ ] Integrate real encryption
+### Phase 1: Network Layer ✅ *(COMPLETE - January 2025)*
+- [x] P2P messaging with WebRTC data channels
+- [x] Message queue with persistence and retry
+- [x] Real-time message sync
+- [x] Per-recipient encryption
+- [x] Network status monitoring
 
-### Phase 1: Core Features 🚧
-- [x] Core encryption packages *(built, not integrated)*
-- [x] Plugin system with WASM runtime
-- [ ] P2P messaging layer
+### Phase 2: Advanced Features 🚧 *(CURRENT)*
+- [ ] Signaling server for peer discovery
+- [ ] CRDT for conflict resolution
+- [ ] File sharing and sync
 - [ ] Post-quantum crypto (Kyber/Dilithium)
-
-### Phase 2: Advanced Features 📅
-- [ ] Real-time P2P sync
-- [ ] Group messaging
-- [ ] Voice notes
-- [ ] Message reactions
+- [ ] Multi-device sync
 
 ### Phase 3: Multi-Platform 🔜
 - [ ] Desktop app (Tauri)
 - [ ] iOS app (Capacitor) 
 - [ ] Android app (Capacitor)
-- [ ] Cross-platform sync
+- [ ] Group messaging
 
 <br/>
 
@@ -276,7 +288,7 @@ graph TD
 |--------|-------------|
 | `npm install` | Install all dependencies |
 | `npm run build:packages` | Build all packages |
-| `npm run test` | Run test suite (98.9% coverage) |
+| `npm run test` | Run test suite (89.7% coverage) |
 | `npm run lint` | Lint codebase |
 | `npm run typecheck` | TypeScript validation |
 | `npm run dev` | Start dev servers |
@@ -327,7 +339,7 @@ volli/
 ## 🤝 Contributing
 
 > [!NOTE]
-> **Not accepting contributions at this time.** This project is in early development. Check back later for contribution guidelines.
+> **Not accepting contributions at this time.** Alpha development in progress. P2P messaging functional but needs signaling infrastructure.
 
 <br/>
 
