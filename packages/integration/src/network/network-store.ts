@@ -1,7 +1,7 @@
 import { writable, get } from 'svelte/store';
 import type { Message } from '../types';
 import { SignalingClient } from './SignalingClient';
-import type { OfferEvent, AnswerEvent } from './SignalingClient';
+import type { OfferEvent, AnswerEvent, IceCandidateEvent } from './SignalingClient';
 
 export interface NetworkState {
   isOnline: boolean;
@@ -109,6 +109,7 @@ class NetworkStore {
       // Set up event handlers
       this.signalingClient.on('offer', this.handleIncomingOffer.bind(this));
       this.signalingClient.on('answer', this.handleIncomingAnswer.bind(this));
+      this.signalingClient.on('ice-candidate', this.handleIncomingIceCandidate.bind(this));
       this.signalingClient.on('error', (error) => {
         console.error('Signaling error:', error);
       });
@@ -210,6 +211,23 @@ class NetworkStore {
     }
   }
 
+  private async handleIncomingIceCandidate(event: IceCandidateEvent): Promise<void> {
+    const { from, candidate } = event;
+    const state = get(this.store);
+    
+    const peerConnection = state.peers.get(from);
+    if (!peerConnection) {
+      console.error('Received ICE candidate for unknown peer:', from);
+      return;
+    }
+    
+    try {
+      await peerConnection.addIceCandidate(candidate);
+    } catch (error) {
+      console.error('Error handling ICE candidate:', error);
+    }
+  }
+
   private createPeerConnection(peerId: string): RTCPeerConnection {
     const configuration: RTCConfiguration = {
       iceServers: [
@@ -222,9 +240,10 @@ class NetworkStore {
 
     // Handle ICE candidates
     pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        // In real implementation, send candidate via signaling
-        console.log('New ICE candidate:', event.candidate);
+      if (event.candidate && this.signalingClient) {
+        this.signalingClient.sendIceCandidate(peerId, event.candidate).catch(error => {
+          console.error('Failed to send ICE candidate:', error);
+        });
       }
     };
 

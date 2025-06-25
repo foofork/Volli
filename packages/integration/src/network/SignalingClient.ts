@@ -5,6 +5,7 @@ import type {
   DiscoverMessage,
   OfferMessage,
   AnswerMessage,
+  IceCandidateMessage,
   RegisteredMessage,
   DiscoverResponseMessage,
   ErrorMessage
@@ -29,6 +30,11 @@ export interface OfferEvent {
 export interface AnswerEvent {
   from: string;
   answer: RTCSessionDescriptionInit;
+}
+
+export interface IceCandidateEvent {
+  from: string;
+  candidate: RTCIceCandidateInit;
 }
 
 export class SignalingClient extends EventEmitter {
@@ -193,6 +199,21 @@ export class SignalingClient extends EventEmitter {
     this.send(message);
   }
   
+  async sendIceCandidate(to: string, candidate: RTCIceCandidateInit): Promise<void> {
+    if (!this.isConnected() || !this.userId) {
+      throw new Error('Not connected or not registered');
+    }
+    
+    const message: IceCandidateMessage = {
+      type: 'ice-candidate',
+      from: this.userId,
+      to,
+      candidate
+    };
+    
+    this.send(message);
+  }
+  
   private send(message: SignalingMessage): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       throw new Error('WebSocket not ready');
@@ -220,6 +241,10 @@ export class SignalingClient extends EventEmitter {
           
         case 'answer':
           this.handleAnswer(message as AnswerMessage);
+          break;
+          
+        case 'ice-candidate':
+          this.handleIceCandidate(message as IceCandidateMessage);
           break;
           
         case 'error':
@@ -277,6 +302,14 @@ export class SignalingClient extends EventEmitter {
       answer: message.answer
     };
     this.emit('answer', event);
+  }
+  
+  private handleIceCandidate(message: IceCandidateMessage): void {
+    const event: IceCandidateEvent = {
+      from: message.from,
+      candidate: message.candidate
+    };
+    this.emit('ice-candidate', event);
   }
   
   private handleError(message: ErrorMessage): void {
