@@ -139,6 +139,7 @@ cd apps/mobile && npm run dev
 
 ### 🔜 Coming Soon (Phase 2)
 
+- [ ] **🎯 Adaptive Trust System** - Intelligent privacy/performance balance
 - [ ] **📡 Signaling Server** - Automatic peer discovery
 - [ ] **🔄 CRDT Sync** - Conflict resolution for multi-device
 - [ ] **📁 File Sharing** - Encrypted file transfer
@@ -242,6 +243,32 @@ graph TD
 
 > [!CAUTION]
 > **Alpha Software**: P2P messaging works but requires manual connection setup. Not audited for production use. Post-quantum crypto not yet implemented.
+
+<br/>
+
+## 🎯 Adaptive Trust System
+
+> [!INFO]
+> **Intelligent Privacy**: Volli adapts its security posture based on your context while respecting your absolute control through sovereignty rules.
+
+### Trust Modes
+
+| Mode | Icon | Use Case | Performance |
+|------|------|----------|-------------|
+| **Convenience** | ☕ | Casual chats, trusted networks | Fastest |
+| **Balanced** | 🛡️ | Daily communication | Optimal |
+| **Private** | 🏰 | Sensitive content | Secure |
+| **Air Gap** | 🔒 | Maximum security | Local only |
+
+### Key Features
+
+- **User Sovereignty**: Your rules always override system suggestions
+- **Context Awareness**: Adapts to network, device, and usage patterns
+- **Performance Budgets**: < 5% battery/CPU impact guaranteed
+- **Privacy First**: No user profiling, all processing local
+
+> [!TIP]
+> See [Adaptive Trust Documentation](docs/ADAPTIVE_TRUST_OVERVIEW.md) for implementation details.
 
 <br/>
 
