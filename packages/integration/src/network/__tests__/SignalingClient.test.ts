@@ -5,6 +5,7 @@ import type {
   DiscoverResponseMessage,
   OfferMessage,
   AnswerMessage,
+  IceCandidateMessage,
   ErrorMessage 
 } from '@volli/signaling-server';
 
@@ -321,6 +322,50 @@ describe('SignalingClient', () => {
       expect(answerHandler).toHaveBeenCalledWith({
         from: 'bob@volli.app',
         answer: answerMessage.answer
+      });
+    });
+    
+    it('should send ICE candidate to peer', async () => {
+      const sendSpy = vi.spyOn(mockWebSocket, 'send');
+      
+      const candidate: RTCIceCandidateInit = {
+        candidate: 'candidate:1 1 UDP 2113667326 192.168.1.100 54400 typ host',
+        sdpMLineIndex: 0,
+        sdpMid: 'data'
+      };
+      
+      await client.sendIceCandidate('bob@volli.app', candidate);
+      
+      expect(sendSpy).toHaveBeenCalledWith(JSON.stringify({
+        type: 'ice-candidate',
+        from: 'alice@volli.app',
+        to: 'bob@volli.app',
+        candidate
+      }));
+    });
+    
+    it('should receive ICE candidate from peer', async () => {
+      const candidateHandler = vi.fn();
+      client.on('ice-candidate', candidateHandler);
+      
+      // Simulate incoming ICE candidate
+      const candidateMessage: IceCandidateMessage = {
+        type: 'ice-candidate',
+        from: 'bob@volli.app',
+        to: 'alice@volli.app',
+        candidate: {
+          candidate: 'candidate:2 1 TCP 2105458942 192.168.1.101 9 typ host tcptype active',
+          sdpMLineIndex: 0,
+          sdpMid: 'data'
+        }
+      };
+      mockWebSocket.onmessage?.(new MessageEvent('message', {
+        data: JSON.stringify(candidateMessage)
+      }));
+      
+      expect(candidateHandler).toHaveBeenCalledWith({
+        from: 'bob@volli.app',
+        candidate: candidateMessage.candidate
       });
     });
   });

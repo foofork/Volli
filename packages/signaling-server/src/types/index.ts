@@ -27,6 +27,13 @@ export interface AnswerMessage extends SignalingMessage {
   answer: RTCSessionDescriptionInit;
 }
 
+export interface IceCandidateMessage extends SignalingMessage {
+  type: 'ice-candidate';
+  from: string;
+  to: string;
+  candidate: RTCIceCandidateInit;
+}
+
 export interface ErrorMessage extends SignalingMessage {
   type: 'error';
   message: string;

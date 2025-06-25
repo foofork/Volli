@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import WebSocket from 'ws';
 import { SignalingServer } from '../SignalingServer.js';
-import type { SignalingMessage, RegisterMessage, DiscoverMessage, OfferMessage, AnswerMessage } from '../types/index.js';
+import type { SignalingMessage, RegisterMessage, DiscoverMessage, OfferMessage, AnswerMessage, IceCandidateMessage } from '../types/index.js';
 
 describe('SignalingServer', () => {
   let server: SignalingServer;
@@ -228,6 +228,85 @@ describe('SignalingServer', () => {
           type: 'answer',
           sdp: 'mock-answer-sdp'
         }
+      });
+    });
+
+    it('should relay ICE candidate from Alice to Bob', async () => {
+      const candidateMsg: IceCandidateMessage = {
+        type: 'ice-candidate',
+        from: 'alice@volli.app',
+        to: 'bob@volli.app',
+        candidate: {
+          candidate: 'candidate:1 1 UDP 2113667326 192.168.1.100 54400 typ host',
+          sdpMLineIndex: 0,
+          sdpMid: 'data'
+        }
+      };
+
+      // Alice sends ICE candidate
+      client1.send(JSON.stringify(candidateMsg));
+
+      // Bob receives ICE candidate
+      const received = await waitForMessage(client2);
+      expect(received).toEqual({
+        type: 'ice-candidate',
+        from: 'alice@volli.app',
+        to: 'bob@volli.app',
+        candidate: {
+          candidate: 'candidate:1 1 UDP 2113667326 192.168.1.100 54400 typ host',
+          sdpMLineIndex: 0,
+          sdpMid: 'data'
+        }
+      });
+    });
+
+    it('should relay ICE candidate from Bob to Alice', async () => {
+      const candidateMsg: IceCandidateMessage = {
+        type: 'ice-candidate',
+        from: 'bob@volli.app',
+        to: 'alice@volli.app',
+        candidate: {
+          candidate: 'candidate:2 1 TCP 2105458942 192.168.1.101 9 typ host tcptype active',
+          sdpMLineIndex: 0,
+          sdpMid: 'data'
+        }
+      };
+
+      // Bob sends ICE candidate
+      client2.send(JSON.stringify(candidateMsg));
+
+      // Alice receives ICE candidate
+      const received = await waitForMessage(client1);
+      expect(received).toEqual({
+        type: 'ice-candidate',
+        from: 'bob@volli.app',
+        to: 'alice@volli.app',
+        candidate: {
+          candidate: 'candidate:2 1 TCP 2105458942 192.168.1.101 9 typ host tcptype active',
+          sdpMLineIndex: 0,
+          sdpMid: 'data'
+        }
+      });
+    });
+
+    it('should handle ICE candidate relay to offline user', async () => {
+      const candidateMsg: IceCandidateMessage = {
+        type: 'ice-candidate',
+        from: 'alice@volli.app',
+        to: 'charlie@volli.app', // Not online
+        candidate: {
+          candidate: 'candidate:1 1 UDP 2113667326 192.168.1.100 54400 typ host',
+          sdpMLineIndex: 0,
+          sdpMid: 'data'
+        }
+      };
+
+      client1.send(JSON.stringify(candidateMsg));
+
+      const response = await waitForMessage(client1);
+      expect(response).toEqual({
+        type: 'error',
+        message: 'User charlie@volli.app is not online'
       });
     });
 

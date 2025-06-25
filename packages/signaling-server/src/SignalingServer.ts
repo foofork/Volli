@@ -7,6 +7,7 @@ import type {
   DiscoverMessage,
   OfferMessage,
   AnswerMessage,
+  IceCandidateMessage,
   RegisteredMessage,
   DiscoverResponseMessage,
   ErrorMessage
@@ -107,6 +108,9 @@ export class SignalingServer {
       case 'answer':
         this.handleAnswer(ws, message as AnswerMessage);
         break;
+      case 'ice-candidate':
+        this.handleIceCandidate(ws, message as IceCandidateMessage);
+        break;
       default:
         this.sendError(ws, 'Unknown message type');
     }
@@ -198,6 +202,24 @@ export class SignalingServer {
     }
 
     // Relay the answer to the target user
+    targetUser.ws.send(JSON.stringify(message));
+  }
+
+  private handleIceCandidate(ws: WebSocket, message: IceCandidateMessage): void {
+    // Validate required fields
+    if (!message.from || !message.to || !message.candidate) {
+      this.sendError(ws, 'Missing required fields');
+      return;
+    }
+
+    const targetUser = this.users.get(message.to);
+    
+    if (!targetUser) {
+      this.sendError(ws, `User ${message.to} is not online`);
+      return;
+    }
+
+    // Relay the ICE candidate to the target user
     targetUser.ws.send(JSON.stringify(message));
   }
 
