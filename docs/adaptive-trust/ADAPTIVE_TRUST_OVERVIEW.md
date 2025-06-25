@@ -15,12 +15,12 @@ Volli's Adaptive Trust System intelligently balances privacy and performance bas
 
 ## Trust Modes
 
-| Mode | Icon | Use Case | Performance |
-|------|------|----------|-------------|
-| **Convenience** | ☕ | Casual chats, trusted networks | Fastest, < 2% battery |
-| **Balanced** | 🛡️ | Daily communication | Good, < 4% battery |
-| **Private** | 🏰 | Sensitive content | Secure, < 6% battery |
-| **Air Gap** | 🔒 | Maximum security | Local only, minimal battery |
+| Mode | Icon | Use Case | Performance | Phase |
+|------|------|----------|-------------|-------|
+| **Convenience** | ☕ | Casual chats, trusted networks | Fastest, < 2% battery | Alpha |
+| **Balanced** | 🛡️ | Daily communication | Good, < 4% battery | Beta |
+| **Private** | 🏰 | Sensitive content | Secure, < 6% battery | Alpha |
+| **Air Gap** | 🔒 | Maximum security | Local only, minimal battery | GA |
 
 ## How It Works
 

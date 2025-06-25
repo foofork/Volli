@@ -293,9 +293,10 @@ Build mobile and desktop applications
 - ✅ **Network Layer**: Real-time message sync
 
 ### Projected Milestones
-- **Beta** (Q1 2025): Signaling server, CRDT sync, multi-device support
-- **RC1** (Q2 2025): Post-quantum crypto, security audit
-- **1.0** (Q3 2025): Multi-platform apps, plugin marketplace
+- **Soft Launch** (February 2025): Signaling + Mobile Apps - [Launch Strategy](./LAUNCH_STRATEGY.md)
+- **Public Launch** (March 2025): Production ready, app stores
+- **1.0** (Q2 2025): Desktop apps, federation - [Platform Phasing](./platforms/MULTIPLATFORM_PHASING_PLAN.md)
+- **2.0** (Q3 2025): Full P2P, post-quantum - [Signaling Phasing](./signaling/SIGNALING_DISCOVERY_PHASING_PLAN.md)
 
 ---
 

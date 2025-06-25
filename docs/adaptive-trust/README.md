@@ -4,8 +4,9 @@
 
 ### 📚 Start Here
 1. **[Overview](./ADAPTIVE_TRUST_OVERVIEW.md)** - What is Adaptive Trust?
-2. **[Implementation Guide](./ADAPTIVE_TRUST_IMPLEMENTATION_GUIDE.md)** - How to build it
-3. **[TDD Guide](./ADAPTIVE_TRUST_TDD_GUIDE.md)** - Test-driven development approach
+2. **[Phasing Plan](./ADAPTIVE_TRUST_PHASING_PLAN.md)** - Rollout strategy and priorities
+3. **[Implementation Guide](./ADAPTIVE_TRUST_IMPLEMENTATION_GUIDE.md)** - How to build it
+4. **[TDD Guide](./ADAPTIVE_TRUST_TDD_GUIDE.md)** - Test-driven development approach
 
 ### 🏗️ Architecture & Design
 - **[Architecture](./ADAPTIVE_TRUST_ARCHITECTURE.md)** - System design and patterns

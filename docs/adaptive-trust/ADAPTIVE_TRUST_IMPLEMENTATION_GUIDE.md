@@ -5,6 +5,7 @@
 - [ ] Development environment ready
 - [ ] Understand [TDD methodology](./ADAPTIVE_TRUST_TDD_GUIDE.md)
 - [ ] Read [Overview](./ADAPTIVE_TRUST_OVERVIEW.md)
+- [ ] **IMPORTANT**: Read [Phasing Plan](./ADAPTIVE_TRUST_PHASING_PLAN.md) to understand rollout strategy
 
 ## Team Coordination Protocol
 
@@ -107,30 +108,43 @@ async decide(): Promise<TrustDecision> {
 
 ## Component Checklist
 
-### Trust Manager
+### Trust Manager (Alpha) 🔴
 - [ ] Write interface tests (RED)
 - [ ] Implement minimal functionality (GREEN)
 - [ ] Add error handling (REFACTOR)
 - [ ] Performance optimization
 - [ ] Documentation
 
-### Rule Engine 🚧 IN PROGRESS
+### Rule Engine ✅ COMPLETE
 - [x] Write rule evaluation tests
 - [x] Implement rule storage
 - [x] Add conflict detection
-- [ ] Implement rule builder
-- [ ] Test with 1000+ rules
+- [ ] Implement rule builder (Beta)
+- [ ] Test with 1000+ rules (GA)
 
-### Context Detector
+### Context Detector 
+#### Alpha (Network Only) 🔴
 - [ ] Write network detection tests
-- [ ] Implement device monitoring
-- [ ] Add sensitivity detection
+- [ ] Implement WiFi trust detection
 - [ ] Cache implementation
+
+#### Beta (Extended Context) 🟡
+- [ ] Implement device monitoring
+- [ ] Add time context
+
+#### GA (Full Context) 🟢
+- [ ] Add sensitivity detection
 - [ ] Performance profiling
 
 ### Connection Manager
+#### Alpha (Use Existing) 🔴
+- [ ] Integration with current WebRTC
+
+#### Beta (Enhanced) 🟡
 - [ ] Write strategy tests
 - [ ] Implement unified interface
+
+#### GA (Multiple Strategies) 🟢
 - [ ] Add strategy implementations
 - [ ] Background upgrade logic
 - [ ] Connection pooling
