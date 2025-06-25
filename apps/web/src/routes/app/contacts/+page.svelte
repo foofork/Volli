@@ -5,6 +5,7 @@
 	import { toasts } from '$lib/stores/toasts';
 	import { messages } from '$lib/stores/messages';
 	import { goto } from '$app/navigation';
+	import { networkStore } from '@volli/integration';
 	
 	let searchQuery = '';
 	let debouncedSearchQuery = '';
@@ -13,6 +14,8 @@
 	let newContactPublicKey = '';
 	let isAdding = false;
 	let error = '';
+	let discoveryMode = 'signaling'; // 'signaling' or 'hex'
+	let userSearchQuery = '';
 	let searchTimeout: NodeJS.Timeout;
 	
 	// Debounce search for better performance
@@ -37,6 +40,7 @@
 	function resetForm() {
 		newContactName = '';
 		newContactPublicKey = '';
+		userSearchQuery = '';
 		error = '';
 	}
 	
@@ -64,20 +68,61 @@
 			return;
 		}
 		
-		let publicKey = newContactPublicKey.trim();
-		
-		// If no public key provided, generate a mock one
-		if (!publicKey) {
-			publicKey = `pk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-		} else if (!validatePublicKey(publicKey)) {
-			error = 'Invalid public key format. Expected 64-character hex string or 44-character base64 string.';
-			return;
-		}
-		
 		isAdding = true;
 		error = '';
 		
 		try {
+			let publicKey: string;
+			
+			if (discoveryMode === 'hex') {
+				// Direct hex key entry (power users)
+				publicKey = newContactPublicKey.trim();
+				
+				if (!publicKey) {
+					error = 'Public key is required for manual entry';
+					return;
+				}
+				
+				if (!validatePublicKey(publicKey)) {
+					error = 'Invalid public key format. Expected 64-character hex string or 44-character base64 string.';
+					return;
+				}
+			} else {
+				// Username/email discovery via signaling (normal users)
+				const searchInput = userSearchQuery.trim() || newContactName.trim();
+				
+				if (!searchInput) {
+					error = 'Username or email is required for discovery';
+					return;
+				}
+				
+				try {
+					const discovery = await networkStore.discoverUser(searchInput);
+					
+					if (!discovery.online) {
+						error = `User "${searchInput}" is not online or not found`;
+						toasts.warning(`User ${searchInput} is not currently online`);
+						return;
+					}
+					
+					publicKey = discovery.publicKey!;
+					toasts.success(`Found ${searchInput} online!`);
+					
+					// Try to establish P2P connection immediately
+					try {
+						await networkStore.connectToPeer(searchInput);
+						toasts.success('P2P connection established');
+					} catch (p2pError) {
+						console.warn('P2P connection failed, will use signaling relay:', p2pError);
+					}
+				} catch (discoverError) {
+					error = `Failed to find user: ${discoverError instanceof Error ? discoverError.message : 'Unknown error'}`;
+					toasts.error(`Could not find user "${searchInput}"`);
+					return;
+				}
+			}
+			
+			// Add contact with discovered or entered public key
 			await contacts.addContact(newContactName.trim(), publicKey);
 			toasts.success(`Contact "${newContactName.trim()}" added successfully!`);
 			resetForm();
@@ -147,27 +192,64 @@
 		<div class="add-contact-form">
 			<h3>Add New Contact</h3>
 			
+			<!-- Discovery Mode Tabs -->
+			<div class="discovery-tabs">
+				<button 
+					class="tab"
+					class:active={discoveryMode === 'signaling'}
+					on:click={() => { discoveryMode = 'signaling'; error = ''; }}
+				>
+					🔍 Find by Username
+				</button>
+				<button 
+					class="tab"
+					class:active={discoveryMode === 'hex'}
+					on:click={() => { discoveryMode = 'hex'; error = ''; }}
+				>
+					🔐 Enter Public Key
+				</button>
+			</div>
+			
 			<div class="form-group">
-				<label for="contactName">Name</label>
+				<label for="contactName">Contact Name</label>
 				<input
 					id="contactName"
 					type="text"
 					bind:value={newContactName}
-					placeholder="Enter contact name"
+					placeholder="Enter display name for this contact"
 					disabled={isAdding}
 				/>
 			</div>
 			
-			<div class="form-group">
-				<label for="publicKey">Public Key (optional)</label>
-				<input
-					id="publicKey"
-					type="text"
-					bind:value={newContactPublicKey}
-					placeholder="Paste public key or leave empty for demo"
-					disabled={isAdding}
-				/>
-			</div>
+			{#if discoveryMode === 'signaling'}
+				<div class="form-group">
+					<label for="userSearch">Username or Email</label>
+					<input
+						id="userSearch"
+						type="text"
+						bind:value={userSearchQuery}
+						placeholder="alice@example.com or @alice"
+						disabled={isAdding}
+					/>
+					<div class="form-help">
+						Find users currently online via the network
+					</div>
+				</div>
+			{:else}
+				<div class="form-group">
+					<label for="publicKey">Public Key</label>
+					<input
+						id="publicKey"
+						type="text"
+						bind:value={newContactPublicKey}
+						placeholder="64-character hex key or 44-character base64 key"
+						disabled={isAdding}
+					/>
+					<div class="form-help">
+						For power users: Enter the exact public key
+					</div>
+				</div>
+			{/if}
 			
 			{#if error}
 				<div class="error">{error}</div>
@@ -175,7 +257,7 @@
 			
 			<div class="form-actions">
 				<button on:click={addContact} disabled={!newContactName.trim() || isAdding}>
-					{isAdding ? 'Adding...' : 'Add Contact'}
+					{isAdding ? 'Adding...' : (discoveryMode === 'signaling' ? 'Find & Add' : 'Add Contact')}
 				</button>
 				<button class="secondary" on:click={toggleAddForm}>Cancel</button>
 			</div>
@@ -364,6 +446,44 @@
 	.form-actions button.secondary:hover {
 		background: rgba(255, 255, 255, 0.05);
 		color: #fff;
+	}
+	
+	.discovery-tabs {
+		display: flex;
+		gap: 0;
+		margin-bottom: 1.5rem;
+		border-radius: 8px;
+		overflow: hidden;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+	
+	.discovery-tabs .tab {
+		flex: 1;
+		padding: 0.75rem 1rem;
+		background: rgba(255, 255, 255, 0.02);
+		border: none;
+		color: #888;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		font-size: 0.9rem;
+	}
+	
+	.discovery-tabs .tab:hover {
+		background: rgba(255, 255, 255, 0.05);
+		color: #ccc;
+	}
+	
+	.discovery-tabs .tab.active {
+		background: #3B82F6;
+		color: white;
+	}
+	
+	.form-help {
+		margin-top: 0.5rem;
+		font-size: 0.8rem;
+		color: #666;
+		font-style: italic;
 	}
 	
 	.error {
