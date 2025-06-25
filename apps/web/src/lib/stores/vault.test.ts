@@ -367,21 +367,24 @@ describe('VaultStore', () => {
       await authStore.createIdentity('Test User');
       await authStore.createVaultWithPassphrase(fixtures.validPassphrase);
       
-      // Add test data with unique IDs
+      // Add test data with unique IDs and publicKeys
       await vaultStore.addContact(factories.contact({ 
         id: 'alice-id',
         identityId: 'alice-identity',
-        displayName: 'Alice Smith' 
+        displayName: 'Alice Smith',
+        publicKey: 'alice-public-key'
       }));
       await vaultStore.addContact(factories.contact({ 
         id: 'bob-id',
         identityId: 'bob-identity',
-        displayName: 'Bob Jones' 
+        displayName: 'Bob Jones',
+        publicKey: 'bob-public-key'
       }));
       await vaultStore.addContact(factories.contact({ 
         id: 'charlie-id',
         identityId: 'charlie-identity',
-        displayName: 'Charlie Smith' 
+        displayName: 'Charlie Smith',
+        publicKey: 'charlie-public-key'
       }));
     });
 

@@ -21,28 +21,11 @@ interface MessagesState {
 	error: string | null;
 }
 
-// Mock network store (will be replaced with real P2P later)
-const networkStore = {
-	isOnline: false,
-	getSyncEndpoint: async () => ({
-		getMessages: async () => [],
-		sendMessage: async () => true
-	})
-};
+// Import real network store from integration package
+import { networkStore as realNetworkStore } from '@volli/integration';
 
-// Message queue for offline support
-const messageQueue = {
-	pending: [] as Message[],
-	enqueue(message: Message) {
-		this.pending.push(message);
-	},
-	async getPending() {
-		return this.pending;
-	},
-	markDelivered(messageId: number) {
-		this.pending = this.pending.filter(m => m.id !== messageId);
-	}
-};
+// Use persistent message queue from core
+const getMessageQueue = () => core.messageQueue;
 
 function createMessagesStore() {
 	const { subscribe, set, update } = writable<MessagesState>({
@@ -81,7 +64,7 @@ function createMessagesStore() {
 			}));
 
 			// Trigger sync if online
-			if (networkStore.isOnline) {
+			if (realNetworkStore.isOnline) {
 				syncMessages().catch(console.error);
 			}
 		} catch (error) {
@@ -144,14 +127,14 @@ function createMessagesStore() {
 			});
 
 			// Queue for network delivery if online
-			if (networkStore.isOnline) {
+			if (realNetworkStore.isOnline) {
 				try {
 					await deliverMessage(message);
 				} catch (error) {
-					messageQueue.enqueue(message);
+					await getMessageQueue().enqueue(message);
 				}
 			} else {
-				messageQueue.enqueue(message);
+				await getMessageQueue().enqueue(message);
 			}
 		} catch (error) {
 			throw new Error(`Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -177,16 +160,19 @@ function createMessagesStore() {
 		try {
 			// This will be implemented when P2P is ready
 			// For now, just process pending queue
-			const pendingMessages = await messageQueue.getPending();
+			const pendingMessages = await getMessageQueue().getPending();
 			
-			for (const message of pendingMessages) {
+			for (const pendingItem of pendingMessages) {
 				try {
-					await deliverMessage(message);
-					if (message.id) {
-						messageQueue.markDelivered(message.id);
+					await deliverMessage(pendingItem.message);
+					if (pendingItem.id) {
+						await getMessageQueue().markDelivered(pendingItem.id);
 					}
 				} catch (error) {
 					console.error('Failed to deliver message:', error);
+					if (pendingItem.id) {
+						await getMessageQueue().markFailed(pendingItem.id, error instanceof Error ? error.message : 'Unknown error');
+					}
 				}
 			}
 
@@ -245,12 +231,12 @@ function createMessagesStore() {
 	}
 
 	async function deliverMessage(message: Message): Promise<void> {
-		// Mock delivery - will be replaced with P2P
-		const endpoint = await networkStore.getSyncEndpoint();
+		// Use real network store for delivery
+		const endpoint = await realNetworkStore.getSyncEndpoint();
 		await endpoint.sendMessage(message);
 	}
 
-	function reset() {
+	async function reset() {
 		set({
 			conversations: new Map(),
 			activeConversation: null,
@@ -258,7 +244,7 @@ function createMessagesStore() {
 			isLoading: false,
 			error: null
 		});
-		messageQueue.pending = [];
+		await getMessageQueue().clear();
 	}
 
 	// Build conversation objects from messages
@@ -300,8 +286,8 @@ function createMessagesStore() {
 		getConversations,
 		reset,
 		// Internal methods exposed for testing
-		networkStore,
-		messageQueue
+		networkStore: realNetworkStore,
+		messageQueue: getMessageQueue()
 	};
 
 	return store;

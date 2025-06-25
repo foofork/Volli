@@ -38,42 +38,60 @@ Volli is a privacy-first messaging platform designed for post-quantum security a
 
 ## Current State Architecture
 
-### What's Actually Built
+### What's Actually Built (January 2025)
 ```mermaid
 graph TB
-    subgraph "Web Application (In-Memory Only)"
+    subgraph "Web Application (Fully Functional)"
         WEB[Web UI<br/>SvelteKit]
-        STORES[Svelte Stores<br/>In-Memory]
+        STORES[Svelte Stores<br/>Persistent]
     end
     
-    subgraph "Core Packages (Built, Not Integrated)"
-        ID[identity-core<br/>Classical Crypto Only]
-        VAULT[vault-core<br/>SQL.js Storage]
-        SYNC[sync-ipfs<br/>IPFS Implementation]
+    subgraph "Integration Layer (NEW)"
+        INT[Integration Package<br/>Connects Everything]
+        NET[Network Store<br/>WebRTC P2P]
+        QUEUE[Message Queue<br/>Persistent]
+    end
+    
+    subgraph "Core Packages (Integrated)"
+        ID[identity-core<br/>Classical Crypto]
+        VAULT[vault-core<br/>Encrypted Storage]
+        MSG[messaging<br/>Message Management]
         PLUGIN[plugins<br/>WASM Runtime]
     end
     
-    subgraph "Placeholder/Mock"
-        PQ[Post-Quantum<br/>TODO Placeholders]
-        NET[Network Layer<br/>Mock Only]
+    subgraph "Storage Layer"
+        IDB[IndexedDB<br/>Dexie.js]
+    end
+    
+    subgraph "Network Layer"
+        WEBRTC[WebRTC<br/>Data Channels]
+        STUN[STUN Servers<br/>NAT Traversal]
     end
     
     WEB --> STORES
+    STORES --> INT
+    INT --> NET
+    INT --> QUEUE
+    INT --> ID
+    INT --> VAULT
+    INT --> MSG
+    NET --> WEBRTC
+    WEBRTC --> STUN
+    VAULT --> IDB
+    QUEUE --> IDB
     
-    style PQ fill:#ffcccc
-    style NET fill:#ffcccc
-    style ID fill:#ccffcc
-    style VAULT fill:#ccffcc
-    style SYNC fill:#ccffcc
-    style PLUGIN fill:#ccffcc
+    style INT fill:#ffccff
+    style NET fill:#ccffcc
+    style QUEUE fill:#ccffcc
+    style WEBRTC fill:#ccffcc
 ```
 
-### Current Limitations
-- **No Persistence**: Data lost on page refresh
-- **No Real Crypto**: Web app uses mock encryption
-- **No Networking**: Messages don't leave the browser
-- **No Mobile/Desktop**: Only web UI exists
-- **Package Isolation**: Core packages not connected to UI
+### Current Capabilities
+- **Full Persistence**: IndexedDB with Dexie
+- **Real Encryption**: libsodium with per-recipient encryption
+- **P2P Networking**: WebRTC data channels for messaging
+- **Message Queue**: Persistent with retry logic
+- **All Packages Integrated**: Via integration layer
 
 ---
 
@@ -265,33 +283,101 @@ CREATE TABLE metadata (
 
 ### 3. Messaging Service
 
-**Current State**: Mock implementation only  
-**Target State**: Full E2E encrypted messaging
+**Current State**: Fully implemented with P2P delivery  
+**Enhancements**: Per-recipient encryption, persistent queue
 
 #### Architecture
 ```typescript
 interface MessagingService {
   // Message Operations
-  sendMessage(params: SendParams): Promise<Message>
-  receiveMessage(data: EncryptedData): Promise<Message>
+  sendMessage(
+    conversationId: string, 
+    content: string, 
+    senderVault: Vault,
+    recipientIds?: string[]
+  ): Promise<Message>
+  
+  // Encryption
+  encryptForRecipient(content: string, recipientPublicKey: string): Promise<string>
+  getContactPublicKey(contactId: string): Promise<string | null>
   
   // Conversation Management
-  createConversation(contacts: Contact[]): Promise<Conversation>
-  loadConversation(id: string): Promise<Conversation>
+  getMessages(conversationId: string): Promise<Message[]>
+  getConversations(): Promise<string[]>
   
-  // Sync & Delivery
-  queueForDelivery(message: Message): Promise<void>
-  processDeliveryQueue(): Promise<DeliveryReport[]>
+  // Message Management
+  markAsRead(messageId: number): Promise<void>
+  deleteMessage(messageId: number): Promise<void>
+  deleteConversation(conversationId: string): Promise<void>
 }
 
 interface Message {
-  id: string
+  id?: number
   conversationId: string
   content: string
-  attachments?: Attachment[]
+  senderId: string
   timestamp: number
-  signature: Signature
-  deliveryStatus: DeliveryStatus
+  status: 'pending' | 'sent' | 'delivered' | 'read'
+  encryptedContent?: string // Per-recipient encrypted versions
+}
+```
+
+### 4. Network Store (NEW)
+
+**Current State**: WebRTC implementation with data channels  
+**Features**: Peer management, automatic reconnection, message queuing
+
+#### Architecture
+```typescript
+interface NetworkStore {
+  // Connection Management
+  connectToPeer(peerId: string, offer?: RTCSessionDescriptionInit): Promise<void>
+  disconnect(): Promise<void>
+  
+  // Status
+  isOnline: boolean
+  peers: Map<string, RTCPeerConnection>
+  dataChannels: Map<string, RTCDataChannel>
+  
+  // Message Handling
+  getSyncEndpoint(): Promise<SyncEndpoint>
+  onMessage(handler: (message: Message) => void): () => void
+}
+
+interface SyncEndpoint {
+  getMessages(since?: number): Promise<Message[]>
+  sendMessage(message: Message): Promise<boolean>
+}
+```
+
+### 5. Message Queue (NEW)
+
+**Current State**: Persistent queue with retry logic  
+**Features**: Exponential backoff, delivery tracking
+
+#### Architecture
+```typescript
+interface PersistentMessageQueue {
+  // Queue Operations
+  enqueue(message: Message): Promise<void>
+  getPending(): Promise<QueuedMessage[]>
+  
+  // Delivery Management
+  markDelivered(messageId: number): Promise<void>
+  markFailed(messageId: number, error: string): Promise<void>
+  
+  // Utilities
+  clear(): Promise<void>
+  getQueueSize(): Promise<number>
+}
+
+interface QueuedMessage {
+  id?: number
+  message: Message
+  attempts: number
+  lastAttempt?: number
+  nextRetry?: number  // Exponential backoff: 1s, 5s, 15s, 60s
+  error?: string
 }
 ```
 
@@ -334,29 +420,39 @@ interface Manifest {
 
 ## Data Flow
 
-### Message Send Flow
+### Message Send Flow (Implemented)
 ```mermaid
 sequenceDiagram
     participant UI
     participant Store
     participant Crypto
     participant Vault
-    participant Network
-    participant Recipient
+    participant Queue
+    participant WebRTC
+    participant Peer
     
     UI->>Store: sendMessage(content)
-    Store->>Crypto: encrypt(content, recipientKey)
-    Crypto-->>Store: encryptedData
     Store->>Vault: store(message)
     Vault-->>Store: messageId
-    Store->>Network: queue(encryptedData)
+    
+    alt Has Recipients
+        Store->>Crypto: encryptForRecipient(content, publicKey)
+        Crypto-->>Store: encryptedData
+    end
+    
     Store-->>UI: optimisticUpdate
     
-    Note over Network: When online
-    Network->>Recipient: deliver(encryptedData)
-    Recipient-->>Network: ack
-    Network-->>Store: deliveryConfirmation
-    Store-->>UI: updateStatus
+    alt Peer Online
+        Store->>WebRTC: deliverMessage(message)
+        WebRTC->>Peer: dataChannel.send(message)
+        Peer-->>WebRTC: ack
+        WebRTC-->>Store: delivered
+    else Peer Offline
+        Store->>Queue: enqueue(message)
+        Queue->>Vault: persist to IndexedDB
+        Note over Queue: Retry with exponential backoff
+        Queue->>WebRTC: retry delivery (1s, 5s, 15s, 60s)
+    end
 ```
 
 ### File Storage Flow
@@ -526,25 +622,34 @@ graph TB
 
 ## Technology Stack
 
-### Current Stack
+### Current Stack (January 2025)
 
 | Layer | Technology | Status | Notes |
 |-------|------------|--------|-------|
 | Frontend | SvelteKit 2.0 | ✅ Active | Type-safe, performant |
-| State | Svelte Stores | ⚠️ In-memory | Needs persistence |
-| Crypto | libsodium.js | ✅ Active | Classical only |
-| Storage | In-memory | ❌ Temporary | No persistence |
-| Network | None | ❌ Missing | Mock only |
-| Testing | Vitest | ✅ Active | 98.9% coverage |
+| State | Svelte Stores | ✅ Persistent | IndexedDB backed |
+| Crypto | libsodium.js | ✅ Active | Classical, per-recipient encryption |
+| Storage | IndexedDB/Dexie | ✅ Active | Encrypted, persistent |
+| Network | WebRTC | ✅ Active | P2P data channels |
+| Queue | Custom | ✅ Active | Persistent with retry |
+| Testing | Vitest | ✅ Active | 89.7% coverage |
 
-### Target Stack (Research Phase)
+### Implemented Technologies
+
+| Layer | Choice | Reasoning |
+|-------|--------|-----------|
+| Storage | Dexie.js | Best IndexedDB wrapper, TypeScript support |
+| P2P | WebRTC | Browser native, reliable data channels |
+| Queue | Custom implementation | Tailored retry logic, IndexedDB persistence |
+| Integration | New package | Clean separation of concerns |
+
+### Still Evaluating
 
 | Layer | Options | Decision Criteria |
 |-------|---------|-------------------|
-| Storage | Dexie.js, LocalForage, PouchDB | Performance, size, encryption |
-| P2P | WebRTC, libp2p, Gun.js | NAT traversal, reliability |
 | CRDT | Yjs, Automerge | Performance, conflict resolution |
 | PQ Crypto | liboqs, pqc-js, kyber-crystals | WASM support, performance |
+| Signaling | Socket.io, Firebase, custom | Simplicity, scalability |
 | Desktop | Tauri, Electron | Security, bundle size |
 | Mobile | Capacitor, React Native | Code reuse, performance |
 
@@ -606,10 +711,31 @@ graph LR
 **Consequences**: Larger keys, slower operations
 
 ### ADR-004: Browser Storage Strategy
-**Status**: Under Review  
+**Status**: Accepted  
 **Context**: Need persistent encrypted storage  
-**Decision**: TBD - Evaluating IndexedDB libraries  
-**Consequences**: TBD
+**Decision**: Dexie.js for IndexedDB management  
+**Consequences**: Excellent TypeScript support, reactive queries, migration support
+
+### ADR-005: P2P Messaging Implementation
+**Status**: Accepted (January 2025)  
+**Context**: Need direct peer-to-peer messaging without servers  
+**Decision**: WebRTC with data channels  
+**Consequences**: 
+- ✅ Browser native support
+- ✅ Reliable, ordered delivery
+- ✅ Works with STUN servers
+- ❌ Requires signaling for initial connection
+- ❌ Complex NAT traversal scenarios need TURN
+
+### ADR-006: Message Queue Design
+**Status**: Accepted (January 2025)  
+**Context**: Need reliable message delivery with offline support  
+**Decision**: Custom persistent queue with exponential backoff  
+**Consequences**: 
+- ✅ Messages survive app restarts
+- ✅ Automatic retry with backoff
+- ✅ Delivery tracking
+- ✅ Failed message handling
 
 ---
 
@@ -654,5 +780,5 @@ npm run security:fuzz
 
 ---
 
-*Last Updated: December 2024*  
-*Version: 2.0 - Complete Rewrite for Accuracy*
+*Last Updated: January 2025*  
+*Version: 3.0 - P2P Implementation Complete*

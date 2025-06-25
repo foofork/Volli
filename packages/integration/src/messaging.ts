@@ -1,5 +1,6 @@
-import { VolliDB, Message, Vault } from './database';
+import { VolliDB, Message, Vault, Contact } from './database';
 import type { VolliCore } from './index';
+import { keyEncapsulation, encryptData, initCrypto } from '@volli/identity-core';
 
 export class MessagingService {
   constructor(
@@ -10,11 +11,9 @@ export class MessagingService {
   async sendMessage(
     conversationId: string,
     content: string,
-    senderVault: Vault
+    senderVault: Vault,
+    recipientIds?: string[]
   ): Promise<Message> {
-    // For now, store unencrypted until we have proper key exchange
-    // TODO: Implement proper end-to-end encryption with recipient's public key
-    
     const message: Message = {
       conversationId,
       content,
@@ -23,11 +22,31 @@ export class MessagingService {
       status: 'pending'
     };
     
+    // If recipients are specified, encrypt for each recipient
+    if (recipientIds && recipientIds.length > 0) {
+      const encryptedVersions: Record<string, string> = {};
+      
+      for (const recipientId of recipientIds) {
+        const publicKey = await this.getContactPublicKey(recipientId);
+        if (publicKey) {
+          try {
+            const encrypted = await this.encryptForRecipient(content, publicKey);
+            encryptedVersions[recipientId] = encrypted;
+          } catch (error) {
+            console.error(`Failed to encrypt for recipient ${recipientId}:`, error);
+          }
+        }
+      }
+      
+      // Store encrypted versions (in real app, would send these to recipients)
+      message.encryptedContent = JSON.stringify(encryptedVersions);
+    }
+    
     // Store in Dexie (auto-generates ID)
     const id = await this.db.messages.add(message);
     message.id = id;
     
-    // TODO: Queue for P2P delivery
+    // TODO: Queue for P2P delivery with encrypted versions
     // For now, just mark as sent locally
     await this.db.messages.update(id, { status: 'sent' });
     
@@ -72,5 +91,43 @@ export class MessagingService {
       .where('conversationId')
       .equals(conversationId)
       .delete();
+  }
+  
+  /**
+   * Encrypt a message for a specific recipient using their public key
+   * Returns the encrypted content that can only be decrypted by the recipient
+   */
+  async encryptForRecipient(content: string, recipientPublicKey: string): Promise<string> {
+    await initCrypto();
+    
+    // Parse the recipient's public key
+    const publicKey = JSON.parse(recipientPublicKey);
+    
+    // Perform key encapsulation to get a shared secret
+    const { sharedSecret, ciphertext: kemCiphertext } = await keyEncapsulation(publicKey);
+    
+    // Convert content to bytes
+    const contentBytes = new TextEncoder().encode(content);
+    
+    // Encrypt the content with the shared secret
+    const { ciphertext, nonce } = encryptData(contentBytes, sharedSecret);
+    
+    // Package everything together
+    const encryptedMessage = {
+      kemCiphertext: Array.from(kemCiphertext),
+      ciphertext: Array.from(ciphertext),
+      nonce: Array.from(nonce)
+    };
+    
+    // Return as JSON string
+    return JSON.stringify(encryptedMessage);
+  }
+  
+  /**
+   * Get the public key for a contact
+   */
+  async getContactPublicKey(contactId: string): Promise<string | null> {
+    const contact = await this.db.contacts.get(contactId);
+    return contact?.publicKey || null;
   }
 }

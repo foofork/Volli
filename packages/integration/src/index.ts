@@ -3,13 +3,22 @@ import { createIdentity } from '@volli/identity-core';
 import { MessageManager } from '@volli/messaging';
 import { VolliDB, Vault as VaultRecord } from './database';
 import { MessagingService } from './messaging';
+import { PersistentMessageQueue } from './message-queue';
 
-export * from './database';
+// Export specific items to avoid conflicts
+export { VolliDB } from './database';
+export type { Config } from './database';
+export type { QueuedMessage as DatabaseQueuedMessage } from './database';
 export * from './messaging';
+export * from './network/network-store';
+export { PersistentMessageQueue } from './message-queue';
+export type { QueuedMessage } from './message-queue';
+export * from './types';
 
 export class VolliCore {
   public db: VolliDB;
   private _messaging: MessagingService | null = null;
+  private _messageQueue: PersistentMessageQueue | null = null;
   private currentVault: VaultRecord | null = null;
   private vaultKey: Uint8Array | null = null;
   
@@ -120,6 +129,13 @@ export class VolliCore {
       this._messaging = new MessagingService(this.db, this);
     }
     return this._messaging;
+  }
+  
+  get messageQueue(): PersistentMessageQueue {
+    if (!this._messageQueue) {
+      this._messageQueue = new PersistentMessageQueue(this.db);
+    }
+    return this._messageQueue;
   }
   
   async getCurrentVault(): Promise<VaultRecord | null> {
