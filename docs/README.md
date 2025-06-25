@@ -14,6 +14,8 @@
   - [Overview](./adaptive-trust/ADAPTIVE_TRUST_OVERVIEW.md)
   - [Implementation Guide](./adaptive-trust/ADAPTIVE_TRUST_IMPLEMENTATION_GUIDE.md)
   - [Architecture](./adaptive-trust/ADAPTIVE_TRUST_ARCHITECTURE.md)
+  - [Performance Guide](./adaptive-trust/ADAPTIVE_TRUST_PERFORMANCE_GUIDE.md)
+  - [Security Checklist](./adaptive-trust/ADAPTIVE_TRUST_SECURITY_CHECKLIST.md)
   - [Research](./adaptive-trust/research/)
 
 ### Development Guides
