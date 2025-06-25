@@ -115,73 +115,35 @@ class HybridDiscovery {
 }
 ```
 
-## Realistic Implementation Timeline
+## Implementation Status
+
+For current tasks and progress, see: **[TASK_BOARD.md](../TASK_BOARD.md#signaling-server)**
 
 ### Phase 1: MVP Signaling (Weeks 1-3)
-
-#### Week 1: Core Development
-- [ ] WebSocket server with rooms
-- [ ] Basic presence tracking  
-- [ ] Offer/answer relay protocol
-- [ ] Unit tests
-
-#### Week 2: Client Integration
-- [ ] NetworkStore signaling client
-- [ ] Auto-reconnection logic
-- [ ] Integration tests
-- [ ] Local testing with 2-10 users
-
-#### Week 3: Production Deployment
-- [ ] Deploy to cloud (DigitalOcean/Hetzner)
-- [ ] SSL/WSS configuration
-- [ ] Basic monitoring (uptime, connections)
-- [ ] Load testing (simulate 100 users)
-
-**Coordination Gate**: Team review before production deployment
+**Goal**: Basic WebSocket server for user discovery
+**Deliverables**:
+- WebSocket server with presence tracking
+- Client integration in NetworkStore
+- Production deployment with monitoring
 
 ### Phase 2: Production Hardening (Weeks 4-6)
-
-#### Week 4: Reliability
-- [ ] Rate limiting & DDoS protection
-- [ ] Error recovery & logging
-- [ ] Backup signaling server
-- [ ] Graceful failover
-
-#### Week 5: Scale Testing  
-- [ ] Load test with 1000+ concurrent users
-- [ ] Database for persistent presence
-- [ ] Redis for fast lookups
-- [ ] Geographic distribution prep
-
-#### Week 6: Federation Protocol
-- [ ] Design server-to-server protocol
-- [ ] Reference implementation
-- [ ] Federation documentation
-- [ ] Community server template
-
-**Coordination Gate**: Security review before federation
+**Goal**: Scale to 1000+ users with reliability
+**Deliverables**:
+- Rate limiting and DDoS protection
+- Database persistence and Redis caching
+- Federation protocol and documentation
 
 ### Phase 3: Decentralization (Weeks 7-12)
+**Goal**: Progressive P2P with fallbacks
+**Deliverables**:
+- mDNS local discovery
+- DHT integration (libp2p or Kademlia)
+- Hybrid discovery system
 
-#### Weeks 7-8: mDNS Local Discovery
-- [ ] mDNS service advertisement
-- [ ] Local peer discovery
-- [ ] Fallback to signaling
-- [ ] Cross-platform testing
-
-#### Weeks 9-10: DHT Integration
-- [ ] Evaluate libp2p vs custom Kademlia
-- [ ] DHT node implementation  
-- [ ] Bootstrap node deployment
-- [ ] Privacy analysis
-
-#### Weeks 11-12: Hybrid System
-- [ ] Unified discovery interface
-- [ ] Method prioritization
-- [ ] Fallback chains
-- [ ] Performance optimization
-
-**Coordination Gate**: Full system test before DHT launch
+### Coordination Gates
+1. **Before Production** (Week 3): Security review required
+2. **Before Federation** (Week 6): Protocol spec review
+3. **Before P2P** (Week 12): Privacy impact assessment
 
 ## Configuration Examples
 

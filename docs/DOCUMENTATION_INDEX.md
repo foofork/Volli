@@ -1,5 +1,9 @@
 # 📚 Volli Documentation Index
 
+## 🎯 Start Here for Contributors
+
+**→ [TASK_BOARD.md](./TASK_BOARD.md) ← Find available work and claim tasks**
+
 ## 📋 Quick Navigation
 
 ### Essential Documents (Root Level)

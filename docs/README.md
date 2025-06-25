@@ -29,9 +29,10 @@
 ## 🎯 Quick Links
 
 ### For New Contributors
-1. Read [Architecture](./ARCHITECTURE.md)
-2. Review [Security Model](./SECURITY.md)
-3. Understand [Testing Approach](./TESTING.md)
+1. **[Find Work: TASK_BOARD.md](./TASK_BOARD.md)** - Available tasks & how to claim them
+2. Read [Architecture](./ARCHITECTURE.md)
+3. Review [Security Model](./SECURITY.md)
+4. Understand [Testing Approach](./TESTING.md)
 
 ### For Adaptive Trust Implementation
 1. Start with [Adaptive Trust Overview](./adaptive-trust/ADAPTIVE_TRUST_OVERVIEW.md)

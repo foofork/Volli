@@ -140,93 +140,35 @@ const nativeModules = {
 };
 ```
 
-## Realistic Implementation Timeline
+## Implementation Status
+
+For current tasks and progress, see: **[TASK_BOARD.md](../TASK_BOARD.md#mobile-apps)**
 
 ### Phase 1: Mobile PWA (Weeks 1-4)
-
-#### Week 1: Capacitor Foundation
-- [ ] Initialize Capacitor project structure
-- [ ] Configure iOS project in Xcode
-- [ ] Configure Android project in Android Studio  
-- [ ] Basic app running on simulators
-- [ ] Deploy to physical test devices
-
-#### Week 2: Core Native Features
-- [ ] Push notification setup (Firebase/APNs)
-- [ ] Push notification permissions flow
-- [ ] Background app refresh
-- [ ] Biometric authentication
-- [ ] Deep linking configuration
-
-#### Week 3: App Store Assets
-- [ ] App icon design (all required sizes)
-- [ ] Screenshot creation (all device sizes)
-- [ ] App Store descriptions (localized)
-- [ ] Privacy policy & terms
-- [ ] TestFlight internal testing
-
-#### Week 4: App Store Submission  
-- [ ] Apple Developer account setup ($99/year)
-- [ ] Google Play Console setup ($25 one-time)
-- [ ] App Store Connect configuration
-- [ ] Initial submission for review
-- [ ] Handle any rejection feedback
-
-**Coordination Gate**: Marketing ready for launch announcement
+**Goal**: Get apps in stores using Capacitor wrapper
+**Deliverables**:
+- iOS and Android apps from existing web app
+- Push notifications working
+- App store approval and launch
 
 ### Phase 2: Native Enhancement (Weeks 5-8)
-
-#### Week 5: Platform Polish
-- [ ] iOS: Haptic feedback
-- [ ] iOS: Dynamic island support
-- [ ] Android: Material You theming
-- [ ] Android: Widget support
-- [ ] Platform-specific UI tweaks
-
-#### Week 6: Performance Optimization
-- [ ] Native crypto module integration
-- [ ] Image caching optimization
-- [ ] Startup time reduction
-- [ ] Memory usage profiling
-- [ ] Battery usage optimization
-
-#### Week 7-8: Extended Features
-- [ ] Share extension (share to Volli)
-- [ ] File provider integration
-- [ ] Contact provider integration
-- [ ] Siri/Google Assistant shortcuts
-- [ ] Notification actions (reply from notification)
-
-**Coordination Gate**: User feedback integration before Phase 3
+**Goal**: Platform-specific optimizations
+**Deliverables**:
+- Native UI features (haptics, theming)
+- Performance optimizations
+- Extended integrations (share, widgets)
 
 ### Phase 3: Desktop Apps (Weeks 9-12)
+**Goal**: Tauri-based desktop applications
+**Deliverables**:
+- Windows, macOS, Linux apps
+- System tray and auto-update
+- Cross-platform distribution
 
-#### Week 9: Tauri Setup
-- [ ] Tauri project initialization
-- [ ] Window management
-- [ ] Menu bar configuration
-- [ ] Development builds for all platforms
-
-#### Week 10: Desktop Features
-- [ ] System tray/menu bar app
-- [ ] Global hotkeys
-- [ ] File drag & drop
-- [ ] Native notifications
-- [ ] Auto-start on login
-
-#### Week 11: Distribution
-- [ ] Code signing certificates
-- [ ] Auto-updater implementation
-- [ ] MSI/DMG/AppImage builders
-- [ ] Update server setup
-
-#### Week 12: Platform Testing
-- [ ] Windows 10/11 testing
-- [ ] macOS 12+ testing  
-- [ ] Linux (Ubuntu/Fedora) testing
-- [ ] Cross-platform update testing
-
-**Coordination Gate**: Desktop beta program launch
+### Key Milestones
+- **Week 4**: Apps submitted to stores
+- **Week 5**: Public mobile launch
+- **Week 12**: Desktop beta release
 
 ## Platform-Specific Considerations
 

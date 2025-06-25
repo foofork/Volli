@@ -25,6 +25,9 @@
 > [!TIP]
 > **Current Focus**: Adaptive Trust System implementation. This groundbreaking feature balances privacy and performance automatically, learning from your usage patterns while keeping all data local. Your sovereignty rules always override system suggestions.
 
+> [!IMPORTANT]
+> **Want to Contribute?** Check out our [Task Board](docs/TASK_BOARD.md) to find available work!
+
 ## 💡 Why Privacy Shouldn't Be Hard
 
 > **The Problem**: Every messaging app makes you choose—either sacrifice privacy for features, or sacrifice usability for security.

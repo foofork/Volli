@@ -106,48 +106,32 @@ async decide(): Promise<TrustDecision> {
 - Optimize performance
 - Add documentation
 
-## Component Checklist
+## Component Status
 
-### Trust Manager (Alpha) 🔴
-- [ ] Write interface tests (RED)
-- [ ] Implement minimal functionality (GREEN)
-- [ ] Add error handling (REFACTOR)
-- [ ] Performance optimization
-- [ ] Documentation
+For current task availability and progress, see: **[TASK_BOARD.md](../TASK_BOARD.md)**
 
-### Rule Engine ✅ COMPLETE
-- [x] Write rule evaluation tests
-- [x] Implement rule storage
-- [x] Add conflict detection
-- [ ] Implement rule builder (Beta)
-- [ ] Test with 1000+ rules (GA)
+### Component Overview
 
-### Context Detector 
-#### Alpha (Network Only) 🔴
-- [ ] Write network detection tests
-- [ ] Implement WiFi trust detection
-- [ ] Cache implementation
+#### Trust Manager
+- **Alpha**: Basic decision flow with network context
+- **Beta**: Extended context and UI indicators
+- **GA**: Full adaptive learning
 
-#### Beta (Extended Context) 🟡
-- [ ] Implement device monitoring
-- [ ] Add time context
+#### Rule Engine ✅ COMPLETE
+- Full CRUD operations
+- Rule evaluation with composite conditions
+- Conflict detection
+- Dexie storage integration
 
-#### GA (Full Context) 🟢
-- [ ] Add sensitivity detection
-- [ ] Performance profiling
+#### Context Detector
+- **Alpha**: Network trust detection only
+- **Beta**: Device and time context
+- **GA**: Content sensitivity detection
 
-### Connection Manager
-#### Alpha (Use Existing) 🔴
-- [ ] Integration with current WebRTC
-
-#### Beta (Enhanced) 🟡
-- [ ] Write strategy tests
-- [ ] Implement unified interface
-
-#### GA (Multiple Strategies) 🟢
-- [ ] Add strategy implementations
-- [ ] Background upgrade logic
-- [ ] Connection pooling
+#### Connection Manager
+- **Alpha**: Integration with existing WebRTC
+- **Beta**: Unified interface
+- **GA**: Multiple connection strategies
 
 ## Testing Requirements
 
