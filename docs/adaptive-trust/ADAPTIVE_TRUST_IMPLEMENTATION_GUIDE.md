@@ -6,6 +6,32 @@
 - [ ] Understand [TDD methodology](./ADAPTIVE_TRUST_TDD_GUIDE.md)
 - [ ] Read [Overview](./ADAPTIVE_TRUST_OVERVIEW.md)
 
+## Team Coordination Protocol
+
+### Before Starting Any Component
+
+**CRITICAL**: To prevent implementation conflicts when working in parallel:
+
+1. **CLAIM YOUR COMPONENT** 
+   - Post in team chat: "Taking <component> - @username"
+   - Update shared tracking doc/board
+   - Check no one else is working on dependencies
+
+2. **CREATE FEATURE BRANCH**
+   ```bash
+   git checkout -b feature/adaptive-trust-<component>
+   # Example: feature/adaptive-trust-rule-engine
+   ```
+
+3. **MARK STATUS IN DOCS**
+   - Add "🚧 IN PROGRESS - @username" to component
+   - Update when complete: "✅ COMPLETE - PR #123"
+
+4. **COMMUNICATE ACTIVELY**
+   - Share blockers immediately
+   - Post progress updates daily
+   - Coordinate on shared interfaces
+
 ## Implementation Phases
 
 ### Phase 1: Foundation (Week 1)

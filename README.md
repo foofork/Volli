@@ -268,7 +268,7 @@ graph TD
 - **Privacy First**: No user profiling, all processing local
 
 > [!TIP]
-> See [Adaptive Trust Documentation](docs/ADAPTIVE_TRUST_OVERVIEW.md) for implementation details.
+> See [Adaptive Trust Documentation](docs/adaptive-trust/ADAPTIVE_TRUST_OVERVIEW.md) for implementation details.
 
 <br/>
 
@@ -290,6 +290,7 @@ graph TD
 - [x] Network status monitoring
 
 ### Phase 2: Advanced Features 🚧 *(CURRENT)*
+- [ ] Adaptive Trust System (intelligent privacy/performance balance)
 - [ ] Signaling server for peer discovery
 - [ ] CRDT for conflict resolution
 - [ ] File sharing and sync

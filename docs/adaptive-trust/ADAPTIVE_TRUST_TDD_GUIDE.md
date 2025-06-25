@@ -4,6 +4,13 @@
 
 This guide explains how to implement the Adaptive Trust System using SPARC's Test-Driven Development (TDD) methodology. Every feature must follow the Red-Green-Refactor cycle.
 
+## Team Coordination
+
+**Before starting ANY component:**
+1. **Claim your work** to prevent conflicts (see [Implementation Guide](./ADAPTIVE_TRUST_IMPLEMENTATION_GUIDE.md#team-coordination-protocol))
+2. Create feature branch: `feature/adaptive-trust-<component>`
+3. Mark status: "🚧 IN PROGRESS - @username" in docs
+
 ## SPARC TDD Methodology
 
 ### The Cycle
