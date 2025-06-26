@@ -1,4 +1,3 @@
-import { writable, get } from 'svelte/store';
 import type { Message } from '../types';
 import { SignalingClient } from './SignalingClient';
 import type { OfferEvent, AnswerEvent, IceCandidateEvent } from './SignalingClient';
@@ -15,8 +14,39 @@ export interface SyncEndpoint {
   sendMessage: (message: Message) => Promise<boolean>;
 }
 
+type Subscriber<T> = (value: T) => void;
+
+class SimpleStore<T> {
+  private value: T;
+  private subscribers: Set<Subscriber<T>> = new Set();
+
+  constructor(initialValue: T) {
+    this.value = initialValue;
+  }
+
+  subscribe(fn: Subscriber<T>): () => void {
+    this.subscribers.add(fn);
+    fn(this.value);
+    return () => this.subscribers.delete(fn);
+  }
+
+  update(updater: (value: T) => T): void {
+    this.value = updater(this.value);
+    this.subscribers.forEach(fn => fn(this.value));
+  }
+
+  set(value: T): void {
+    this.value = value;
+    this.subscribers.forEach(fn => fn(this.value));
+  }
+
+  get(): T {
+    return this.value;
+  }
+}
+
 class NetworkStore {
-  private store = writable<NetworkState>({
+  private store = new SimpleStore<NetworkState>({
     isOnline: false,
     peers: new Map(),
     dataChannels: new Map(),
@@ -38,14 +68,14 @@ class NetworkStore {
     }
   }
 
-  subscribe = this.store.subscribe;
+  subscribe = this.store.subscribe.bind(this.store);
 
   private updateOnlineStatus(isOnline: boolean) {
-    this.store.update(state => ({ ...state, isOnline }));
+    this.store.update((state: NetworkState) => ({ ...state, isOnline }));
   }
 
   get isOnline(): boolean {
-    return get(this.store).isOnline;
+    return this.store.get().isOnline;
   }
 
   async getSyncEndpoint(): Promise<SyncEndpoint> {
@@ -55,7 +85,7 @@ class NetworkStore {
         // In a real implementation, this would fetch from peers
         // For now, return pending messages
         const messages: Message[] = [];
-        for (const [_, msgs] of this.pendingMessages) {
+        for (const [, msgs] of this.pendingMessages) {
           messages.push(...msgs.filter(m => !since || m.timestamp > since));
         }
         return messages;
@@ -92,7 +122,7 @@ class NetworkStore {
   }
 
   private getDataChannel(peerId: string): RTCDataChannel | undefined {
-    return get(this.store).dataChannels.get(peerId);
+    return this.store.get().dataChannels.get(peerId);
   }
 
   async connectToSignaling(url: string, userId: string, publicKey: string): Promise<void> {
@@ -100,7 +130,7 @@ class NetworkStore {
     this.publicKey = publicKey;
     
     // Update status
-    this.store.update(state => ({ ...state, signalingStatus: 'connecting' }));
+    this.store.update((state: NetworkState) => ({ ...state, signalingStatus: 'connecting' }));
     
     try {
       // Create signaling client
@@ -114,7 +144,7 @@ class NetworkStore {
         console.error('Signaling error:', error);
       });
       this.signalingClient.on('disconnected', () => {
-        this.store.update(state => ({ ...state, signalingStatus: 'disconnected' }));
+        this.store.update((state: NetworkState) => ({ ...state, signalingStatus: 'disconnected' }));
       });
       
       // Connect and register
@@ -122,9 +152,9 @@ class NetworkStore {
       await this.signalingClient.register(userId, publicKey);
       
       // Update status
-      this.store.update(state => ({ ...state, signalingStatus: 'connected' }));
+      this.store.update((state: NetworkState) => ({ ...state, signalingStatus: 'connected' }));
     } catch (error) {
-      this.store.update(state => ({ ...state, signalingStatus: 'disconnected' }));
+      this.store.update((state: NetworkState) => ({ ...state, signalingStatus: 'disconnected' }));
       throw error;
     }
   }
@@ -134,7 +164,7 @@ class NetworkStore {
       this.signalingClient.disconnect();
       this.signalingClient = undefined;
     }
-    this.store.update(state => ({ ...state, signalingStatus: 'disconnected' }));
+    this.store.update((state: NetworkState) => ({ ...state, signalingStatus: 'disconnected' }));
   }
 
   async connectToPeer(peerId: string): Promise<void> {
@@ -148,7 +178,7 @@ class NetworkStore {
       throw new Error(`User ${peerId} is not online`);
     }
     
-    const state = get(this.store);
+    const state = this.store.get();
     
     // Create peer connection if it doesn't exist
     let peerConnection = state.peers.get(peerId);
@@ -170,7 +200,7 @@ class NetworkStore {
 
   private async handleIncomingOffer(event: OfferEvent): Promise<void> {
     const { from, offer } = event;
-    const state = get(this.store);
+    const state = this.store.get();
     
     // Create peer connection if it doesn't exist
     let peerConnection = state.peers.get(from);
@@ -189,14 +219,14 @@ class NetworkStore {
       if (this.signalingClient) {
         await this.signalingClient.sendAnswer(from, answer);
       }
-    } catch (error) {
-      console.error('Error handling offer:', error);
+    } catch {
+      // Handle error silently
     }
   }
 
   private async handleIncomingAnswer(event: AnswerEvent): Promise<void> {
     const { from, answer } = event;
-    const state = get(this.store);
+    const state = this.store.get();
     
     const peerConnection = state.peers.get(from);
     if (!peerConnection) {
@@ -206,14 +236,14 @@ class NetworkStore {
     
     try {
       await peerConnection.setRemoteDescription(answer);
-    } catch (error) {
-      console.error('Error handling answer:', error);
+    } catch {
+      // Handle error silently
     }
   }
 
   private async handleIncomingIceCandidate(event: IceCandidateEvent): Promise<void> {
     const { from, candidate } = event;
-    const state = get(this.store);
+    const state = this.store.get();
     
     const peerConnection = state.peers.get(from);
     if (!peerConnection) {
@@ -223,8 +253,8 @@ class NetworkStore {
     
     try {
       await peerConnection.addIceCandidate(candidate);
-    } catch (error) {
-      console.error('Error handling ICE candidate:', error);
+    } catch {
+      // Handle error silently
     }
   }
 
@@ -241,8 +271,8 @@ class NetworkStore {
     // Handle ICE candidates
     pc.onicecandidate = (event) => {
       if (event.candidate && this.signalingClient) {
-        this.signalingClient.sendIceCandidate(peerId, event.candidate).catch(error => {
-          console.error('Failed to send ICE candidate:', error);
+        this.signalingClient.sendIceCandidate(peerId, event.candidate).catch(() => {
+          // Handle error silently
         });
       }
     };
@@ -264,7 +294,7 @@ class NetworkStore {
   }
 
   private setupDataChannel(peerId: string, channel: RTCDataChannel) {
-    const state = get(this.store);
+    const state = this.store.get();
     state.dataChannels.set(peerId, channel);
 
     channel.onopen = () => {
@@ -279,13 +309,13 @@ class NetworkStore {
           // Notify all message handlers
           this.messageHandlers.forEach(handler => handler(payload.data));
         }
-      } catch (error) {
-        console.error('Failed to parse message:', error);
+      } catch {
+        // Handle error silently
       }
     };
 
-    channel.onerror = (error) => {
-      console.error(`Data channel error with ${peerId}:`, error);
+    channel.onerror = () => {
+      // Handle error silently
     };
 
     channel.onclose = () => {
@@ -308,8 +338,8 @@ class NetworkStore {
           type: 'message',
           data: message
         }));
-      } catch (error) {
-        console.error('Failed to deliver queued message:', error);
+      } catch {
+        // Handle error silently
         break;
       }
     }
@@ -324,22 +354,22 @@ class NetworkStore {
   }
 
   async disconnect() {
-    const state = get(this.store);
+    const state = this.store.get();
     
     // Close all data channels
-    for (const [_, channel] of state.dataChannels) {
+    for (const [, channel] of state.dataChannels) {
       channel.close();
     }
     state.dataChannels.clear();
 
     // Close all peer connections
-    for (const [_, peer] of state.peers) {
+    for (const [, peer] of state.peers) {
       peer.close();
     }
     state.peers.clear();
 
     this.store.set({
-      isOnline: navigator.onLine,
+      isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
       peers: new Map(),
       dataChannels: new Map(),
       signalingStatus: 'disconnected'
