@@ -69,7 +69,7 @@ export class SignalingClient extends EventEmitter {
         this.ws.onopen = () => {
           this.connected = true;
           this.reconnectAttempts = 0;
-          resolve();
+          resolve(undefined);
         };
 
         this.ws.onerror = (_error) => {
@@ -272,7 +272,7 @@ export class SignalingClient extends EventEmitter {
       this.pendingRequests.delete(requestKey);
 
       if (message.success) {
-        resolve();
+        resolve(undefined);
       } else {
         reject(new Error('Registration failed'));
       }
