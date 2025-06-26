@@ -7,6 +7,7 @@ export interface Contact {
   trustLevel?: 'verified' | 'trusted' | 'untrusted';
   lastSeen?: Date | string;
   avatar?: string;
+  isOnline?: boolean;
 }
 
 export interface Thread {
