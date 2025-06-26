@@ -22,8 +22,11 @@
       "parser": "svelte-eslint-parser",
       "parserOptions": {
         "parser": "@typescript-eslint/parser"
+      },
+      "rules": {
+        "no-inner-declarations": "off"
       }
     }
   ],
-  "ignorePatterns": ["node_modules/", "dist/", "build/", ".svelte-kit/", "coverage/"]
+  "ignorePatterns": ["node_modules/", "dist/", "build/", ".svelte-kit/", "coverage/", "**/*.svelte.d.ts"]
 }

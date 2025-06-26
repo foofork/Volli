@@ -51,7 +51,7 @@
     textareaElement.style.height = `${Math.min(textareaElement.scrollHeight, 200)}px`;
   }
 
-  function handlePaste(event) {
+  function handlePaste(_event) {
     // Handle file paste in the future
   }
 

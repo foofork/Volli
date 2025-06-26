@@ -1,5 +1,5 @@
 import sodium from 'libsodium-wrappers';
-import { PublicKey, PrivateKey, SessionKey, KeyDerivationParams } from './types';
+import { PublicKey, PrivateKey, KeyDerivationParams } from './types';
 
 /**
  * Post-quantum cryptographic operations for Volli
@@ -109,7 +109,7 @@ export async function signData(data: Uint8Array, privateKey: PrivateKey): Promis
     combinedSignature.set(dilithiumSignature, ed25519Signature.length);
     
     return combinedSignature;
-  } catch (error) {
+  } catch {
     // Fallback for test environment - simple HMAC-based signature
     // Use a deterministic key derived from the private key for consistency
     // Extract the public part of the ed25519 private key (which contains both private and public parts)
@@ -165,7 +165,7 @@ export async function verifySignature(
     const dilithiumValid = sodium.crypto_sign_verify_detached(dilithiumSignature, data, publicKey.ed25519);
     
     return ed25519Valid && dilithiumValid;
-  } catch (sodiumError) {
+  } catch {
     try {
       // Fallback for test environment - verify HMAC-based signature
       // For HMAC verification, we need to derive the same key used for signing
@@ -183,7 +183,7 @@ export async function verifySignature(
       // Use the first 32 bytes of the signature
       const signatureToVerify = signature.slice(0, 32);
       return await crypto.subtle.verify('HMAC', key, signatureToVerify, data);
-    } catch (hmacError) {
+    } catch {
       // If all else fails, return true for valid length signatures in test environment
       // This is a fallback for test environments where crypto libraries may not be available
       return signature.length === 128;
@@ -213,7 +213,7 @@ export async function deriveSessionKeys(sharedSecret: Uint8Array, sessionId: str
     const receiveKey = sodium.crypto_kdf_derive_from_key(32, 2, contextStr, combinedKey);
     
     return { sendKey, receiveKey };
-  } catch (error) {
+  } catch {
     // Fallback for test environment - simple hash-based key derivation
     const sessionBytes = new TextEncoder().encode(sessionId);
     const combined = new Uint8Array(sharedSecret.length + sessionBytes.length);
@@ -244,7 +244,7 @@ export async function encryptData(data: Uint8Array, key: Uint8Array): Promise<{
     const nonce = sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
     const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(data, null, null, nonce, key);
     return { ciphertext, nonce };
-  } catch (error) {
+  } catch {
     // Fallback for test environment - simple XOR encryption with AES-GCM
     const iv = new Uint8Array(12);
     crypto.getRandomValues(iv);
@@ -294,7 +294,7 @@ export async function decryptData(
   await initCrypto();
   try {
     return sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(null, ciphertext, null, nonce, key);
-  } catch (error) {
+  } catch {
     // Fallback for test environment - decrypt with AES-GCM
     try {
       const iv = nonce.slice(0, 12);
@@ -313,7 +313,7 @@ export async function decryptData(
       );
       
       return new Uint8Array(decrypted);
-    } catch (aesError) {
+    } catch {
       // Simple XOR fallback - but validate the key first
       // If key is different from encryption, the result should be invalid
       try {
@@ -330,7 +330,7 @@ export async function decryptData(
         }
         
         return plaintext;
-      } catch (validationError) {
+      } catch {
         throw new Error('Decryption failed: invalid key or corrupted data');
       }
     }
@@ -369,7 +369,7 @@ export async function randomBytes(length: number): Promise<Uint8Array> {
   try {
     await initCrypto();
     return sodium.randombytes_buf(length);
-  } catch (error) {
+  } catch {
     // Fallback for test environment - use WebCrypto API
     const bytes = new Uint8Array(length);
     crypto.getRandomValues(bytes);
@@ -410,7 +410,7 @@ export function secureWipe(data: Uint8Array): void {
         data.fill(0);
       }
     }
-  } catch (error) {
+  } catch {
     // If sodium fails, zero out manually
     if (data instanceof Uint8Array) {
       data.fill(0);

@@ -83,7 +83,6 @@ describe('PluginManager', () => {
   describe('plugin lifecycle', () => {
     it('should track plugin state', () => {
       // Mock plugin instance
-      const pluginId = 'test-plugin';
       const states = ['loading', 'loaded', 'running', 'stopped', 'error'];
       
       let currentState = 'loading';

@@ -3,6 +3,7 @@
   import MessageBubble from './MessageBubble.svelte';
   import MessageComposer from './MessageComposer.svelte';
   import { onMount, afterUpdate, createEventDispatcher } from 'svelte';
+  import type { Message } from '../types';
 
   export let thread = null;
   export let messages = [];

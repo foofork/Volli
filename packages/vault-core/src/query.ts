@@ -121,7 +121,7 @@ export class VaultQueryBuilder implements IQueryBuilder {
   /**
    * Execute SQL query and return decrypted documents
    */
-  private async executeSQL(sql: string, parameters: any[]): Promise<Document[]> {
+  private async executeSQL(_sql: string, _parameters: any[]): Promise<Document[]> {
     // This is a simplified implementation
     // In the real VaultStorage class, we'd need to expose a query method
     // For now, we'll throw an error to indicate this needs to be implemented

@@ -10,6 +10,10 @@ import {
   PluginSandbox
 } from './types';
 
+// Type definitions for WASM plugin lifecycle functions
+type WasmLifecycleFunction = () => void | Promise<void>;
+type WasmMessageHandler = (messageJson: string) => string | Promise<string>;
+
 /**
  * Plugin manager for loading and managing WASM plugins
  */
@@ -95,7 +99,7 @@ export class PluginManager extends EventEmitter {
       );
       
       // Initialize plugin
-      const initFn = plugin.wasmInstance.exports._init as Function | undefined;
+      const initFn = plugin.wasmInstance.exports._init as WasmLifecycleFunction | undefined;
       if (initFn) {
         await initFn();
       }
@@ -137,7 +141,7 @@ export class PluginManager extends EventEmitter {
     
     try {
       // Call plugin activation handler
-      const activateFn = plugin.wasmInstance.exports._activate as Function | undefined;
+      const activateFn = plugin.wasmInstance.exports._activate as WasmLifecycleFunction | undefined;
       if (activateFn) {
         await activateFn();
       }
@@ -166,7 +170,7 @@ export class PluginManager extends EventEmitter {
     
     try {
       // Call plugin suspension handler
-      const suspendFn = plugin.wasmInstance.exports._suspend as Function | undefined;
+      const suspendFn = plugin.wasmInstance.exports._suspend as WasmLifecycleFunction | undefined;
       if (suspendFn) {
         await suspendFn();
       }
@@ -196,7 +200,7 @@ export class PluginManager extends EventEmitter {
       }
       
       // Call plugin cleanup handler
-      const cleanupFn = plugin.wasmInstance.exports._cleanup as Function | undefined;
+      const cleanupFn = plugin.wasmInstance.exports._cleanup as WasmLifecycleFunction | undefined;
       if (cleanupFn) {
         await cleanupFn();
       }
@@ -272,7 +276,7 @@ export class PluginManager extends EventEmitter {
     }
     
     // Handle message through plugin's message handler
-    const handleMessageFn = plugin.wasmInstance.exports._handleMessage as Function | undefined;
+    const handleMessageFn = plugin.wasmInstance.exports._handleMessage as WasmMessageHandler | undefined;
     if (handleMessageFn) {
       const messageJson = JSON.stringify(message);
       const responseJson = await handleMessageFn(messageJson);
@@ -405,17 +409,17 @@ export class PluginManager extends EventEmitter {
   /**
    * Create a permission-gated host function
    */
-  private createHostFunction(
+  private createHostFunction<T extends (...args: any[]) => any>(
     plugin: PluginInstance,
     permission: PluginPermission,
-    fn: Function
-  ): Function {
-    return (...args: any[]) => {
+    fn: T
+  ): T {
+    return ((...args: Parameters<T>) => {
       if (!this.hasPermission(plugin.id, permission)) {
         throw new Error(`Plugin ${plugin.id} does not have permission ${permission}`);
       }
       return fn(...args);
-    };
+    }) as T;
   }
   
   /**

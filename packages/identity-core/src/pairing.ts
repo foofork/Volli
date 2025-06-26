@@ -8,7 +8,7 @@ import {
   TrustLevel,
   SessionKey
 } from './types';
-import { generateKeyPair, signData, verifySignature } from './crypto';
+import { signData, verifySignature } from './crypto';
 import { getKeyFingerprint, createSessionKey } from './keys';
 import { randomBytes } from './crypto';
 
@@ -247,7 +247,7 @@ export function isPairingExpired(pairingData: PairingData): boolean {
  */
 export async function generatePairingChallenge(
   myPrivateKey: PrivateKey,
-  theirPublicKey: PublicKey
+  _theirPublicKey: PublicKey
 ): Promise<{
   challenge: Uint8Array;
   signature: Uint8Array;

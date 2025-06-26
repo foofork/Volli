@@ -3,8 +3,7 @@ import {
   Message,
   MessageQueue,
   QueuedMessage,
-  QueuePriority,
-  DeliveryStatus
+  QueuePriority
 } from './types';
 
 /**
@@ -83,7 +82,7 @@ export class MessageQueueManager {
   /**
    * Mark message as sent successfully
    */
-  markMessageSent(tempId: string, finalMessageId: string): void {
+  markMessageSent(tempId: string, _finalMessageId: string): void {
     this.removeMessage(tempId);
     this.clearRetryTimer(tempId);
   }

@@ -55,7 +55,7 @@ if (typeof window !== 'undefined') {
   theme.init();
   
   // Listen for system theme changes
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (_e) => {
     const currentTheme = localStorage.getItem('volli-theme') as Theme;
     if (currentTheme === 'system') {
       applyTheme('system');

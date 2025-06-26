@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MessageManager } from './message-manager';
-import type { Message, MessageContent } from './types';
+import type { MessageContent } from './types';
 
 describe('MessageManager', () => {
   let messageManager: MessageManager;

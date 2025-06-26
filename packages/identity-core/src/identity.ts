@@ -10,13 +10,11 @@ import {
 } from './types';
 import { generateKeyPair, signData, verifySignature } from './crypto';
 import { 
-  generateDeviceKeys, 
   getKeyFingerprint, 
   exportKeyPairEncrypted,
   importKeyPairEncrypted,
   updateDeviceTrust,
-  canTrustDevice,
-  validateKeyPair
+  canTrustDevice
 } from './keys';
 
 /**
@@ -221,12 +219,6 @@ export async function exportIdentityEncrypted(
   privateKey: PrivateKey,
   password: string
 ): Promise<EncryptedBackup> {
-  // Create complete identity data for backup
-  const identityBackup = {
-    ...identity,
-    privateKey // Include private key in backup
-  };
-  
   // Use the existing key export function
   return await exportKeyPairEncrypted(identity.publicKey, privateKey, password);
 }

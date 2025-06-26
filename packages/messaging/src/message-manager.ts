@@ -1,13 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { 
-  Message, 
   MessageContent, 
-  MessageMetadata, 
-  DeliveryStatus,
-  MessageReaction,
-  MessageEdit
+  DeliveryStatus
 } from './types';
-import * as MessageFunctions from './message';
 
 /**
  * MessageManager class that wraps message functions for testing compatibility
@@ -61,8 +56,9 @@ export class MessageManager {
     
     if (filteredReactions.length === 0) {
       // Remove reactions field if empty
-      const { reactions, ...messageWithoutReactions } = message;
-      return messageWithoutReactions;
+      const messageCopy = { ...message };
+      delete messageCopy.reactions;
+      return messageCopy;
     }
     
     return {

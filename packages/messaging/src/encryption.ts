@@ -166,12 +166,10 @@ export function generateEphemeralKey(): Uint8Array {
 /**
  * Derive message key from session key and message ID
  */
-export function deriveMessageKey(sessionKey: Uint8Array, messageId: string): Uint8Array {
+export function deriveMessageKey(sessionKey: Uint8Array, _messageId: string): Uint8Array {
   if (!sodiumReady) {
     throw new Error('Encryption not initialized');
   }
-  
-  const messageIdBytes = new TextEncoder().encode(messageId);
   
   return sodium.crypto_kdf_derive_from_key(
     32, // key length

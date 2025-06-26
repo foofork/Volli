@@ -403,9 +403,10 @@ export function getMessageThreadId(message: Message): string {
  */
 export function createMessageSummary(message: Message): string {
   switch (message.type) {
-    case MessageType.TEXT:
+    case MessageType.TEXT: {
       const text = message.content.data as string;
       return text.length > 50 ? text.substring(0, 47) + '...' : text;
+    }
     
     case MessageType.IMAGE:
       return '📷 Photo';

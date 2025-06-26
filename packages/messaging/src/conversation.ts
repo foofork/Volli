@@ -99,7 +99,7 @@ export function addParticipant(
   conversation: Conversation,
   userId: string,
   role: ParticipantRole = ParticipantRole.MEMBER,
-  invitedBy?: string
+  _invitedBy?: string
 ): Conversation {
   // Check if user is already a participant
   if (conversation.participants.some(p => p.userId === userId)) {
@@ -265,7 +265,7 @@ export function unarchiveConversation(conversation: Conversation): Conversation 
 /**
  * Mute conversation
  */
-export function muteConversation(conversation: Conversation, muteUntil?: number): Conversation {
+export function muteConversation(conversation: Conversation, _muteUntil?: number): Conversation {
   return updateConversationMetadata(conversation, { isMuted: true });
 }
 

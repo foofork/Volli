@@ -12,7 +12,7 @@ import {
 import { VaultStorage } from './storage';
 import { VaultSearch } from './search';
 import { VaultSync } from './sync';
-import { initCrypto, hashData, encryptData, decryptData, generateSalt } from './crypto';
+import { initCrypto, hashData, encryptData, decryptData } from './crypto';
 
 /**
  * Main Vault class for encrypted document storage

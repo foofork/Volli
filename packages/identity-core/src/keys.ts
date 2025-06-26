@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 import { 
   PublicKey, 
   PrivateKey, 
@@ -11,7 +12,6 @@ import {
 import { 
   generateKeyPair, 
   keyEncapsulation, 
-  keyDecapsulation, 
   deriveSessionKeys,
   encryptData,
   decryptData,
@@ -124,7 +124,7 @@ export function getKeyFingerprint(publicKey: PublicKey): string {
   combined.set(publicKey.ed25519, offset);
   
   // Create readable fingerprint (SHA-256 hash in hex)
-  const hash = require('crypto').createHash('sha256').update(combined).digest('hex');
+  const hash = crypto.createHash('sha256').update(combined).digest('hex');
   
   // Format as fingerprint blocks
   return hash.match(/.{1,4}/g)?.join(' ').toUpperCase() || hash.toUpperCase();
@@ -176,7 +176,7 @@ export async function exportKeyPairEncrypted(
   encryptedData.set(ciphertext, nonce.length);
   
   // Create checksum
-  const checksum = require('crypto').createHash('sha256')
+  const checksum = crypto.createHash('sha256')
     .update(encryptedData)
     .digest();
   
@@ -200,7 +200,7 @@ export async function importKeyPairEncrypted(
   password: string
 ): Promise<{ publicKey: PublicKey; privateKey: PrivateKey }> {
   // Verify checksum
-  const checksum = require('crypto').createHash('sha256')
+  const checksum = crypto.createHash('sha256')
     .update(backup.encryptedData)
     .digest();
   
@@ -243,7 +243,7 @@ export async function importKeyPairEncrypted(
     secureWipe(decrypted);
     
     return { publicKey, privateKey };
-  } catch (error) {
+  } catch {
     secureWipe(decryptionKey);
     throw new Error('Failed to decrypt backup: invalid password or corrupted data');
   }
