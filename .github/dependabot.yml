@@ -1,0 +1,62 @@
+version: 2
+
+# Enable security updates for all ecosystems
+enable-beta-ecosystems: true
+
+updates:
+  # JavaScript/TypeScript dependencies
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+      time: '03:00'
+      timezone: 'UTC'
+    open-pull-requests-limit: 10
+    # Group updates to reduce noise
+    groups:
+      development-dependencies:
+        patterns:
+          - '@types/*'
+          - 'eslint*'
+          - 'prettier*'
+          - 'vitest*'
+          - 'tsup*'
+      svelte-ecosystem:
+        patterns:
+          - 'svelte*'
+          - '@sveltejs/*'
+    # Security updates should always be prioritized
+    priority: 1
+    labels:
+      - 'dependencies'
+      - 'security'
+    reviewers:
+      - '@foofork'
+    commit-message:
+      prefix: 'chore'
+      prefix-development: 'chore(dev)'
+      include: 'scope'
+    # Only allow security updates for production dependencies
+    versioning-strategy: 'increase-if-necessary'
+
+  # GitHub Actions
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+      day: 'monday'
+      time: '03:00'
+      timezone: 'UTC'
+    open-pull-requests-limit: 5
+    labels:
+      - 'github-actions'
+      - 'dependencies'
+    reviewers:
+      - '@foofork'
+    commit-message:
+      prefix: 'ci'
+      include: 'scope'
+
+# Security-specific configuration
+security-updates-only: false # We want all updates, not just security
+vulnerability-alerts: true # Enable vulnerability alerts

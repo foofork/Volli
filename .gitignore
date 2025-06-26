@@ -142,3 +142,45 @@ debug-test.js
 secrets/
 keys/
 certificates/
+*.secret
+*.private
+*.priv
+.gitleaks.toml
+**/.env*
+!.env.example
+security-report/
+vulnerability-report/
+.secrets.baseline.tmp
+trivy-results.sarif
+osv-results.sarif
+sbom.spdx.json
+
+# Credential files
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.truststore
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+*.ppk
+
+# Cloud provider credentials
+.aws/
+.azure/
+.gcp/
+google-credentials.json
+credentials.json
+service-account*.json
+
+# API keys and tokens
+.npmrc
+.yarnrc
+.netrc
+.pypirc

@@ -62,4 +62,11 @@ jobs:
         run: npm test
 
       - name: Check for security vulnerabilities
-        run: pnpm audit --audit-level=high
+        run: |
+          echo "Checking for security vulnerabilities..."
+          pnpm audit --audit-level=high
+
+      - name: Verify lock file integrity
+        run: |
+          echo "Verifying pnpm-lock.yaml hasn't been tampered with..."
+          pnpm install --frozen-lockfile --verify-integrity --dry-run
