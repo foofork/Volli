@@ -14,12 +14,13 @@
   export let disabled = false;
   let className = '';
   export { className as class };
+  
+  function handleInput(event: Event) {
+    const target = event.target as HTMLInputElement;
+    value = target.value;
+  }
 
   $: hasError = !!error;
-  
-  function handleInput(event) {
-    value = event.target.value;
-  }
 </script>
 
 <div class={cn('space-y-volli-sm', className)}>

@@ -7,7 +7,6 @@ import {
   SearchOptions, 
   SearchResult, 
   BackupData,
-  VaultEvents,
   SyncStatus
 } from './types';
 import { VaultStorage } from './storage';
@@ -50,7 +49,7 @@ export class Vault extends EventEmitter {
     await initCrypto();
     
     // Initialize storage
-    this.storage = new VaultStorage(this.config.encryptionKey, existingDatabase);
+    this.storage = await VaultStorage.create(this.config.encryptionKey, existingDatabase);
     
     // Initialize search if enabled
     if (this.config.searchEnabled !== false) {
@@ -258,7 +257,7 @@ export class Vault extends EventEmitter {
     
     if (password) {
       // Encrypt backup with password
-      const salt = generateSalt();
+      // const salt = generateSalt(); // TODO: Use for key derivation when deriveKeyFromPassword is available
       // TODO: Import deriveKeyFromPassword from identity-core when available
       // For now, use a placeholder implementation
       const backupKey = new Uint8Array(32); // Placeholder
@@ -314,7 +313,7 @@ export class Vault extends EventEmitter {
     
     // Reinitialize storage with restored data
     this.storage.close();
-    this.storage = new VaultStorage(this.config.encryptionKey, decryptedData);
+    this.storage = await VaultStorage.create(this.config.encryptionKey, decryptedData);
     
     // Rebuild search index if enabled
     if (this.search) {

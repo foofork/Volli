@@ -2,30 +2,20 @@
   import { cn } from '../utils/cn';
   import Button from './Button.svelte';
   import { createEventDispatcher } from 'svelte';
+  import type { Contact } from '../types';
 
-  export let contact;
+  export let contact: Contact;
   export let showActions = true;
   export let className = '';
 
   const dispatch = createEventDispatcher();
 
-  $: trustColor = contact?.trustLevel ? {
-    verified: 'text-volli-success-600 dark:text-volli-success-400',
-    trusted: 'text-volli-primary-600 dark:text-volli-primary-400',
-    untrusted: 'text-volli-gray-500 dark:text-volli-gray-400'
-  }[contact.trustLevel] || '' : '';
-
-  $: trustIcon = contact?.trustLevel ? {
-    verified: '✓',
-    trusted: '●',
-    untrusted: '○'
-  }[contact.trustLevel] || '○' : '○';
-
-  function formatLastSeen(date) {
+  function formatLastSeen(date: Date | string | undefined): string {
     if (!date) return 'Unknown';
     
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
     const now = new Date();
-    const diff = now.getTime() - date.getTime();
+    const diff = now.getTime() - dateObj.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
@@ -36,9 +26,21 @@
     return `${days}d ago`;
   }
 
-  function truncateKey(key) {
+  function truncateKey(key: string): string {
     return `${key.slice(0, 6)}...${key.slice(-6)}`;
   }
+
+  $: trustColor = contact?.trustLevel ? ({
+    verified: 'text-volli-success-600 dark:text-volli-success-400',
+    trusted: 'text-volli-primary-600 dark:text-volli-primary-400',
+    untrusted: 'text-volli-gray-500 dark:text-volli-gray-400'
+  } as const)[contact.trustLevel] || '' : '';
+
+  $: trustIcon = contact?.trustLevel ? ({
+    verified: '✓',
+    trusted: '●',
+    untrusted: '○'
+  } as const)[contact.trustLevel] || '○' : '○';
 </script>
 
 <div class={cn('volli-card-interactive p-volli-lg', className)}>

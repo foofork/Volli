@@ -1,8 +1,8 @@
 import { PluginManifest } from './types';
+import crypto from 'crypto';
 // import { hashData } from '@volli/vault-core';
 // Temporary hash function until vault-core types are available
 function hashData(data: Uint8Array): Uint8Array {
-  const crypto = require('crypto');
   return crypto.createHash('sha256').update(data).digest();
 }
 

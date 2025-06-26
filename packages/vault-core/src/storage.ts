@@ -1,4 +1,4 @@
-import { Database } from 'sql.js';
+import initSqlJs, { Database } from 'sql.js';
 import { EncryptedRecord, Document, DatabaseSchema } from './types';
 import { encryptData, decryptData, hashData } from './crypto';
 
@@ -70,14 +70,19 @@ export class VaultStorage {
   private db: Database;
   private encryptionKey: Uint8Array;
   
-  constructor(encryptionKey: Uint8Array, databaseData?: Uint8Array) {
+  private constructor(encryptionKey: Uint8Array, db: Database) {
     this.encryptionKey = encryptionKey;
-    
-    // Initialize SQL.js database
-    const SQL = require('sql.js');
-    this.db = new SQL.Database(databaseData);
-    
+    this.db = db;
     this.initializeSchema();
+  }
+  
+  /**
+   * Create a new VaultStorage instance
+   */
+  static async create(encryptionKey: Uint8Array, databaseData?: Uint8Array): Promise<VaultStorage> {
+    const SQL = await initSqlJs();
+    const db = new SQL.Database(databaseData);
+    return new VaultStorage(encryptionKey, db);
   }
   
   /**
