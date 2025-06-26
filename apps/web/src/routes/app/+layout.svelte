@@ -170,7 +170,7 @@
 		</div>
 	{:else}
 		<div class="app-layout">
-			<aside class="sidebar" bind:this={sidebarElement} role="navigation" aria-label="Main navigation" on:keydown={handleSidebarKeydown}>
+			<aside class="sidebar" bind:this={sidebarElement} role="navigation" aria-label="Main navigation">
 				<div class="sidebar-header">
 					<h1>
 						<span role="img" aria-label="Lock icon">🔐</span>
@@ -183,7 +183,7 @@
 					</button>
 				</div>
 				
-				<nav class="nav-menu" role="menu">
+				<nav class="nav-menu">
 					<a href="/app" class="nav-item" class:active={true} role="menuitem" aria-current="page">
 						<span class="icon" role="img" aria-label="Messages icon">💬</span>
 						<span>Messages</span>
@@ -228,7 +228,7 @@
 				</div>
 			</aside>
 			
-			<main class="main-content" role="main">
+			<main class="main-content">
 				<slot />
 			</main>
 		</div>
