@@ -108,8 +108,8 @@
         {#each dayMessages as message (message.id)}
           <div class="animate-fade-in">
             <MessageBubble
-              content={message.content}
-              sender={message.sender}
+              content={message.text}
+              sender={message.senderId}
               timestamp={message.timestamp}
               isOwn={message.senderId === currentUserId}
               status={message.status}
