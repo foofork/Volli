@@ -51,7 +51,9 @@ jobs:
         run: npm run lint
 
       - name: Build all packages
-        run: npm run build:packages
+        run: |
+          echo "Building packages in dependency order..."
+          npm run build:packages -- --concurrency=1
 
       - name: Run type checking
         run: npm run typecheck
