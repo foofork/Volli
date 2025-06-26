@@ -11,11 +11,12 @@
     "test:run": "vitest run"
   },
   "dependencies": {
-    "@volli/vault-core": "workspace:*",
     "@volli/identity-core": "workspace:*",
     "@volli/messaging": "workspace:*",
     "@volli/signaling-server": "workspace:*",
-    "dexie": "^3.2.4"
+    "@volli/vault-core": "workspace:*",
+    "dexie": "^3.2.4",
+    "eventemitter3": "^5.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
