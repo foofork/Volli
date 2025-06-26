@@ -51,7 +51,7 @@ jobs:
         run: npm run lint
 
       - name: Build all packages
-        run: npm run build
+        run: npm run build:packages
 
       - name: Run type checking
         run: npm run typecheck
