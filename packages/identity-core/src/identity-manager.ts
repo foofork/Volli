@@ -23,7 +23,7 @@ import {
   getIdentityStats,
   cleanupDevices
 } from './identity';
-import { generateKeyPair } from './crypto';
+import { generateKeyPair, verifySignature } from './crypto';
 
 /**
  * Identity Manager class for managing identities and devices
@@ -175,7 +175,7 @@ export class IdentityManager {
   /**
    * Export identity for backup
    */
-  exportIdentity(identityId: string, password: string): EncryptedBackup {
+  async exportIdentity(identityId: string, password: string): Promise<EncryptedBackup> {
     const identity = this.identities.get(identityId);
     const privateKey = this.privateKeys.get(identityId);
     
@@ -183,14 +183,14 @@ export class IdentityManager {
       throw new Error('Identity or private key not found');
     }
 
-    return exportIdentityEncrypted(identity, privateKey, password);
+    return await exportIdentityEncrypted(identity, privateKey, password);
   }
 
   /**
    * Import identity from backup
    */
-  importIdentity(backup: EncryptedBackup, password: string): Identity {
-    const { identity, privateKey } = importIdentityEncrypted(backup, password);
+  async importIdentity(backup: EncryptedBackup, password: string): Promise<Identity> {
+    const { identity, privateKey } = await importIdentityEncrypted(backup, password);
     
     this.identities.set(identity.id, identity);
     this.privateKeys.set(identity.id, privateKey);
@@ -289,7 +289,9 @@ export class IdentityManager {
       return false;
     }
 
-    return verifyIdentitySignature(identity, data, signature);
+    // Verify signature against the device's public key
+    // For the primary device, this should be the same as the identity's public key
+    return verifySignature(data, signature, device.publicKey);
   }
 
   /**

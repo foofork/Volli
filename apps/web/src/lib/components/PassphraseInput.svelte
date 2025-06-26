@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import { authStore } from '$lib/stores/auth';
+	import { generateId, announceToScreenReader } from '$lib/utils/accessibility';
 	
 	export let value: string = '';
 	export let placeholder: string = 'Enter passphrase';
@@ -11,6 +12,8 @@
 	export let required: boolean = true;
 	export let showToggle: boolean = true;
 	export let autocomplete: string = 'new-password';
+	export let describedBy: string = '';
+	export let errorId: string = '';
 	
 	const dispatch = createEventDispatcher();
 	
@@ -18,9 +21,29 @@
 	let strength: { entropy: number; strength: string; hasCommonPattern: boolean } | null = null;
 	let suggestions: string[] = [];
 	
+	// Generate unique IDs for accessibility
+	const inputId = generateId('passphrase-input');
+	const strengthId = generateId('strength-indicator');
+	const suggestionsId = generateId('suggestions');
+	const errorMessageId = generateId('error-message');
+	
+	// Build describedBy attribute
+	$: ariaDescribedBy = [
+		showStrength && strength ? strengthId : '',
+		suggestions.length > 0 ? suggestionsId : '',
+		value && !isValid ? errorMessageId : '',
+		describedBy
+	].filter(Boolean).join(' ');
+	
 	$: if (value && showStrength) {
 		strength = authStore.validatePassphraseStrength(value);
 		updateSuggestions();
+		// Dispatch strength event reactively
+		if (strength) {
+			dispatch('strength', strength);
+			// Announce strength changes to screen readers
+			announceToScreenReader(`Passphrase strength: ${strength.strength}`);
+		}
 	} else {
 		strength = null;
 		suggestions = [];
@@ -78,16 +101,14 @@
 	
 	function toggleVisibility() {
 		showPassphrase = !showPassphrase;
+		// Announce visibility change to screen readers
+		announceToScreenReader(showPassphrase ? 'Passphrase visible' : 'Passphrase hidden');
 	}
 	
 	function handleInput(event: Event) {
 		const target = event.target as HTMLInputElement;
 		value = target.value;
 		dispatch('input', value);
-		
-		if (strength) {
-			dispatch('strength', strength);
-		}
 	}
 	
 	function handleBlur() {
@@ -96,16 +117,16 @@
 </script>
 
 <div class="passphrase-input">
-	<label for="passphrase">
+	<label for={inputId}>
 		{label}
 		{#if required}
-			<span class="required">*</span>
+			<span class="required" aria-label="required">*</span>
 		{/if}
 	</label>
 	
 	<div class="input-wrapper">
 		<input
-			id="passphrase"
+			id={inputId}
 			type={showPassphrase ? 'text' : 'password'}
 			{value}
 			{placeholder}
@@ -113,6 +134,9 @@
 			{required}
 			{autocomplete}
 			class:invalid={value && !isValid}
+			aria-describedby={ariaDescribedBy || undefined}
+			aria-invalid={value && !isValid}
+			aria-label={`${label}${required ? ' (required)' : ''}`}
 			on:input={handleInput}
 			on:blur={handleBlur}
 		/>
@@ -122,15 +146,17 @@
 				type="button"
 				class="toggle-visibility"
 				on:click={toggleVisibility}
+				aria-label={showPassphrase ? 'Hide passphrase' : 'Show passphrase'}
+				aria-pressed={showPassphrase}
 				title={showPassphrase ? 'Hide passphrase' : 'Show passphrase'}
 			>
 				{#if showPassphrase}
-					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
 						<path d="M10 12a2 2 0 100-4 2 2 0 000 4z" fill="currentColor"/>
 						<path d="M10 3C5 3 1.73 7.11 1 10c.73 2.89 4 7 9 7s8.27-4.11 9-7c-.73-2.89-4-7-9-7zm0 11.5a4.5 4.5 0 110-9 4.5 4.5 0 010 9z" fill="currentColor"/>
 					</svg>
 				{:else}
-					<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+					<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
 						<path d="M10 6a4 4 0 014 4 1 1 0 001.92.39l2.04-2.04a1 1 0 00-1.42-1.41l-.91.91A8.96 8.96 0 0010 3C5 3 1.73 7.11 1 10a16.8 16.8 0 001.86 2.65l-1.51 1.5a1 1 0 001.41 1.42l14-14a1 1 0 00-1.42-1.41L14 4.5A8.95 8.95 0 0010 3v3zm0 8a4 4 0 01-4-4v-.29l1.88-1.88A2 2 0 0010 12v2z" fill="currentColor"/>
 						<path d="M10.13 14.98l1.45-1.45c.16.03.29.04.42.04a4 4 0 004-4c0-.13-.01-.26-.04-.42l2.98-2.98c.48.73.88 1.54 1.06 2.33-.73 2.89-4 7-9 7-.85 0-1.68-.12-2.47-.34l1.6-1.6z" fill="currentColor"/>
 					</svg>
@@ -140,8 +166,8 @@
 	</div>
 	
 	{#if showStrength && value && strength}
-		<div class="strength-indicator">
-			<div class="strength-bar">
+		<div class="strength-indicator" id={strengthId} role="status" aria-live="polite">
+			<div class="strength-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={strengthPercent} aria-label="Passphrase strength">
 				<div
 					class="strength-fill {strengthClass}"
 					style="width: {strengthPercent}%"
@@ -156,16 +182,16 @@
 		</div>
 		
 		{#if suggestions.length > 0}
-			<ul class="suggestions">
+			<ul class="suggestions" id={suggestionsId} role="list" aria-label="Passphrase suggestions">
 				{#each suggestions as suggestion}
-					<li>{suggestion}</li>
+					<li role="listitem">{suggestion}</li>
 				{/each}
 			</ul>
 		{/if}
 	{/if}
 	
 	{#if value && !isValid}
-		<div class="error">
+		<div class="error" id={errorMessageId} role="alert" aria-live="assertive">
 			{#if strength?.hasCommonPattern}
 				This passphrase contains common patterns. Please choose something more unique.
 			{:else if strength && strength.entropy < minStrength}
@@ -219,7 +245,15 @@
 		outline: none;
 		border-color: #3B82F6;
 		background: rgba(255, 255, 255, 0.08);
-		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+	}
+	
+	/* High contrast mode support */
+	@media (prefers-contrast: high) {
+		input:focus {
+			box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.8);
+			border-color: #1E40AF;
+		}
 	}
 	
 	input:disabled {
@@ -251,6 +285,24 @@
 	
 	.toggle-visibility:hover {
 		color: #fff;
+	}
+	
+	.toggle-visibility:focus {
+		outline: 2px solid #3B82F6;
+		outline-offset: 2px;
+		color: #fff;
+	}
+	
+	/* Ensure button is focusable and accessible */
+	.toggle-visibility {
+		border-radius: 4px;
+	}
+	
+	/* High contrast mode support */
+	@media (prefers-contrast: high) {
+		.toggle-visibility:focus {
+			outline: 3px solid #1E40AF;
+		}
 	}
 	
 	.strength-indicator {

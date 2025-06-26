@@ -173,24 +173,22 @@ describe('PassphraseInput', () => {
       );
     });
     
-    it.skip('should dispatch strength event', async () => {
-      // TODO: Fix timing issue with reactive strength calculation
-      // The strength functionality is tested through UI assertions
-      let strengthValue = null;
+    it('should dispatch strength event', async () => {
+      let strengthValue: any = null;
       const { getByLabelText, component } = render(PassphraseInput);
       
       // Subscribe to strength event
-      component.$on('strength', (event) => {
+      component.$on('strength', (event: CustomEvent) => {
         strengthValue = event.detail;
       });
       
       const input = getByLabelText('Passphrase *');
+      
+      // Fire input event - this should trigger the strength calculation and dispatch
       await fireEvent.input(input, { target: { value: 'Test123!' } });
       
-      // Wait for Svelte's tick to ensure reactive updates complete
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
-      // Check that strength was calculated
+      // The strength event should be dispatched immediately during the input event
+      // if the strength has been calculated by the reactive statement
       expect(strengthValue).toBeTruthy();
       expect(strengthValue).toHaveProperty('entropy');
       expect(strengthValue).toHaveProperty('strength');
@@ -198,6 +196,10 @@ describe('PassphraseInput', () => {
       expect(typeof strengthValue.entropy).toBe('number');
       expect(typeof strengthValue.strength).toBe('string');
       expect(typeof strengthValue.hasCommonPattern).toBe('boolean');
+      
+      // Verify the strength calculation for this specific input
+      expect(strengthValue.entropy).toBeGreaterThan(0);
+      expect(['weak', 'fair', 'good', 'strong', 'excellent']).toContain(strengthValue.strength);
     });
     
     it('should dispatch blur event', async () => {

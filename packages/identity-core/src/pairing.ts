@@ -25,7 +25,7 @@ export async function generatePairingData(
   expirationMinutes: number = 10
 ): Promise<PairingData> {
   // Generate secure PIN (6 digits)
-  const pinBytes = randomBytes(3);
+  const pinBytes = await randomBytes(3);
   const pin = Array.from(pinBytes)
     .map(b => (b % 10).toString())
     .join('')
@@ -253,7 +253,7 @@ export async function generatePairingChallenge(
   signature: Uint8Array;
 }> {
   // Generate random challenge
-  const challenge = randomBytes(32);
+  const challenge = await randomBytes(32);
   
   // Sign the challenge with our private key
   const signature = await signData(challenge, myPrivateKey);

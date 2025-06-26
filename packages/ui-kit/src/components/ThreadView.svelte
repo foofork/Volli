@@ -142,7 +142,7 @@
     <div class="border-t border-volli-gray-200 dark:border-volli-gray-700">
       <MessageComposer
         on:send={handleSendMessage}
-        class="rounded-t-none border-0"
+        className="rounded-t-none border-0"
       />
     </div>
   {:else}

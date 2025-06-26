@@ -302,6 +302,30 @@
 		font-size: 0.9rem;
 	}
 	
+	.required {
+		color: #EF4444;
+		font-weight: 600;
+	}
+	
+	/* High contrast mode support */
+	@media (prefers-contrast: high) {
+		input:focus {
+			box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.8);
+			border-color: #1E40AF;
+		}
+		
+		button:focus {
+			outline: 3px solid #1E40AF;
+		}
+	}
+	
+	/* Reduced motion support */
+	@media (prefers-reduced-motion: reduce) {
+		button:hover:not(:disabled) {
+			transform: none;
+		}
+	}
+	
 	.security-note {
 		margin-top: 2rem;
 		padding-top: 2rem;

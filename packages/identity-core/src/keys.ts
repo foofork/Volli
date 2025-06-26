@@ -60,7 +60,7 @@ export async function createSessionKey(
   const sessionId = uuidv4();
   
   // Derive session keys
-  const { sendKey, receiveKey } = deriveSessionKeys(sharedSecret, sessionId);
+  const { sendKey, receiveKey } = await deriveSessionKeys(sharedSecret, sessionId);
   
   const sessionKey: SessionKey = {
     id: sessionId,
@@ -133,13 +133,13 @@ export function getKeyFingerprint(publicKey: PublicKey): string {
 /**
  * Export key pair for backup (encrypted)
  */
-export function exportKeyPairEncrypted(
+export async function exportKeyPairEncrypted(
   publicKey: PublicKey,
   privateKey: PrivateKey,
   password: string
-): EncryptedBackup {
+): Promise<EncryptedBackup> {
   // Generate key derivation parameters
-  const salt = randomBytes(32);
+  const salt = await randomBytes(32);
   const params: KeyDerivationParams = {
     salt,
     iterations: 4, // Argon2id parameter
@@ -148,17 +148,27 @@ export function exportKeyPairEncrypted(
   };
   
   // Derive encryption key from password
-  const encryptionKey = deriveKeyFromPassword(password, params);
+  const encryptionKey = await deriveKeyFromPassword(password, params);
   
-  // Serialize key data
+  // Serialize key data with proper Uint8Array handling
   const keyData = {
-    publicKey,
-    privateKey
+    publicKey: {
+      kyber: Array.from(publicKey.kyber),
+      dilithium: Array.from(publicKey.dilithium),
+      x25519: Array.from(publicKey.x25519),
+      ed25519: Array.from(publicKey.ed25519)
+    },
+    privateKey: {
+      kyber: Array.from(privateKey.kyber),
+      dilithium: Array.from(privateKey.dilithium),
+      x25519: Array.from(privateKey.x25519),
+      ed25519: Array.from(privateKey.ed25519)
+    }
   };
   const serialized = new TextEncoder().encode(JSON.stringify(keyData));
   
   // Encrypt the data
-  const { ciphertext, nonce } = encryptData(serialized, encryptionKey);
+  const { ciphertext, nonce } = await encryptData(serialized, encryptionKey);
   
   // Combine nonce and ciphertext
   const encryptedData = new Uint8Array(nonce.length + ciphertext.length);
@@ -185,10 +195,10 @@ export function exportKeyPairEncrypted(
 /**
  * Import key pair from backup (decrypt)
  */
-export function importKeyPairEncrypted(
+export async function importKeyPairEncrypted(
   backup: EncryptedBackup,
   password: string
-): { publicKey: PublicKey; privateKey: PrivateKey } {
+): Promise<{ publicKey: PublicKey; privateKey: PrivateKey }> {
   // Verify checksum
   const checksum = require('crypto').createHash('sha256')
     .update(backup.encryptedData)
@@ -199,7 +209,7 @@ export function importKeyPairEncrypted(
   }
   
   // Derive decryption key
-  const decryptionKey = deriveKeyFromPassword(password, backup.params);
+  const decryptionKey = await deriveKeyFromPassword(password, backup.params);
   
   try {
     // Extract nonce and ciphertext
@@ -208,19 +218,31 @@ export function importKeyPairEncrypted(
     const ciphertext = backup.encryptedData.slice(nonceLength);
     
     // Decrypt the data
-    const decrypted = decryptData(ciphertext, nonce, decryptionKey);
+    const decrypted = await decryptData(ciphertext, decryptionKey, nonce);
     
     // Parse the key data
     const keyData = JSON.parse(new TextDecoder().decode(decrypted));
+    
+    // Convert arrays back to Uint8Arrays
+    const publicKey: PublicKey = {
+      kyber: new Uint8Array(keyData.publicKey.kyber),
+      dilithium: new Uint8Array(keyData.publicKey.dilithium),
+      x25519: new Uint8Array(keyData.publicKey.x25519),
+      ed25519: new Uint8Array(keyData.publicKey.ed25519)
+    };
+    
+    const privateKey: PrivateKey = {
+      kyber: new Uint8Array(keyData.privateKey.kyber),
+      dilithium: new Uint8Array(keyData.privateKey.dilithium),
+      x25519: new Uint8Array(keyData.privateKey.x25519),
+      ed25519: new Uint8Array(keyData.privateKey.ed25519)
+    };
     
     // Clear sensitive data
     secureWipe(decryptionKey);
     secureWipe(decrypted);
     
-    return {
-      publicKey: keyData.publicKey,
-      privateKey: keyData.privateKey
-    };
+    return { publicKey, privateKey };
   } catch (error) {
     secureWipe(decryptionKey);
     throw new Error('Failed to decrypt backup: invalid password or corrupted data');
@@ -248,9 +270,9 @@ export function canTrustDevice(deviceKey: DeviceKey): boolean {
 /**
  * Generate key derivation parameters for password-based encryption
  */
-export function generateKDFParams(): KeyDerivationParams {
+export async function generateKDFParams(): Promise<KeyDerivationParams> {
   return {
-    salt: randomBytes(32),
+    salt: await randomBytes(32),
     iterations: 4, // Argon2id opslimit interactive
     memory: 67108864, // 64MB memlimit interactive
     parallelism: 1

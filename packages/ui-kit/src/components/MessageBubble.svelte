@@ -32,26 +32,27 @@
 >
   <div
     class={cn(
-      'max-w-[70%] rounded-2xl px-4 py-2 shadow-sm',
+      'max-w-[70%] rounded-volli-lg px-volli-lg py-volli-md shadow-volli-sm',
+      'volli-transition-colors',
       isOwn
         ? 'bg-volli-primary-600 text-white dark:bg-volli-primary-500'
         : 'bg-volli-gray-100 text-volli-gray-900 dark:bg-volli-gray-800 dark:text-volli-gray-100'
     )}
   >
     {#if !isOwn}
-      <p class="text-xs font-medium mb-1 opacity-80">{sender}</p>
+      <p class="text-volli-xs font-volli-medium mb-volli-xs opacity-80">{sender}</p>
     {/if}
     
-    <p class="text-sm whitespace-pre-wrap break-words">{content}</p>
+    <p class="text-volli-sm whitespace-pre-wrap break-words leading-volli-normal">{content}</p>
     
-    <div class={cn('flex items-center gap-1 mt-1', isOwn ? 'justify-end' : 'justify-start')}>
-      <span class="text-xs opacity-70">{formattedTime}</span>
+    <div class={cn('flex items-center space-volli-xs mt-volli-xs', isOwn ? 'justify-end' : 'justify-start')}>
+      <span class="text-volli-xs opacity-70">{formattedTime}</span>
       {#if isOwn}
         <span 
           class={cn(
-            'text-xs',
+            'text-volli-xs',
             status === 'read' ? 'text-volli-primary-200' : 'opacity-70',
-            status === 'failed' ? 'text-red-300' : ''
+            status === 'failed' ? 'text-volli-error-300' : ''
           )}
         >
           {statusIcon}

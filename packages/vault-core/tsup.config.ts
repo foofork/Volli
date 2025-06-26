@@ -15,8 +15,11 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outDir: 'dist',
+  // Keep @automerge/automerge as external - consumers will handle WASM loading
   external: ['@automerge/automerge', 'flexsearch', 'sql.js', 'libsodium-wrappers', 'uuid', 'events'],
   target: 'es2022',
   minify: false,
-  bundle: true
+  bundle: true,
+  // Remove platform setting to allow both node and browser
+  platform: 'neutral'
 });

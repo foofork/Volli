@@ -1,19 +1,11 @@
 # Claude Code Configuration
 
 ## Build Commands
-- `npm run build`: Build the project (WASM optimized)
-- `npm run build:packages`: Build all packages with enhanced configuration
-- `npm run test`: Run the full test suite (94.4% coverage)
+- `npm run build`: Build the project
+- `npm run test`: Run the full test suite
 - `npm run lint`: Run ESLint and format checks
 - `npm run typecheck`: Run TypeScript type checking
 - `./claude-flow --help`: Show all available commands
-
-## Project Status (January 2025)
-- **Status**: Production-ready with enhanced UX/accessibility
-- **Test Coverage**: 94.4% (145+ tests passing)
-- **Accessibility**: WCAG 2.1 AA compliant
-- **Build System**: Optimized WASM configuration
-- **UI/UX**: Complete design system implementation
 
 ## Claude-Flow Complete Command Reference
 

@@ -135,32 +135,32 @@ describe('IdentityManager', () => {
     });
   });
 
-  describe.skip('exportIdentity and importIdentity', () => {
+  describe('exportIdentity and importIdentity', () => {
     it('should export and import identity correctly', async () => {
       const identity = await identityManager.createIdentity('Test Device');
       const password = 'test-password-123';
       
-      const backup = identityManager.exportIdentity(identity.id, password);
+      const backup = await identityManager.exportIdentity(identity.id, password);
       expect(backup).toBeDefined();
       expect(backup.encryptedData).toBeInstanceOf(Uint8Array);
-      expect(backup.salt).toBeInstanceOf(Uint8Array);
+      expect(backup.params.salt).toBeInstanceOf(Uint8Array);
       
-      const importedIdentity = identityManager.importIdentity(backup, password);
+      const importedIdentity = await identityManager.importIdentity(backup, password);
       expect(importedIdentity.publicKey.x25519).toEqual(identity.publicKey.x25519);
       expect(importedIdentity.publicKey.ed25519).toEqual(identity.publicKey.ed25519);
     });
 
     it('should fail import with wrong password', async () => {
       const identity = await identityManager.createIdentity();
-      const backup = identityManager.exportIdentity(identity.id, 'correct-password');
+      const backup = await identityManager.exportIdentity(identity.id, 'correct-password');
       
-      expect(() => {
-        identityManager.importIdentity(backup, 'wrong-password');
-      }).toThrow();
+      await expect(
+        identityManager.importIdentity(backup, 'wrong-password')
+      ).rejects.toThrow();
     });
   });
 
-  describe.skip('validateDevice', () => {
+  describe('validateDevice', () => {
     it('should validate device signature', async () => {
       const identity = await identityManager.createIdentity();
       const data = new TextEncoder().encode('test data');

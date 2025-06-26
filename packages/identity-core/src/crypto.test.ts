@@ -53,52 +53,52 @@ describe('Crypto Module', () => {
     });
   });
 
-  describe.skip('encryptData and decryptData', () => {
+  describe('encryptData and decryptData', () => {
     it('should encrypt and decrypt data correctly', async () => {
-      const key = randomBytes(32);
+      const key = await randomBytes(32);
       const plaintext = new TextEncoder().encode('Hello, Volli!');
       
-      const encrypted = encryptData(plaintext, key);
+      const encrypted = await encryptData(plaintext, key);
       expect(encrypted.ciphertext).toBeInstanceOf(Uint8Array);
       expect(encrypted.nonce).toBeInstanceOf(Uint8Array);
       expect(encrypted.nonce.length).toBe(24); // XChaCha20 nonce
       
-      const decrypted = decryptData(encrypted.ciphertext, key, encrypted.nonce);
-      expect(decrypted).toEqual(plaintext);
+      const decrypted = await decryptData(encrypted.ciphertext, key, encrypted.nonce);
+      expect(Array.from(decrypted)).toEqual(Array.from(plaintext));
       expect(new TextDecoder().decode(decrypted)).toBe('Hello, Volli!');
     });
 
     it('should produce different ciphertexts for same plaintext', async () => {
-      const key = randomBytes(32);
+      const key = await randomBytes(32);
       const plaintext = new TextEncoder().encode('Hello, Volli!');
       
-      const encrypted1 = encryptData(plaintext, key);
-      const encrypted2 = encryptData(plaintext, key);
+      const encrypted1 = await encryptData(plaintext, key);
+      const encrypted2 = await encryptData(plaintext, key);
       
       expect(encrypted1.ciphertext).not.toEqual(encrypted2.ciphertext);
       expect(encrypted1.nonce).not.toEqual(encrypted2.nonce);
     });
 
     it('should fail decryption with wrong key', async () => {
-      const key1 = randomBytes(32);
-      const key2 = randomBytes(32);
+      const key1 = await randomBytes(32);
+      const key2 = await randomBytes(32);
       const plaintext = new TextEncoder().encode('Hello, Volli!');
       
-      const encrypted = encryptData(plaintext, key1);
+      const encrypted = await encryptData(plaintext, key1);
       
-      expect(() => {
-        decryptData(encrypted.ciphertext, key2, encrypted.nonce);
-      }).toThrow();
+      await expect(
+        decryptData(encrypted.ciphertext, key2, encrypted.nonce)
+      ).rejects.toThrow();
     });
   });
 
-  describe.skip('deriveSessionKeys', () => {
+  describe('deriveSessionKeys', () => {
     it('should derive consistent session keys', async () => {
-      const sharedSecret = randomBytes(32);
+      const sharedSecret = await randomBytes(32);
       const sessionId = 'test-session-123';
       
-      const keys1 = deriveSessionKeys(sharedSecret, sessionId);
-      const keys2 = deriveSessionKeys(sharedSecret, sessionId);
+      const keys1 = await deriveSessionKeys(sharedSecret, sessionId);
+      const keys2 = await deriveSessionKeys(sharedSecret, sessionId);
       
       expect(keys1.sendKey).toEqual(keys2.sendKey);
       expect(keys1.receiveKey).toEqual(keys2.receiveKey);
@@ -106,10 +106,10 @@ describe('Crypto Module', () => {
     });
 
     it('should derive different keys for different sessions', async () => {
-      const sharedSecret = randomBytes(32);
+      const sharedSecret = await randomBytes(32);
       
-      const keys1 = deriveSessionKeys(sharedSecret, 'session-1');
-      const keys2 = deriveSessionKeys(sharedSecret, 'session-2');
+      const keys1 = await deriveSessionKeys(sharedSecret, 'session-1');
+      const keys2 = await deriveSessionKeys(sharedSecret, 'session-2');
       
       expect(keys1.sendKey).not.toEqual(keys2.sendKey);
       expect(keys1.receiveKey).not.toEqual(keys2.receiveKey);
@@ -129,7 +129,7 @@ describe('Crypto Module', () => {
     });
   });
 
-  describe.skip('signData and verifySignature', () => {
+  describe('signData and verifySignature', () => {
     it('should sign and verify data correctly', async () => {
       const keyPair = await generateKeyPair();
       const data = new TextEncoder().encode('Hello, Volli!');
@@ -166,9 +166,9 @@ describe('Crypto Module', () => {
   });
 
   describe('utility functions', () => {
-    it('should generate random bytes', () => {
-      const bytes1 = randomBytes(32);
-      const bytes2 = randomBytes(32);
+    it('should generate random bytes', async () => {
+      const bytes1 = await randomBytes(32);
+      const bytes2 = await randomBytes(32);
       
       expect(bytes1).toBeInstanceOf(Uint8Array);
       expect(bytes1.length).toBe(32);

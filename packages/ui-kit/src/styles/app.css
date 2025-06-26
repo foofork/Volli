@@ -56,4 +56,97 @@
   .volli-scrollbar::-webkit-scrollbar-thumb:hover {
     @apply bg-volli-gray-500 dark:bg-volli-gray-500;
   }
+  
+  /* Spacing utilities using design tokens */
+  .space-volli-xs { gap: var(--volli-space-xs); }
+  .space-volli-sm { gap: var(--volli-space-sm); }
+  .space-volli-md { gap: var(--volli-space-md); }
+  .space-volli-lg { gap: var(--volli-space-lg); }
+  .space-volli-xl { gap: var(--volli-space-xl); }
+  .space-volli-2xl { gap: var(--volli-space-2xl); }
+  .space-volli-3xl { gap: var(--volli-space-3xl); }
+  
+  /* Padding utilities */
+  .p-volli-xs { padding: var(--volli-space-xs); }
+  .p-volli-sm { padding: var(--volli-space-sm); }
+  .p-volli-md { padding: var(--volli-space-md); }
+  .p-volli-lg { padding: var(--volli-space-lg); }
+  .p-volli-xl { padding: var(--volli-space-xl); }
+  .p-volli-2xl { padding: var(--volli-space-2xl); }
+  .p-volli-3xl { padding: var(--volli-space-3xl); }
+  
+  /* Margin utilities */
+  .m-volli-xs { margin: var(--volli-space-xs); }
+  .m-volli-sm { margin: var(--volli-space-sm); }
+  .m-volli-md { margin: var(--volli-space-md); }
+  .m-volli-lg { margin: var(--volli-space-lg); }
+  .m-volli-xl { margin: var(--volli-space-xl); }
+  .m-volli-2xl { margin: var(--volli-space-2xl); }
+  .m-volli-3xl { margin: var(--volli-space-3xl); }
+  
+  /* Accessibility utilities */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  
+  .not-sr-only {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .volli-card,
+    .volli-card-elevated,
+    .volli-card-interactive {
+      border-width: 2px;
+    }
+    
+    .volli-focus:focus,
+    .volli-focus-visible:focus-visible {
+      outline: 3px solid theme('colors.volli.primary.700');
+      outline-offset: 2px;
+    }
+  }
+  
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .volli-transition,
+    .volli-transition-colors,
+    .volli-transition-transform {
+      transition: none;
+    }
+    
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Adjust surface colors for better dark mode contrast */
+    --volli-surface-50: 3 7 18;             /* Gray 950 */
+    --volli-surface-100: 17 24 39;          /* Gray 900 */
+    --volli-surface-200: 31 41 55;          /* Gray 800 */
+    --volli-surface-300: 75 85 99;          /* Gray 600 */
+    --volli-surface-800: 243 244 246;       /* Gray 100 */
+    --volli-surface-900: 249 250 251;       /* Gray 50 */
+    --volli-surface-950: 255 255 255;       /* White */
+  }
 }

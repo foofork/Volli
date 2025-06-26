@@ -72,5 +72,11 @@ export default {
       }
     }
   },
-  plugins: []
+  plugins: [],
+  
+  // Define custom Volli design system classes
+  corePlugins: {
+    // We handle focus styles with our custom volli-focus classes
+    outline: false
+  }
 };

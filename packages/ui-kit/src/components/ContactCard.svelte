@@ -10,7 +10,7 @@
   const dispatch = createEventDispatcher();
 
   $: trustColor = contact?.trustLevel ? {
-    verified: 'text-green-600 dark:text-green-400',
+    verified: 'text-volli-success-600 dark:text-volli-success-400',
     trusted: 'text-volli-primary-600 dark:text-volli-primary-400',
     untrusted: 'text-volli-gray-500 dark:text-volli-gray-400'
   }[contact.trustLevel] || '' : '';
@@ -41,8 +41,8 @@
   }
 </script>
 
-<div class={cn('volli-card p-4', className)}>
-  <div class="flex items-start gap-4">
+<div class={cn('volli-card-interactive p-volli-lg', className)}>
+  <div class="flex items-start space-volli-lg">
     <div class="relative flex-shrink-0">
       {#if contact.avatar}
         <img
@@ -51,39 +51,40 @@
           class="w-16 h-16 rounded-full object-cover"
         />
       {:else}
-        <div class="w-16 h-16 rounded-full bg-volli-primary-100 dark:bg-volli-primary-900 flex items-center justify-center">
-          <span class="text-xl font-medium text-volli-primary-600 dark:text-volli-primary-400">
+        <div class="w-16 h-16 rounded-volli-full bg-volli-primary-100 dark:bg-volli-primary-900 flex items-center justify-center">
+          <span class="text-volli-xl font-volli-medium text-volli-primary-600 dark:text-volli-primary-400">
             {contact.name.charAt(0).toUpperCase()}
           </span>
         </div>
       {/if}
       {#if contact.isOnline}
-        <span class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white dark:border-volli-gray-800 rounded-full"></span>
+        <span class="absolute bottom-0 right-0 w-4 h-4 bg-volli-success-500 border-2 border-white dark:border-volli-gray-800 rounded-volli-full" aria-label="Online"></span>
       {/if}
     </div>
 
     <div class="flex-1 min-w-0">
-      <div class="flex items-center gap-2 mb-1">
-        <h3 class="text-lg font-medium text-volli-gray-900 dark:text-volli-gray-100">
+      <div class="flex items-center space-volli-sm mb-volli-sm">
+        <h3 class="text-volli-lg font-volli-medium text-volli-gray-900 dark:text-volli-gray-100">
           {contact.name}
         </h3>
         {#if contact.trustLevel}
-          <span class={cn('text-sm font-medium', trustColor)}>
-            {trustIcon} {contact.trustLevel}
+          <span class={cn('text-volli-sm font-volli-medium', trustColor)}>
+            <span aria-hidden="true">{trustIcon}</span>
+            <span class="ml-volli-xs">{contact.trustLevel}</span>
           </span>
         {/if}
       </div>
 
-      <p class="text-sm text-volli-gray-600 dark:text-volli-gray-400 font-mono mb-2">
+      <p class="text-volli-sm text-volli-gray-600 dark:text-volli-gray-400 font-mono mb-volli-sm">
         {truncateKey(contact.publicKey)}
       </p>
 
-      <p class="text-xs text-volli-gray-500 dark:text-volli-gray-500">
+      <p class="text-volli-xs text-volli-gray-500 dark:text-volli-gray-500">
         {contact.isOnline ? 'Online' : `Last seen ${formatLastSeen(contact.lastSeen)}`}
       </p>
 
       {#if showActions}
-        <div class="flex gap-2 mt-3">
+        <div class="flex space-volli-sm mt-volli-md">
           <Button
             size="sm"
             variant="primary"

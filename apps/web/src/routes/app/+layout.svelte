@@ -8,6 +8,7 @@
 	import { contacts } from '$lib/stores/contacts';
 	import { files } from '$lib/stores/files';
 	import { toasts } from '$lib/stores/toasts';
+	import { KeyboardShortcuts, handleArrowNavigation, announceToScreenReader } from '$lib/utils/accessibility';
 	import { networkStore } from '@volli/integration';
 	import VaultErrorFallback from '$lib/components/VaultErrorFallback.svelte';
 	
@@ -15,6 +16,8 @@
 	let unlockPassphrase = '';
 	let unlockError = '';
 	let isUnlocking = false;
+	let keyboardShortcuts: KeyboardShortcuts;
+	let sidebarElement: HTMLElement;
 	
 	async function connectToSignaling() {
 		try {
@@ -41,6 +44,13 @@
 		// Initialize auth
 		await auth.initialize();
 		
+		// Set up keyboard shortcuts
+		keyboardShortcuts = new KeyboardShortcuts();
+		keyboardShortcuts.register('ctrl+l', handleLock);
+		keyboardShortcuts.register('cmd+l', handleLock);
+		keyboardShortcuts.register('ctrl+q', handleLogout);
+		keyboardShortcuts.register('cmd+q', handleLogout);
+		
 		// Check authentication
 		const unsubscribe = isAuthenticated.subscribe(async (authenticated) => {
 			if (!authenticated) {
@@ -53,12 +63,18 @@
 					await contacts.loadContacts();
 					await files.loadFiles();
 					await connectToSignaling();
+					announceToScreenReader('Application ready. Vault unlocked and secure.');
+				} else {
+					announceToScreenReader('Please unlock your vault to continue.');
 				}
 				isReady = true;
 			}
 		});
 		
-		return unsubscribe;
+		return () => {
+			unsubscribe();
+			keyboardShortcuts?.destroy();
+		};
 	});
 	
 	async function handleUnlock() {
@@ -97,11 +113,19 @@
 		contacts.reset();
 		files.reset();
 		toasts.info('Vault locked');
+		announceToScreenReader('Vault locked successfully');
 	}
 	
 	async function handleLogout() {
 		auth.logout();
+		announceToScreenReader('Logged out successfully');
 		goto('/');
+	}
+	
+	function handleSidebarKeydown(event: KeyboardEvent) {
+		if (sidebarElement) {
+			handleArrowNavigation(sidebarElement, event, 'vertical');
+		}
 	}
 </script>
 
@@ -110,30 +134,35 @@
 	{#if !$vault.isUnlocked}
 		<div class="unlock-screen">
 			<div class="unlock-card">
-				<h1>🔐 Volli</h1>
+				<h1>
+					<span role="img" aria-label="Lock icon">🔐</span>
+					Volli
+				</h1>
 				<h2>Unlock Your Vault</h2>
 				<p>Enter your passphrase to decrypt your messages</p>
 				
-				<form on:submit|preventDefault={handleUnlock}>
+				<form on:submit|preventDefault={handleUnlock} aria-labelledby="unlock-heading">
 					<PassphraseInput
 						bind:value={unlockPassphrase}
 						label="Passphrase"
 						placeholder="Enter your passphrase"
 						disabled={isUnlocking}
 						showStrength={false}
+						errorId={unlockError ? 'unlock-error' : ''}
 					/>
 					
 					{#if unlockError}
-						<div class="error">{unlockError}</div>
+						<div class="error" id="unlock-error" role="alert" aria-live="assertive">{unlockError}</div>
 					{/if}
 					
-					<button type="submit" disabled={isUnlocking || !unlockPassphrase}>
+					<button type="submit" disabled={isUnlocking || !unlockPassphrase} aria-describedby="unlock-help">
 						{isUnlocking ? 'Unlocking...' : 'Unlock Vault'}
 					</button>
+					<div class="sr-only" id="unlock-help">Use your secure passphrase to decrypt and access your messages</div>
 				</form>
 				
 				<div class="unlock-footer">
-					<button class="text-button" on:click={handleLogout}>
+					<button class="text-button" on:click={handleLogout} aria-label="Sign out and return to home page">
 						Sign out
 					</button>
 				</div>
@@ -141,51 +170,57 @@
 		</div>
 	{:else}
 		<div class="app-layout">
-			<aside class="sidebar">
+			<aside class="sidebar" bind:this={sidebarElement} role="navigation" aria-label="Main navigation" on:keydown={handleSidebarKeydown}>
 				<div class="sidebar-header">
-					<h1>🔐 Volli</h1>
-					<button class="icon-button" title="New conversation">
-						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+					<h1>
+						<span role="img" aria-label="Lock icon">🔐</span>
+						Volli
+					</h1>
+					<button class="icon-button" aria-label="Start new conversation" title="New conversation">
+						<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
 							<path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 						</svg>
 					</button>
 				</div>
 				
-				<nav class="nav-menu">
-					<a href="/app" class="nav-item" class:active={true}>
-						<span class="icon">💬</span>
+				<nav class="nav-menu" role="menu">
+					<a href="/app" class="nav-item" class:active={true} role="menuitem" aria-current="page">
+						<span class="icon" role="img" aria-label="Messages icon">💬</span>
 						<span>Messages</span>
 					</a>
-					<a href="/app/contacts" class="nav-item">
-						<span class="icon">👥</span>
+					<a href="/app/contacts" class="nav-item" role="menuitem">
+						<span class="icon" role="img" aria-label="Contacts icon">👥</span>
 						<span>Contacts</span>
 					</a>
-					<a href="/app/files" class="nav-item">
-						<span class="icon">📁</span>
+					<a href="/app/files" class="nav-item" role="menuitem">
+						<span class="icon" role="img" aria-label="Files icon">📁</span>
 						<span>Files</span>
 					</a>
-					<a href="/app/settings" class="nav-item">
-						<span class="icon">⚙️</span>
+					<a href="/app/settings" class="nav-item" role="menuitem">
+						<span class="icon" role="img" aria-label="Settings icon">⚙️</span>
 						<span>Settings</span>
 					</a>
 				</nav>
 				
 				<div class="sidebar-footer">
-					<div class="user-info">
-						<div class="avatar">👤</div>
+					<div class="user-info" role="group" aria-label="User information">
+						<div class="avatar" role="img" aria-label="User avatar">👤</div>
 						<div class="user-details">
-							<div class="user-name">{$auth.currentIdentity?.displayName}</div>
-							<div class="user-status">🟢 Secure</div>
+							<div class="user-name" aria-label="Current user">{$auth.currentIdentity?.displayName}</div>
+							<div class="user-status">
+								<span role="img" aria-label="Online status indicator">🟢</span>
+								Secure
+							</div>
 						</div>
 					</div>
-					<div class="footer-actions">
-						<button class="icon-button" on:click={handleLock} title="Lock vault">
-							<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+					<div class="footer-actions" role="group" aria-label="Account actions">
+						<button class="icon-button" on:click={handleLock} aria-label="Lock vault (Ctrl+L)" title="Lock vault">
+							<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
 								<path d="M5 9V7a5 5 0 0110 0v2m-9 0h8a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4a2 2 0 012-2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 							</svg>
 						</button>
-						<button class="icon-button" on:click={handleLogout} title="Logout">
-							<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+						<button class="icon-button" on:click={handleLogout} aria-label="Logout (Ctrl+Q)" title="Logout">
+							<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
 								<path d="M7 3H4a1 1 0 00-1 1v12a1 1 0 001 1h3M14 10l3-3m0 0l-3-3m3 3H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 							</svg>
 						</button>
@@ -193,14 +228,14 @@
 				</div>
 			</aside>
 			
-			<main class="main-content">
+			<main class="main-content" role="main">
 				<slot />
 			</main>
 		</div>
 	{/if}
 {:else}
-	<div class="loading">
-		<div class="spinner"></div>
+	<div class="loading" role="status" aria-live="polite">
+		<div class="spinner" aria-hidden="true"></div>
 		<p>Initializing secure environment...</p>
 	</div>
 {/if}
@@ -257,6 +292,12 @@
 		background: rgba(255, 255, 255, 0.1);
 	}
 	
+	.icon-button:focus {
+		outline: 2px solid #3B82F6;
+		outline-offset: 2px;
+		background: rgba(255, 255, 255, 0.1);
+	}
+	
 	.nav-menu {
 		flex: 1;
 		padding: 1rem 0;
@@ -275,6 +316,13 @@
 	}
 	
 	.nav-item:hover {
+		color: #fff;
+		background: rgba(255, 255, 255, 0.05);
+	}
+	
+	.nav-item:focus {
+		outline: 2px solid #3B82F6;
+		outline-offset: 2px;
 		color: #fff;
 		background: rgba(255, 255, 255, 0.05);
 	}
@@ -476,6 +524,42 @@
 	.text-button:hover {
 		color: #2563EB;
 		text-decoration: underline;
+	}
+	
+	.text-button:focus {
+		outline: 2px solid #3B82F6;
+		outline-offset: 2px;
+		color: #2563EB;
+	}
+	
+	.sr-only {
+		position: absolute;
+		left: -10000px;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+	}
+	
+	/* High contrast mode support */
+	@media (prefers-contrast: high) {
+		.icon-button:focus {
+			outline: 3px solid #1E40AF;
+		}
+		
+		.nav-item:focus {
+			outline: 3px solid #1E40AF;
+		}
+		
+		.text-button:focus {
+			outline: 3px solid #1E40AF;
+		}
+	}
+	
+	/* Reduced motion support */
+	@media (prefers-reduced-motion: reduce) {
+		.spinner {
+			animation: none;
+		}
 	}
 	
 	@media (max-width: 768px) {

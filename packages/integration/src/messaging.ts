@@ -110,7 +110,7 @@ export class MessagingService {
     const contentBytes = new TextEncoder().encode(content);
     
     // Encrypt the content with the shared secret
-    const { ciphertext, nonce } = encryptData(contentBytes, sharedSecret);
+    const { ciphertext, nonce } = await encryptData(contentBytes, sharedSecret);
     
     // Package everything together
     const encryptedMessage = {

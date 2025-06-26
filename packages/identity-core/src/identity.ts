@@ -216,11 +216,11 @@ export async function verifyIdentitySignature(
 /**
  * Export identity for backup (encrypted)
  */
-export function exportIdentityEncrypted(
+export async function exportIdentityEncrypted(
   identity: Identity,
   privateKey: PrivateKey,
   password: string
-): EncryptedBackup {
+): Promise<EncryptedBackup> {
   // Create complete identity data for backup
   const identityBackup = {
     ...identity,
@@ -228,17 +228,17 @@ export function exportIdentityEncrypted(
   };
   
   // Use the existing key export function
-  return exportKeyPairEncrypted(identity.publicKey, privateKey, password);
+  return await exportKeyPairEncrypted(identity.publicKey, privateKey, password);
 }
 
 /**
  * Import identity from backup (decrypt)
  */
-export function importIdentityEncrypted(
+export async function importIdentityEncrypted(
   backup: EncryptedBackup,
   password: string
-): { identity: Identity; privateKey: PrivateKey } {
-  const { publicKey, privateKey } = importKeyPairEncrypted(backup, password);
+): Promise<{ identity: Identity; privateKey: PrivateKey }> {
+  const { publicKey, privateKey } = await importKeyPairEncrypted(backup, password);
   
   // Create a minimal identity structure
   // In a real implementation, the backup would contain full identity data

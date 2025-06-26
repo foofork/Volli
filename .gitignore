@@ -122,6 +122,10 @@ SUMMARY.md
 TEST_IMPLEMENTATION.md
 WEB_APP_COMPLETION.md
 phase_1_requirements.md
+VOLLI_UX_AUDIT_REPORT.md
+test-failure-analysis.md
+test-fixes-implementation-plan.md
+identity_core_test_results.md
 
 # Build configuration (temporary)
 tsconfig.build.json
@@ -131,6 +135,9 @@ vitest.config.ts
 test-results/
 playwright-report/
 test-output/
+test_results.txt
+count-skipped-tests.sh
+debug-test.js
 
 # Security
 secrets/

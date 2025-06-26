@@ -1,11 +1,11 @@
 import { SvelteComponent } from "svelte";
 declare const __propDef: {
     props: {
-        variant?: string;
-        size?: string;
+        variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+        size?: 'sm' | 'md' | 'lg';
         loading?: boolean;
         disabled?: boolean;
-        type?: string;
+        type?: 'button' | 'submit' | 'reset';
         class?: string;
     };
     events: {

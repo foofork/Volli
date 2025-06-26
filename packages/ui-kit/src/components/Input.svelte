@@ -22,10 +22,13 @@
   }
 </script>
 
-<div class={cn('space-y-1', className)}>
+<div class={cn('space-y-volli-sm', className)}>
   {#if label}
-    <label for={id || name} class="block text-sm font-medium text-volli-gray-700 dark:text-volli-gray-300">
+    <label for={id || name} class="block text-volli-sm font-volli-medium text-volli-gray-700 dark:text-volli-gray-300">
       {label}
+      {#if required}
+        <span class="ml-volli-xs text-volli-error-500" aria-label="required">*</span>
+      {/if}
     </label>
   {/if}
 
@@ -40,13 +43,9 @@
     value={value}
     on:input={handleInput}
     class={cn(
-      'block w-full rounded-md px-3 py-2 text-volli-gray-900 dark:text-volli-gray-100',
-      'bg-white dark:bg-volli-gray-800',
-      'border volli-transition volli-focus',
-      hasError
-        ? 'border-red-500 dark:border-red-400 focus:ring-red-500'
-        : 'border-volli-gray-300 dark:border-volli-gray-600 focus:ring-volli-primary-500',
-      'placeholder:text-volli-gray-400 dark:placeholder:text-volli-gray-500'
+      'volli-input-base',
+      hasError && 'volli-input-error',
+      'rounded-volli px-volli-md py-volli-sm text-volli-base'
     )}
     on:input
     on:change
@@ -57,8 +56,11 @@
   />
 
   {#if error}
-    <p class="text-sm text-red-600 dark:text-red-400">{error}</p>
+    <p class="text-volli-sm text-volli-error-600 dark:text-volli-error-400 mt-volli-xs" role="alert">
+      <span class="sr-only">Error:</span>
+      {error}
+    </p>
   {:else if hint}
-    <p class="text-sm text-volli-gray-500 dark:text-volli-gray-400">{hint}</p>
+    <p class="text-volli-sm text-volli-gray-500 dark:text-volli-gray-400 mt-volli-xs">{hint}</p>
   {/if}
 </div>

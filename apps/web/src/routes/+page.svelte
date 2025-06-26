@@ -3,8 +3,10 @@
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/stores/auth';
 	import { initializeCore } from '$lib/stores/core';
+	import { KeyboardShortcuts } from '$lib/utils/accessibility';
 	
 	let ready = false;
+	let keyboardShortcuts: KeyboardShortcuts;
 	
 	onMount(async () => {
 		try {
@@ -26,9 +28,17 @@
 				}
 			});
 			
+			// Set up keyboard shortcuts
+			keyboardShortcuts = new KeyboardShortcuts();
+			keyboardShortcuts.register('enter', getStarted);
+			keyboardShortcuts.register('g', getStarted); // 'g' for get started
+			
 			ready = true;
 			
-			return unsubscribe;
+			return () => {
+				unsubscribe();
+				keyboardShortcuts?.destroy();
+			};
 		} catch (error) {
 			console.error('Failed to initialize:', error);
 			ready = true; // Show UI even if there's an error
@@ -45,40 +55,68 @@
 	<meta name="description" content="Post-quantum secure, local-first messaging platform" />
 </svelte:head>
 
-<main class="container">
+<main class="container" role="main">
 	<div class="hero">
-		<h1>🔐 Volli</h1>
+		<h1>
+			<span class="logo-icon" role="img" aria-label="Lock icon">🔐</span>
+			Volli
+		</h1>
 		<p class="tagline">Post-quantum secure, local-first messaging</p>
 		
 		{#if ready}
-			<div class="features">
+			<section class="features" aria-label="Key features">
 				<div class="feature">
-					<h3>🔒 Post-Quantum Security</h3>
+					<h3>
+						<span class="feature-icon" role="img" aria-label="Lock icon">🔒</span>
+						Post-Quantum Security
+					</h3>
 					<p>Kyber-1024 & Dilithium-3 algorithms protect against future quantum threats</p>
 				</div>
 				
 				<div class="feature">
-					<h3>📱 Multi-Platform</h3>
+					<h3>
+						<span class="feature-icon" role="img" aria-label="Mobile phone icon">📱</span>
+						Multi-Platform
+					</h3>
 					<p>One codebase for Web, iOS, Android, and Desktop</p>
 				</div>
 				
 				<div class="feature">
-					<h3>🌐 Local-First</h3>
+					<h3>
+						<span class="feature-icon" role="img" aria-label="Globe icon">🌐</span>
+						Local-First
+					</h3>
 					<p>Works 100% offline with P2P sync when online</p>
 				</div>
 				
 				<div class="feature">
-					<h3>🔌 Extensible</h3>
+					<h3>
+						<span class="feature-icon" role="img" aria-label="Plug icon">🔌</span>
+						Extensible
+					</h3>
 					<p>WASM plugin system with capability-based security</p>
 				</div>
-			</div>
+			</section>
 			
-			<div class="cta">
-				<button class="primary" on:click={getStarted}>Get Started</button>
-				<button class="secondary">Learn More</button>
+			<div class="cta" role="group" aria-label="Main actions">
+				<button 
+					class="primary" 
+					on:click={getStarted}
+					aria-describedby="get-started-hint"
+				>
+					Get Started
+				</button>
+				<button class="secondary" aria-describedby="learn-more-hint">Learn More</button>
+				<div class="sr-only">
+					<div id="get-started-hint">Create your secure identity and start messaging (Keyboard shortcut: G or Enter)</div>
+					<div id="learn-more-hint">Discover more about Volli's security features</div>
+				</div>
 			</div>
 		{:else}
-			<p class="loading">Loading...</p>
+			<div class="loading" role="status" aria-live="polite">
+				<div class="spinner" aria-hidden="true"></div>
+				<p>Loading secure environment...</p>
+			</div>
 		{/if}
 	</div>
 </main>
@@ -142,6 +180,13 @@
 		border-color: rgba(59, 130, 246, 0.5);
 	}
 	
+	.feature:focus-within {
+		background: rgba(255, 255, 255, 0.08);
+		border-color: rgba(59, 130, 246, 0.7);
+		outline: 2px solid #3B82F6;
+		outline-offset: 2px;
+	}
+	
 	.feature h3 {
 		margin: 0 0 1rem;
 		font-size: 1.25rem;
@@ -168,6 +213,12 @@
 		cursor: pointer;
 		transition: all 0.3s ease;
 		font-weight: 600;
+		position: relative;
+	}
+	
+	button:focus {
+		outline: 2px solid #3B82F6;
+		outline-offset: 3px;
 	}
 	
 	.primary {
@@ -190,8 +241,71 @@
 		background: rgba(59, 130, 246, 0.1);
 	}
 	
+	.secondary:focus {
+		background: rgba(59, 130, 246, 0.15);
+	}
+	
 	.loading {
 		color: #666;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+	}
+	
+	.spinner {
+		width: 32px;
+		height: 32px;
+		border: 3px solid rgba(255, 255, 255, 0.1);
+		border-top-color: #3B82F6;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+	}
+	
+	@keyframes spin {
+		to { transform: rotate(360deg); }
+	}
+	
+	.sr-only {
+		position: absolute;
+		left: -10000px;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+	}
+	
+	/* High contrast mode support */
+	@media (prefers-contrast: high) {
+		button:focus {
+			outline: 3px solid #1E40AF;
+		}
+		
+		.feature:focus-within {
+			outline: 3px solid #1E40AF;
+		}
+	}
+	
+	/* Reduced motion support */
+	@media (prefers-reduced-motion: reduce) {
+		.feature {
+			transition: none;
+		}
+		
+		button {
+			transition: none;
+		}
+		
+		.spinner {
+			animation: none;
+		}
+		
+		.feature:hover {
+			transform: none;
+		}
+		
+		.primary:hover {
+			transform: none;
+		}
 	}
 	
 	@media (max-width: 768px) {
