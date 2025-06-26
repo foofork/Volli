@@ -17,7 +17,6 @@
 	let unlockError = '';
 	let isUnlocking = false;
 	let keyboardShortcuts: KeyboardShortcuts;
-	let sidebarElement: HTMLElement;
 	
 	async function connectToSignaling() {
 		try {
@@ -122,11 +121,6 @@
 		goto('/');
 	}
 	
-	function handleSidebarKeydown(event: KeyboardEvent) {
-		if (sidebarElement) {
-			handleArrowNavigation(sidebarElement, event, 'vertical');
-		}
-	}
 </script>
 
 <ErrorBoundary fallback={VaultErrorFallback}>
@@ -170,7 +164,7 @@
 		</div>
 	{:else}
 		<div class="app-layout">
-			<aside class="sidebar" bind:this={sidebarElement} role="navigation" aria-label="Main navigation">
+			<aside class="sidebar" role="navigation" aria-label="Main navigation">
 				<div class="sidebar-header">
 					<h1>
 						<span role="img" aria-label="Lock icon">🔐</span>
