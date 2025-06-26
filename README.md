@@ -5,6 +5,7 @@
 # Intelligent Privacy, User Sovereignty, Local‑First Messaging
 
 <p align="center">
+  <a href="https://github.com/foofork/Volli/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/foofork/Volli/ci.yml?style=flat-square&logo=github&label=CI" alt="CI Status"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License MIT"></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.3-2F74C0?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"></a>
   <a href="https://kit.svelte.dev/"><img src="https://img.shields.io/badge/SvelteKit-2.0-FF3E00?style=flat-square&logo=svelte&logoColor=white" alt="SvelteKit"></a>
