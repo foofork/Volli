@@ -9,31 +9,26 @@ export default defineConfig({
     host: true,
     headers: {
       'Cross-Origin-Embedder-Policy': 'require-corp',
-      'Cross-Origin-Opener-Policy': 'same-origin'
-    }
+      'Cross-Origin-Opener-Policy': 'same-origin',
+    },
   },
   worker: {
-    format: 'es'
+    format: 'es',
   },
   define: {
-    global: 'globalThis'
+    global: 'globalThis',
   },
   build: {
     target: 'esnext',
     sourcemap: true,
     rollupOptions: {
-      external: []
+      external: [],
     },
     assetsDir: 'assets',
-    copyPublicDir: true
+    copyPublicDir: true,
   },
   optimizeDeps: {
     exclude: ['libsodium-wrappers', '@automerge/automerge'],
-    include: ['@automerge/automerge-wasm']
+    include: ['@automerge/automerge-wasm'],
   },
-  resolve: {
-    alias: {
-      '@volli/integration': '/workspaces/Volli/packages/integration/dist/index.js'
-    }
-  }
 });
