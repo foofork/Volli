@@ -14,8 +14,10 @@
     "@volli/vault-core": "workspace:*",
     "@volli/identity-core": "workspace:*",
     "ipfs-core": "^0.18.0",
+    "ipfs-core-types": "^0.14.0",
     "ipfs-http-client": "^60.0.0",
     "it-all": "^3.0.0",
+    "multiformats": "^12.1.0",
     "uint8arrays": "^4.0.0",
     "uuid": "^9.0.0"
   },
