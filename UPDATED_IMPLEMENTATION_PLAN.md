@@ -5,6 +5,34 @@
 
 Transform Volly from a P2P messaging system into a **universal communication protocol** - the single platform for humans, AI agents, IoT devices, and services to communicate securely. Dead simple for users, powerful for developers, quantum-proof for everyone.
 
+## 📋 How to Use This Plan
+
+### Daily Development Process
+1. **Check current phase** in this document
+2. **Pick unchecked tasks** from current week
+3. **Create branch** named `feature/week-X-taskname`
+4. **Update checkbox** when PR is merged
+5. **Review metrics** weekly to ensure on track
+
+### Weekly Review Process
+1. **Every Monday**: Team reviews completed tasks
+2. **Update checkboxes** in this document via PR
+3. **Check success metrics** against targets
+4. **Identify blockers** and adjust timeline if needed
+5. **Plan next week** based on progress
+
+### Checkpoint Process
+1. **Week 2, 6, 10**: Formal Go/No-Go review
+2. **Document decision** in this file
+3. **Adjust timeline** if No-Go
+4. **Communicate changes** to stakeholders
+
+### Tracking Progress
+- **This document is the source of truth**
+- **Update via PR** to maintain history
+- **Use GitHub Issues** for detailed task tracking
+- **Link PRs** to this plan in commit messages
+
 ## Core Strategy: Ship Fast, Enhance Forever
 
 ### Guiding Principles
