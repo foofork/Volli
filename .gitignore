@@ -184,3 +184,10 @@ service-account*.json
 .yarnrc
 .netrc
 .pypirc
+
+# Documentation planning files
+/docs/*.md
+!/docs/README.md
+!/docs/ARCHITECTURE.md
+!/docs/GETTING_STARTED.md
+!/docs/SECURITY.md
