@@ -18,16 +18,24 @@
 	const containerID = generateId('pin-container');
 	const labelId = generateId('pin-label');
 	
+	// Track internal state to prevent cycles
+	let internalUpdate = false;
+	
 	// Update external value when digits change
 	$: {
-		value = digits.join('');
-		dispatch('input', { value });
+		const newValue = digits.join('');
+		if (newValue !== value && !internalUpdate) {
+			dispatch('input', { value: newValue });
+		}
 	}
 	
 	// Parse incoming value into individual digits
-	$: if (value && value !== digits.join('')) {
+	$: if (value !== undefined && value !== digits.join('') && !internalUpdate) {
+		internalUpdate = true;
 		const newDigits = value.padEnd(6, '').slice(0, 6).split('');
 		digits = newDigits;
+		// Reset flag on next tick
+		setTimeout(() => { internalUpdate = false; }, 0);
 	}
 	
 	function handleInput(index: number, event: Event) {
@@ -45,7 +53,10 @@
 			return;
 		}
 		
+		internalUpdate = true;
 		digits[index] = target.value;
+		digits = digits; // Trigger reactivity
+		setTimeout(() => { internalUpdate = false; }, 0);
 		
 		// Auto-focus next input
 		if (target.value && index < 5) {
@@ -88,7 +99,9 @@
 		
 		if (numbersOnly.length > 0) {
 			const newDigits = numbersOnly.padEnd(6, '').slice(0, 6).split('');
+			internalUpdate = true;
 			digits = newDigits;
+			setTimeout(() => { internalUpdate = false; }, 0);
 			
 			// Focus the next empty input or the last input
 			const nextEmptyIndex = digits.findIndex(d => d === '');
@@ -100,7 +113,9 @@
 	}
 	
 	function clearPin() {
+		internalUpdate = true;
 		digits = ['', '', '', '', '', ''];
+		setTimeout(() => { internalUpdate = false; }, 0);
 		pinInputs[0]?.focus();
 		announceToScreenReader('PIN cleared');
 	}

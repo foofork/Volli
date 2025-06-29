@@ -23,7 +23,7 @@ describe('Kyber768 Implementation', () => {
     // Ensure crypto is available in test environment
     if (!globalThis.crypto) {
       const { webcrypto } = await import('crypto');
-      globalThis.crypto = webcrypto as any;
+      globalThis.crypto = webcrypto as unknown as Crypto;
     }
   });
 

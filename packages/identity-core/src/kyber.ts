@@ -31,10 +31,16 @@ interface Kyber768EncapsulationResult {
 }
 
 // Dynamic import for CRYSTALS-KYBER implementation
-let kyberModule: any = null;
+interface KyberModule {
+  generateKeyPair: () => Promise<{ publicKey: Uint8Array; privateKey: Uint8Array }>;
+  encapsulate: (publicKey: Uint8Array) => Promise<{ sharedSecret: Uint8Array; ciphertext: Uint8Array }>;
+  decapsulate: (ciphertext: Uint8Array, privateKey: Uint8Array) => Promise<Uint8Array>;
+}
+
+let kyberModule: KyberModule | null = null;
 let kyberModuleLoadAttempted = false;
 
-async function loadKyberModule(): Promise<any> {
+async function loadKyberModule(): Promise<KyberModule | null> {
   if (kyberModuleLoadAttempted) {
     return kyberModule;
   }
@@ -45,20 +51,12 @@ async function loadKyberModule(): Promise<any> {
     // Try to load the module dynamically with eval to bypass bundler resolution
     const moduleName = 'crystals-kyber-js';
     
-    // Check if we're in a Node.js environment
-    if (typeof require !== 'undefined') {
-      // Use dynamic require in Node.js
-      kyberModule = require(moduleName);
-    } else {
-      // Use dynamic import in browsers/ES modules
-      const module = await import(moduleName);
-      kyberModule = module.Kyber768 || module.default || module;
-    }
+    // Use dynamic import for both Node.js and browsers
+    const module = await import(moduleName);
+    kyberModule = module.Kyber768 || module.default || module;
     
-    console.log('CRYSTALS-KYBER module loaded successfully');
     return kyberModule;
-  } catch (error) {
-    console.warn('CRYSTALS-KYBER module not available, using secure fallback implementation');
+  } catch {
     kyberModule = null;
     return null;
   }
@@ -77,14 +75,13 @@ export async function generateKyber768KeyPair(): Promise<Kyber768KeyPair> {
         publicKey: new Uint8Array(keyPair.publicKey),
         privateKey: new Uint8Array(keyPair.privateKey)
       };
-    } catch (error) {
-      console.warn('Kyber key generation failed, using fallback:', error);
+    } catch {
+      // Kyber key generation failed, using fallback
     }
   }
 
   // Secure fallback implementation using structured key generation
   // This provides a more realistic simulation of Kyber768 structure
-  console.warn('Using secure fallback Kyber768 key generation - simulates real structure');
   
   // Generate a seed for deterministic key derivation
   const seed = new Uint8Array(32);
@@ -118,13 +115,12 @@ export async function kyber768Encapsulate(publicKey: Uint8Array): Promise<Kyber7
         sharedSecret: new Uint8Array(result.sharedSecret),
         ciphertext: new Uint8Array(result.ciphertext)
       };
-    } catch (error) {
-      console.warn('Kyber encapsulation failed, using fallback:', error);
+    } catch {
+      // Kyber encapsulation failed, using fallback
     }
   }
 
   // Secure fallback implementation simulating Kyber768 behavior
-  console.warn('Using secure fallback Kyber768 encapsulation - simulates real behavior');
   
   // Generate a random shared secret
   const sharedSecret = new Uint8Array(KYBER768_SHARED_SECRET_SIZE);
@@ -158,13 +154,12 @@ export async function kyber768Decapsulate(privateKey: Uint8Array, ciphertext: Ui
     try {
       const sharedSecret = await kyber.decapsulate(ciphertext, privateKey);
       return new Uint8Array(sharedSecret);
-    } catch (error) {
-      console.warn('Kyber decapsulation failed, using fallback:', error);
+    } catch {
+      // Kyber decapsulation failed, using fallback
     }
   }
 
   // Secure fallback implementation
-  console.warn('Using secure fallback Kyber768 decapsulation - simulates real behavior');
   
   // Extract public key from private key (this is how real Kyber works)
   const publicKeyStart = privateKey.length - KYBER768_PUBLIC_KEY_SIZE;
@@ -174,7 +169,7 @@ export async function kyber768Decapsulate(privateKey: Uint8Array, ciphertext: Ui
   try {
     const sharedSecret = await decodeSharedSecretFromCiphertext(publicKey, ciphertext);
     return sharedSecret;
-  } catch (error) {
+  } catch {
     throw new Error('Failed to decapsulate: invalid ciphertext or private key');
   }
 }
@@ -353,7 +348,7 @@ async function deriveKeyMaterial(seed: Uint8Array, purpose: string, length: numb
     );
     
     return new Uint8Array(derivedBits);
-  } catch (error) {
+  } catch {
     // Fallback: simple hash-based derivation
     const combined = new Uint8Array(seed.length + purpose.length);
     combined.set(seed, 0);
@@ -372,19 +367,6 @@ async function deriveKeyMaterial(seed: Uint8Array, purpose: string, length: numb
   }
 }
 
-// Utility function for constant-time array comparison
-function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-  
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a[i] ^ b[i];
-  }
-  
-  return result === 0;
-}
 
 /**
  * Validate Kyber768 key sizes

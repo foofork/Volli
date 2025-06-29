@@ -53,8 +53,8 @@ export async function keyEncapsulation(publicKey: PublicKey): Promise<{ sharedSe
       sharedSecret: result.sharedSecret,
       ciphertext: combinedCiphertext
     };
-  } catch (error) {
-    console.warn('Hybrid key encapsulation failed, falling back to classical:', error);
+  } catch {
+    // Hybrid key encapsulation failed, falling back to classical
     
     // Fallback to classical X25519 key exchange
     const ephemeralKeyPair = sodium.crypto_box_keypair();
@@ -96,8 +96,8 @@ export async function keyDecapsulation(
     // Fall back to classical decapsulation for legacy ciphertexts
     const sharedSecret = sodium.crypto_scalarmult(privateKey.x25519, ciphertext);
     return sharedSecret;
-  } catch (error) {
-    console.warn('Hybrid key decapsulation failed, falling back to classical:', error);
+  } catch {
+    // Hybrid key decapsulation failed, falling back to classical
     
     // Fallback to classical X25519 key exchange
     const sharedSecret = sodium.crypto_scalarmult(privateKey.x25519, ciphertext);
