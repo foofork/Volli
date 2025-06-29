@@ -21,7 +21,8 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "crystals-kyber-js": "^2.3.1",
+    "@volli/crypto-wasm": "workspace:*",
+    "eventemitter3": "^5.0.1",
     "libsodium-wrappers": "^0.7.13",
     "qrcode": "^1.5.3",
     "uuid": "^9.0.0"
@@ -30,6 +31,7 @@
     "@types/libsodium-wrappers": "^0.7.13",
     "@types/qrcode": "^1.5.5",
     "@types/uuid": "^9.0.0",
+    "@types/eventemitter3": "^2.0.2",
     "tsup": "^7.0.0",
     "vitest": "^3.2.4"
   },

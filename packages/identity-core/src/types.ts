@@ -1,3 +1,9 @@
+// Import crypto types from crypto-types.ts
+import type { PublicKey, PrivateKey, KeyPair, KeyDerivationParams } from './crypto-types';
+
+// Re-export them
+export type { PublicKey, PrivateKey, KeyPair, KeyDerivationParams };
+
 export interface Identity {
   id: string;
   publicKey: PublicKey;
@@ -5,20 +11,6 @@ export interface Identity {
   deviceKeys: DeviceKey[];
   createdAt: number;
   metadata: IdentityMetadata;
-}
-
-export interface PublicKey {
-  kyber: Uint8Array;
-  dilithium: Uint8Array;
-  x25519: Uint8Array;
-  ed25519: Uint8Array;
-}
-
-export interface PrivateKey {
-  kyber: Uint8Array;
-  dilithium: Uint8Array;
-  x25519: Uint8Array;
-  ed25519: Uint8Array;
 }
 
 export interface DeviceKey {
@@ -57,13 +49,6 @@ export interface IdentityMetadata {
   displayName?: string;
   avatarUrl?: string;
   bio?: string;
-}
-
-export interface KeyDerivationParams {
-  salt: Uint8Array;
-  iterations: number;
-  memory: number;
-  parallelism: number;
 }
 
 export interface EncryptedBackup {

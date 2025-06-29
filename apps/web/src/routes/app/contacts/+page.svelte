@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { contacts, contactsList } from '$lib/stores/contacts';
+	import { get } from 'svelte/store';
 	import type { Contact } from '$lib/stores/contacts';
 	import { toasts } from '$lib/stores/toasts';
 	import { messages } from '$lib/stores/messages';
@@ -173,7 +174,8 @@
 		}
 	}
 	
-	$: filteredContacts = $contactsList.filter(contact => 
+	// Temporary migration to Svelte 5 - replace reactive statement with getter
+	$: filteredContacts = get(contactsList).filter(contact => 
 		contact.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
 		(contact.notes && contact.notes.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
 	);

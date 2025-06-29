@@ -15,6 +15,11 @@ All foundational issues have been resolved. The project is ready for Week 2 feat
 - [x] Resolved all deprecation warnings and errors
 - [x] Updated SvelteKit/Svelte versions for compatibility
 - [x] Fixed accessibility issues throughout codebase
+- [x] **Fixed ESLint configuration and pre-commit hooks**
+  - Migrated from `.eslintrc.json` to `eslint.config.js` (flat config)
+  - Added proper globals for browser/node/TypeScript environments
+  - Fixed Svelte-specific linting rules
+  - Pre-commit hooks now work correctly
 
 ### Test Suite Improvements
 - [x] Fixed PinInput component event handling in tests

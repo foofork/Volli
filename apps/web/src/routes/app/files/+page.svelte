@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { files, filesList, uploadProgress, totalStorageUsed } from '$lib/stores/files';
 	import { contactsList } from '$lib/stores/contacts';
+	import { get } from 'svelte/store';
 	import type { FileMetadata } from '$lib/stores/files';
 	import { toasts } from '$lib/stores/toasts';
 	
@@ -182,7 +183,8 @@
 		return '📎';
 	}
 	
-	$: filteredFiles = $filesList.filter(file => 
+	// Temporary migration to Svelte 5 - replace reactive statement with getter
+	$: filteredFiles = get(filesList).filter(file => 
 		file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 		file.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
 		(file.tags && file.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
@@ -219,9 +221,9 @@
 		<div class="header-left">
 			<h1>Files</h1>
 			<div class="storage-info">
-				<span>{files.formatFileSize($totalStorageUsed)} used</span>
+				<span>{files.formatFileSize(get(totalStorageUsed))} used</span>
 				<span>•</span>
-				<span>{$filesList.length} files</span>
+				<span>{get(filesList).length} files</span>
 			</div>
 		</div>
 		<div class="header-actions">
@@ -295,9 +297,9 @@
 		on:dragleave={handleDragLeave}
 	>
 		<!-- Upload Progress -->
-		{#if $uploadProgress.length > 0}
+		{#if get(uploadProgress).length > 0}
 			<div class="upload-progress-container">
-				{#each $uploadProgress as upload}
+				{#each get(uploadProgress) as upload}
 					<div class="upload-progress">
 						<div class="upload-header">
 							<span class="upload-filename">{upload.fileName}</span>
@@ -437,13 +439,13 @@
 			<div class="modal-content">
 				<p>Select contacts to share this file with:</p>
 				
-				{#if $contactsList.length === 0}
+				{#if get(contactsList).length === 0}
 					<div class="no-contacts">
 						<p>No contacts available. Add contacts first to share files.</p>
 					</div>
 				{:else}
 					<div class="contacts-list">
-						{#each $contactsList as contact}
+						{#each get(contactsList) as contact}
 							<label class="contact-item">
 								<input 
 									type="checkbox" 

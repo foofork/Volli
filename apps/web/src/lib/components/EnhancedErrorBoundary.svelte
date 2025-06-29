@@ -428,7 +428,7 @@
 		gap: 1rem;
 	}
 	
-	.error-field label {
+	.field-label {
 		font-weight: 600;
 		color: #888;
 		min-width: 100px;
@@ -524,7 +524,7 @@
 			gap: 0.5rem;
 		}
 		
-		.error-field label {
+		.field-label {
 			min-width: auto;
 		}
 	}

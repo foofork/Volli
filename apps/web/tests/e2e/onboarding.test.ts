@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent, waitFor, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import Welcome from '../../src/routes/+page.svelte';
-import CreateIdentity from '../../src/routes/identity/create/+page.svelte';
-import SetupPin from '../../src/routes/identity/setup/+page.svelte';
+import Welcome from '../../src/routes/auth/+page.svelte';
+import CreateIdentity from '../../src/routes/auth/identity/create/+page.svelte';
+import SetupPin from '../../src/routes/auth/identity/setup/+page.svelte';
 import { auth } from '../../src/lib/stores/auth';
 import { goto } from '$app/navigation';
 
@@ -51,23 +51,22 @@ describe('End-to-End: Simplified Onboarding Flow', () => {
     it('should display simplified welcome message', () => {
       render(Welcome);
       
-      expect(screen.getByText('Welcome to Volly')).toBeInTheDocument();
-      expect(screen.getByText(/Universal communication/i)).toBeInTheDocument();
-      expect(screen.getByText('Create Account')).toBeInTheDocument();
+      expect(screen.getByText('Volly')).toBeInTheDocument();
+      expect(screen.getByText(/Post-quantum secure/i)).toBeInTheDocument();
+      expect(screen.getByText('Create New Identity')).toBeInTheDocument();
       
-      // Should not show technical jargon
-      expect(screen.queryByText(/vault/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/cryptographic/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/P2P/i)).not.toBeInTheDocument();
+      // Should show key features but in user-friendly way
+      expect(screen.getByText(/ML-KEM & ML-DSA algorithms/i)).toBeInTheDocument();
+      expect(screen.getByText(/Multi-Platform/i)).toBeInTheDocument();
     });
 
     it('should navigate to create identity on button click', async () => {
       render(Welcome);
       
-      const createButton = screen.getByText('Create Account');
+      const createButton = screen.getByText('Create New Identity');
       await fireEvent.click(createButton);
       
-      expect(goto).toHaveBeenCalledWith('/identity/create');
+      expect(goto).toHaveBeenCalledWith('/auth/identity/create');
     });
   });
 
@@ -127,7 +126,7 @@ describe('End-to-End: Simplified Onboarding Flow', () => {
       
       await waitFor(() => {
         expect(auth.createIdentity).toHaveBeenCalledWith('John Doe');
-        expect(goto).toHaveBeenCalledWith('/identity/setup');
+        expect(goto).toHaveBeenCalledWith('/auth/identity/setup');
       });
     });
   });
@@ -250,10 +249,10 @@ describe('End-to-End: Simplified Onboarding Flow', () => {
       // Start at welcome
       const { unmount: unmountWelcome } = render(Welcome);
       
-      const createButton = screen.getByText('Create Account');
+      const createButton = screen.getByText('Create New Identity');
       await fireEvent.click(createButton);
       
-      expect(goto).toHaveBeenCalledWith('/identity/create');
+      expect(goto).toHaveBeenCalledWith('/auth/identity/create');
       unmountWelcome();
       
       // Create identity
@@ -265,7 +264,7 @@ describe('End-to-End: Simplified Onboarding Flow', () => {
       
       await waitFor(() => {
         expect(auth.createIdentity).toHaveBeenCalledWith('Alice');
-        expect(goto).toHaveBeenCalledWith('/identity/setup');
+        expect(goto).toHaveBeenCalledWith('/auth/identity/setup');
       });
       
       // Update store with created identity

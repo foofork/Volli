@@ -23,12 +23,44 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       external: [],
+      output: {
+        manualChunks(id) {
+          // Only apply chunking for client build, not SSR
+          if (id.includes('node_modules')) {
+            // Heavy crypto library
+            if (id.includes('libsodium-wrappers')) {
+              return 'sodium';
+            }
+            // Automerge CRDT library
+            if (id.includes('@automerge/automerge')) {
+              return 'automerge';
+            }
+            // Other vendor libraries
+            if (id.includes('uuid') || id.includes('qrcode') || 
+                id.includes('dexie') || id.includes('eventemitter3')) {
+              return 'vendor';
+            }
+          }
+          // Volly packages
+          if (id.includes('@volli/identity-core') || id.includes('@volli/crypto-wasm')) {
+            return 'volly-crypto';
+          }
+          if (id.includes('@volli/vault-core')) {
+            return 'volly-vault';
+          }
+          if (id.includes('@volli/messaging')) {
+            return 'volly-messaging';
+          }
+        }
+      }
     },
     assetsDir: 'assets',
     copyPublicDir: true,
+    // Increase chunk size warning limit since we're intentionally splitting
+    chunkSizeWarningLimit: 600,
   },
   optimizeDeps: {
-    exclude: ['libsodium-wrappers', '@automerge/automerge'],
+    // Don't exclude these from optimization if we want to chunk them
     include: ['@automerge/automerge-wasm'],
   },
 });
