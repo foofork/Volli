@@ -7,3 +7,6 @@ export { default as EnhancedButton } from './EnhancedButton.svelte';
 export { default as NotificationCenter } from './NotificationCenter.svelte';
 export { default as EnhancedErrorBoundary } from './EnhancedErrorBoundary.svelte';
 export { default as SimplifiedOnboarding } from './SimplifiedOnboarding.svelte';
+export { default as UserFriendlyId } from './UserFriendlyId.svelte';
+export { default as SimplifiedKeyInput } from './SimplifiedKeyInput.svelte';
+export { default as StatusIndicator } from './StatusIndicator.svelte';

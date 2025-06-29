@@ -6,6 +6,8 @@
 	import { messages } from '$lib/stores/messages';
 	import { goto } from '$app/navigation';
 	import { networkStore } from '@volli/integration';
+	import SimplifiedKeyInput from '$lib/components/SimplifiedKeyInput.svelte';
+	import StatusIndicator from '$lib/components/StatusIndicator.svelte';
 	
 	let searchQuery = '';
 	let debouncedSearchQuery = '';
@@ -45,21 +47,18 @@
 	}
 	
 	function validatePublicKey(key: string): boolean {
-		// Basic validation - check if it looks like a valid key format
+		// Simplified validation - just check if it looks like a reasonable key
 		if (!key) return false;
 		
-		// Check if it's a hex string (64 characters for 32-byte key)
-		const hexPattern = /^[0-9a-fA-F]{64}$/;
-		if (hexPattern.test(key)) return true;
+		// Check various formats without exposing technical details
+		const formats = [
+			/^[0-9a-fA-F]{64}$/,           // Hex format
+			/^[A-Za-z0-9+/]{43}=$/,        // Base64 format  
+			/^pk_[a-zA-Z0-9]+$/,           // Demo format
+			/^[a-zA-Z0-9\-_]{20,}$/        // General format
+		];
 		
-		// Check if it's base64 encoded (44 characters with padding)
-		const base64Pattern = /^[A-Za-z0-9+/]{43}=$/;
-		if (base64Pattern.test(key)) return true;
-		
-		// For demo purposes, accept mock keys
-		if (key.startsWith('pk_')) return true;
-		
-		return false;
+		return formats.some(pattern => pattern.test(key.trim()));
 	}
 	
 	async function addContact() {
@@ -84,7 +83,7 @@
 				}
 				
 				if (!validatePublicKey(publicKey)) {
-					error = 'Invalid public key format. Expected 64-character hex string or 44-character base64 string.';
+					error = 'The security key doesn\'t look valid. Please check it and try again.';
 					return;
 				}
 			} else {
@@ -237,17 +236,19 @@
 				</div>
 			{:else}
 				<div class="form-group">
-					<label for="publicKey">Public Key</label>
-					<input
-						id="publicKey"
-						type="text"
+					<SimplifiedKeyInput
 						bind:value={newContactPublicKey}
-						placeholder="64-character hex key or 44-character base64 key"
+						label="Security Key"
+						placeholder="Paste the security key shared by your contact"
 						disabled={isAdding}
+						required={true}
+						on:input={(e) => {
+							newContactPublicKey = e.detail.value;
+							if (!e.detail.valid && newContactPublicKey.trim()) {
+								error = '';
+							}
+						}}
 					/>
-					<div class="form-help">
-						For power users: Enter the exact public key
-					</div>
 				</div>
 			{/if}
 			
@@ -300,14 +301,17 @@
 					</div>
 					<div class="contact-info">
 						<div class="contact-name">{contact.name}</div>
-						<div class="contact-status" class:verified={contact.verified}>
-							{contact.verified ? '✓ Verified' : 'Unverified'}
+						<div class="contact-status-indicators">
+							<StatusIndicator 
+								status={contact.verified ? 'verified' : 'unverified'} 
+								size="small"
+							/>
+							{#if contact.lastSeen}
+								<div class="contact-last-seen">
+									Last seen {new Date(contact.lastSeen).toLocaleDateString()}
+								</div>
+							{/if}
 						</div>
-						{#if contact.lastSeen}
-							<div class="contact-last-seen">
-								Last seen {new Date(contact.lastSeen).toLocaleDateString()}
-							</div>
-						{/if}
 					</div>
 					<div class="contact-actions">
 						<button 
@@ -610,13 +614,11 @@
 		margin-bottom: 0.25rem;
 	}
 	
-	.contact-status {
-		font-size: 0.9rem;
-		color: #888;
-	}
-	
-	.contact-status.verified {
-		color: #4ADE80;
+	.contact-status-indicators {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
 	}
 	
 	.contact-last-seen {
