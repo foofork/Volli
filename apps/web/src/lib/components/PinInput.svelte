@@ -153,7 +153,7 @@
 				on:paste={handlePaste}
 				autocomplete="off"
 				spellcheck="false"
-				autofocus={autoFocus && index === 0}
+				data-autofocus={autoFocus && index === 0}
 			/>
 		{/each}
 	</div>

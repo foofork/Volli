@@ -13,7 +13,15 @@ export default defineConfig({
     alias: {
       '$lib': path.resolve('./src/lib'),
       '$app': path.resolve('./tests/mocks/app')
-    }
+    },
+    reporters: [
+      [
+        'default',
+        {
+          summary: false
+        }
+      ]
+    ]
   },
   resolve: {
     alias: {

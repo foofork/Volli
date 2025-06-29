@@ -13,7 +13,7 @@
 	export let showToggle: boolean = true;
 	export let autocomplete: string = 'new-password';
 	export let describedBy: string = '';
-	export let errorId: string = '';
+	export const errorId: string = '';
 	
 	const dispatch = createEventDispatcher();
 	

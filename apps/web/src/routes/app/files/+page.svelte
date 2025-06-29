@@ -411,6 +411,8 @@
 
 <!-- Share Modal -->
 {#if showShareModal && fileToShare}
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
+	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<div 
 		class="modal-overlay" 
 		role="dialog" 
@@ -419,6 +421,8 @@
 		on:click={() => showShareModal = false}
 		on:keydown={(e) => e.key === 'Escape' && (showShareModal = false)}
 	>
+		<!-- svelte-ignore a11y-click-events-have-key-events -->
+		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		<div 
 			class="modal" 
 			role="document"

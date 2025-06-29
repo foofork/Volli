@@ -2,7 +2,7 @@
   import { cn } from '../utils/cn';
   import Button from './Button.svelte';
   import Input from './Input.svelte';
-  import { theme } from '../utils/theme';
+  import { theme, type Theme } from '../utils/theme';
   import { createEventDispatcher } from 'svelte';
 
   export let settings = {
@@ -34,7 +34,7 @@
   }
 
   function handleThemeChange() {
-    theme.set(localSettings.theme);
+    theme.set(localSettings.theme as Theme);
   }
 </script>
 

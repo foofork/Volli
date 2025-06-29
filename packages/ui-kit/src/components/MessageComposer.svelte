@@ -9,7 +9,7 @@
   export let className = '';
 
   let message = '';
-  let textareaElement;
+  let textareaElement: HTMLTextAreaElement;
   let isComposing = false;
 
   const dispatch = createEventDispatcher();
@@ -17,7 +17,7 @@
   $: remainingChars = maxLength - message.length;
   $: canSend = message.trim().length > 0 && !disabled;
 
-  function handleKeydown(event) {
+  function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       sendMessage();
@@ -51,7 +51,7 @@
     textareaElement.style.height = `${Math.min(textareaElement.scrollHeight, 200)}px`;
   }
 
-  function handlePaste(_event) {
+  function handlePaste(_event: ClipboardEvent) {
     // Handle file paste in the future
   }
 

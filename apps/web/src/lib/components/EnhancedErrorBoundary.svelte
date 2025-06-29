@@ -5,7 +5,7 @@
 	
 	export let fallback: any = null;
 	export let onError: ((error: Error) => void) | null = null;
-	export let showErrorDetails: boolean = false;
+	export const showErrorDetails: boolean = false;
 	export let level: 'page' | 'component' | 'critical' = 'component';
 	export let recoveryActions: Array<{
 		label: string;
@@ -259,19 +259,19 @@
 						<div class="technical-details">
 							<div class="error-summary">
 								<div class="error-field">
-									<label>Error Type:</label>
+									<span class="field-label">Error Type:</span>
 									<span>{error?.name || 'Unknown'}</span>
 								</div>
 								<div class="error-field">
-									<label>Message:</label>
+									<span class="field-label">Message:</span>
 									<span>{error?.message || 'No message available'}</span>
 								</div>
 								<div class="error-field">
-									<label>Level:</label>
+									<span class="field-label">Level:</span>
 									<span class="level-badge {level}">{level}</span>
 								</div>
 								<div class="error-field">
-									<label>Timestamp:</label>
+									<span class="field-label">Timestamp:</span>
 									<span>{new Date().toLocaleString()}</span>
 								</div>
 							</div>

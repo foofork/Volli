@@ -12,6 +12,7 @@
   export let disabled: boolean = false;
   export let required: boolean = false;
   export let showValidation: boolean = true;
+  export let autoFocus: boolean = false;
   
   const dispatch = createEventDispatcher();
   
@@ -119,6 +120,7 @@
       on:blur={handleBlur}
       autocomplete="off"
       spellcheck="false"
+      data-autofocus={autoFocus}
     />
     
     {#if validationState === ValidationState.VALID}

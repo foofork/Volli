@@ -80,3 +80,58 @@ Object.defineProperty(window, 'localStorage', {
 Object.defineProperty(window, 'sessionStorage', {
   value: localStorageMock
 });
+
+// Mock ClipboardEvent and DataTransfer for paste testing
+global.ClipboardEvent = class ClipboardEvent extends Event {
+  clipboardData: DataTransfer;
+  
+  constructor(type: string, eventInitDict?: { clipboardData?: DataTransfer }) {
+    super(type);
+    this.clipboardData = eventInitDict?.clipboardData || new DataTransfer();
+  }
+} as any;
+
+global.DataTransfer = class DataTransfer {
+  items: DataTransferItemList;
+  files: FileList;
+  types: readonly string[];
+  effectAllowed: string;
+  dropEffect: string;
+  private _data: Map<string, string> = new Map();
+  
+  constructor() {
+    this.items = [] as any;
+    this.files = [] as any;
+    this.types = [];
+    this.effectAllowed = 'none';
+    this.dropEffect = 'none';
+  }
+  
+  getData(format: string): string {
+    return this._data.get(format) || '';
+  }
+  
+  setData(format: string, data: string): void {
+    this._data.set(format, data);
+    if (!this.types.includes(format)) {
+      (this.types as string[]).push(format);
+    }
+  }
+  
+  clearData(format?: string): void {
+    if (format) {
+      this._data.delete(format);
+      const index = this.types.indexOf(format);
+      if (index > -1) {
+        (this.types as string[]).splice(index, 1);
+      }
+    } else {
+      this._data.clear();
+      (this.types as string[]).length = 0;
+    }
+  }
+  
+  setDragImage(element: Element, x: number, y: number): void {
+    // Mock implementation
+  }
+} as any;

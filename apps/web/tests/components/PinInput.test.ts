@@ -173,22 +173,18 @@ describe('PinInput Component', () => {
     it('should handle paste of 6 digits', async () => {
       let emittedValue = '';
       
-      render(PinInput, {
-        events: {
-          input: (e: CustomEvent) => {
-            emittedValue = e.detail.value;
-          }
-        }
+      const { component } = render(PinInput);
+      component.$on('input', (e: CustomEvent) => {
+        emittedValue = e.detail.value;
       });
       
       const firstInput = screen.getByLabelText('Digit 1 of 6');
       
       // Paste 6 digits
+      const clipboardData = new DataTransfer();
+      clipboardData.setData('text/plain', '123456');
       const pasteEvent = new ClipboardEvent('paste', {
-        clipboardData: new DataTransfer()
-      });
-      Object.defineProperty(pasteEvent.clipboardData, 'getData', {
-        value: () => '123456'
+        clipboardData
       });
       
       await fireEvent(firstInput, pasteEvent);
@@ -201,22 +197,18 @@ describe('PinInput Component', () => {
     it('should handle paste with non-numeric characters', async () => {
       let emittedValue = '';
       
-      render(PinInput, {
-        events: {
-          input: (e: CustomEvent) => {
-            emittedValue = e.detail.value;
-          }
-        }
+      const { component } = render(PinInput);
+      component.$on('input', (e: CustomEvent) => {
+        emittedValue = e.detail.value;
       });
       
       const firstInput = screen.getByLabelText('Digit 1 of 6');
       
       // Paste mixed content
+      const clipboardData = new DataTransfer();
+      clipboardData.setData('text/plain', '1a2b3c4d5e6f');
       const pasteEvent = new ClipboardEvent('paste', {
-        clipboardData: new DataTransfer()
-      });
-      Object.defineProperty(pasteEvent.clipboardData, 'getData', {
-        value: () => '1a2b3c4d5e6f'
+        clipboardData
       });
       
       await fireEvent(firstInput, pasteEvent);
@@ -230,22 +222,18 @@ describe('PinInput Component', () => {
     it('should handle paste of partial PIN', async () => {
       let emittedValue = '';
       
-      render(PinInput, {
-        events: {
-          input: (e: CustomEvent) => {
-            emittedValue = e.detail.value;
-          }
-        }
+      const { component } = render(PinInput);
+      component.$on('input', (e: CustomEvent) => {
+        emittedValue = e.detail.value;
       });
       
       const firstInput = screen.getByLabelText('Digit 1 of 6');
       
       // Paste only 3 digits
+      const clipboardData = new DataTransfer();
+      clipboardData.setData('text/plain', '123');
       const pasteEvent = new ClipboardEvent('paste', {
-        clipboardData: new DataTransfer()
-      });
-      Object.defineProperty(pasteEvent.clipboardData, 'getData', {
-        value: () => '123'
+        clipboardData
       });
       
       await fireEvent(firstInput, pasteEvent);
@@ -275,15 +263,13 @@ describe('PinInput Component', () => {
     it('should clear all inputs on clear button click', async () => {
       let emittedValue = '123456';
       
-      render(PinInput, {
+      const { component } = render(PinInput, {
         props: {
           value: '123456'
-        },
-        events: {
-          input: (e: CustomEvent) => {
-            emittedValue = e.detail.value;
-          }
         }
+      });
+      component.$on('input', (e: CustomEvent) => {
+        emittedValue = e.detail.value;
       });
       
       const clearButton = screen.getByText('Clear');
@@ -335,12 +321,9 @@ describe('PinInput Component', () => {
     it('should emit input event on any change', async () => {
       const inputEvents: string[] = [];
       
-      render(PinInput, {
-        events: {
-          input: (e: CustomEvent) => {
-            inputEvents.push(e.detail.value);
-          }
-        }
+      const { component } = render(PinInput);
+      component.$on('input', (e: CustomEvent) => {
+        inputEvents.push(e.detail.value);
       });
       
       const inputs = screen.getAllByLabelText(/Digit \d of 6/);

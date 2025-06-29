@@ -55,7 +55,7 @@
 	<meta name="description" content="Post-quantum secure, local-first messaging platform" />
 </svelte:head>
 
-<main class="container" role="main">
+<main class="container" >
 	<div class="hero">
 		<h1>
 			<span class="logo-icon" role="img" aria-label="Lock icon">🔐</span>

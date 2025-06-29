@@ -25,9 +25,9 @@
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
-    "@vitest/coverage-v8": "^1.0.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "dexie": "^3.2.4",
-    "eslint": "^8.57.1",
+    "eslint": "^9.0.0",
     "eslint-plugin-svelte": "^3.10.0",
     "fake-indexeddb": "^4.0.2",
     "husky": "^9.1.7",
@@ -38,7 +38,7 @@
     "svelte-eslint-parser": "^1.2.0",
     "turbo": "^1.10.0",
     "typescript": "^5.0.0",
-    "vitest": "^1.0.0"
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=18.0.0",

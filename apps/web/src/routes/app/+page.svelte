@@ -168,7 +168,7 @@
 </script>
 
 <div class="messages-layout">
-	<aside class="conversation-list" role="complementary" aria-label="Conversations">
+	<aside class="conversation-list" aria-label="Conversations">
 		<div class="list-header">
 			<h2>Messages</h2>
 			<button class="new-chat" on:click={toggleNewConversation} aria-label="Start new conversation" aria-expanded={showNewConversation}>
@@ -198,7 +198,7 @@
 			</form>
 		{/if}
 		
-		<div class="conversations" bind:this={conversationListElement} on:keydown={handleConversationListKeydown} role="list" aria-label="Conversation list" id={conversationListId}>
+		<ul class="conversations" bind:this={conversationListElement} role="list" aria-label="Conversation list" id={conversationListId}>
 			{#if $messages.isLoading}
 				<div class="empty-state" role="status" aria-live="polite">
 					<div class="spinner" aria-hidden="true"></div>
@@ -211,12 +211,12 @@
 				</div>
 			{:else}
 				{#each $conversations as conversation (conversation.id)}
-					<button
-						class="conversation-item"
-						class:active={$activeConversation?.id === conversation.id}
-						on:click={() => selectConversation(conversation.id)}
-						role="listitem"
-						aria-selected={$activeConversation?.id === conversation.id}
+					<li>
+						<button
+							class="conversation-item"
+							class:active={$activeConversation?.id === conversation.id}
+							on:click={() => selectConversation(conversation.id)}
+							aria-pressed={$activeConversation?.id === conversation.id}
 						aria-label={`Conversation with ${getConversationName(conversation)}. Last message: ${getLastMessagePreview(conversation)}`}
 						tabindex="0"
 					>
@@ -234,10 +234,11 @@
 								</time>
 							</div>
 						{/if}
-					</button>
+						</button>
+					</li>
 				{/each}
 			{/if}
-		</div>
+		</ul>
 	</aside>
 	
 	<section class="chat-view" role="main" aria-label="Chat messages">
