@@ -11,6 +11,7 @@ export type { Config } from './database';
 export type { QueuedMessage as DatabaseQueuedMessage } from './database';
 export * from './messaging';
 export * from './network/network-store';
+export { smartNetwork, SmartNetworkManager, type SmartNetworkConfig } from './network/smart-network';
 export { PersistentMessageQueue } from './message-queue';
 export type { QueuedMessage } from './message-queue';
 export * from './types';

@@ -11,8 +11,9 @@
 	import { KeyboardShortcuts, announceToScreenReader } from '$lib/utils/accessibility';
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	import { handleArrowNavigation } from '$lib/utils/accessibility';
-	import { networkStore } from '@volli/integration';
+	import { smartNetwork } from '@volli/integration';
 	import AccountErrorFallback from '$lib/components/AccountErrorFallback.svelte';
+	import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
 	
 	let isReady = false;
 	let unlockPassphrase = '';
@@ -28,8 +29,8 @@
 				return;
 			}
 			
-			await networkStore.connectToSignaling(
-				'ws://localhost:8080',
+			// Use smart network with auto-reconnect and server selection
+			await smartNetwork.connect(
 				currentIdentity.id,
 				currentIdentity.publicKey
 			);
@@ -204,8 +205,7 @@
 						<div class="user-details">
 							<div class="user-name" aria-label="Current user">{$auth.currentIdentity?.displayName}</div>
 							<div class="user-status">
-								<span role="img" aria-label="Online status indicator">🟢</span>
-								Secure
+								<ConnectionStatus />
 							</div>
 						</div>
 					</div>
