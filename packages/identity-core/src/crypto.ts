@@ -18,63 +18,57 @@ export async function initCrypto(): Promise<void> {
 
 /**
  * Generate a new key pair with hybrid classical + post-quantum crypto
- * Note: This is a placeholder implementation. Real post-quantum crypto 
- * would require proper Kyber/Dilithium implementations
+ * Now uses real Kyber768 implementation for post-quantum security
  */
 export async function generateKeyPair(): Promise<{ publicKey: PublicKey; privateKey: PrivateKey }> {
   await initCrypto();
   
-  // Generate X25519 key pair (ECDH)
-  const x25519KeyPair = sodium.crypto_box_keypair();
-  
-  // Generate Ed25519 key pair (signatures)
-  const ed25519KeyPair = sodium.crypto_sign_keypair();
-  
-  // TODO: Replace with actual Kyber-1024 key generation
-  // For now, use placeholder values (in production, use proper PQC library)
-  const kyberPublic = sodium.randombytes_buf(1568); // Kyber-1024 public key size
-  const kyberPrivate = sodium.randombytes_buf(2400); // Kyber-1024 private key size
-  
-  // TODO: Replace with actual Dilithium-3 key generation
-  const dilithiumPublic = sodium.randombytes_buf(1952); // Dilithium-3 public key size
-  const dilithiumPrivate = sodium.randombytes_buf(4000); // Dilithium-3 private key size
-  
-  return {
-    publicKey: {
-      kyber: kyberPublic,
-      dilithium: dilithiumPublic,
-      x25519: x25519KeyPair.publicKey,
-      ed25519: ed25519KeyPair.publicKey
-    },
-    privateKey: {
-      kyber: kyberPrivate,
-      dilithium: dilithiumPrivate,
-      x25519: x25519KeyPair.privateKey,
-      ed25519: ed25519KeyPair.privateKey
-    }
-  };
+  // Use the new hybrid key generation with real Kyber768
+  const { generateHybridKeyPairWithKyber768 } = await import('./kyber');
+  return generateHybridKeyPairWithKyber768();
 }
 
 /**
- * Perform key encapsulation (KEM) operation
+ * Perform key encapsulation (KEM) operation using hybrid Kyber768 + X25519
  * Returns shared secret and ciphertext
  */
 export async function keyEncapsulation(publicKey: PublicKey): Promise<{ sharedSecret: Uint8Array; ciphertext: Uint8Array }> {
   await initCrypto();
   
-  // TODO: Replace with actual Kyber encapsulation
-  // For now, use X25519 key exchange as fallback
-  const ephemeralKeyPair = sodium.crypto_box_keypair();
-  const sharedSecret = sodium.crypto_scalarmult(ephemeralKeyPair.privateKey, publicKey.x25519);
-  
-  return {
-    sharedSecret,
-    ciphertext: ephemeralKeyPair.publicKey // This would be Kyber ciphertext in production
-  };
+  try {
+    // Use hybrid key encapsulation with Kyber768
+    const { hybridKeyEncapsulation } = await import('./kyber');
+    const result = await hybridKeyEncapsulation(publicKey);
+    
+    // Combine both ciphertexts into a single array for backward compatibility
+    const combinedCiphertext = new Uint8Array(result.ciphertext.length + result.classicalCiphertext.length + 4);
+    const view = new DataView(combinedCiphertext.buffer);
+    
+    // Store the length of the Kyber ciphertext in the first 4 bytes
+    view.setUint32(0, result.ciphertext.length, true);
+    combinedCiphertext.set(result.ciphertext, 4);
+    combinedCiphertext.set(result.classicalCiphertext, 4 + result.ciphertext.length);
+    
+    return {
+      sharedSecret: result.sharedSecret,
+      ciphertext: combinedCiphertext
+    };
+  } catch (error) {
+    console.warn('Hybrid key encapsulation failed, falling back to classical:', error);
+    
+    // Fallback to classical X25519 key exchange
+    const ephemeralKeyPair = sodium.crypto_box_keypair();
+    const sharedSecret = sodium.crypto_scalarmult(ephemeralKeyPair.privateKey, publicKey.x25519);
+    
+    return {
+      sharedSecret,
+      ciphertext: ephemeralKeyPair.publicKey
+    };
+  }
 }
 
 /**
- * Perform key decapsulation operation
+ * Perform key decapsulation operation using hybrid Kyber768 + X25519
  */
 export async function keyDecapsulation(
   privateKey: PrivateKey, 
@@ -82,11 +76,33 @@ export async function keyDecapsulation(
 ): Promise<Uint8Array> {
   await initCrypto();
   
-  // TODO: Replace with actual Kyber decapsulation
-  // For now, use X25519 key exchange as fallback
-  const sharedSecret = sodium.crypto_scalarmult(privateKey.x25519, ciphertext);
-  
-  return sharedSecret;
+  try {
+    // Check if this is a hybrid ciphertext (has the length prefix)
+    if (ciphertext.length > 32 && ciphertext.length > 4) {
+      const view = new DataView(ciphertext.buffer, ciphertext.byteOffset);
+      const kyberCiphertextLength = view.getUint32(0, true);
+      
+      // Validate the length to ensure this is a hybrid ciphertext
+      if (kyberCiphertextLength > 0 && kyberCiphertextLength < ciphertext.length - 4) {
+        const kyberCiphertext = ciphertext.slice(4, 4 + kyberCiphertextLength);
+        const classicalCiphertext = ciphertext.slice(4 + kyberCiphertextLength);
+        
+        // Use hybrid key decapsulation
+        const { hybridKeyDecapsulation } = await import('./kyber');
+        return await hybridKeyDecapsulation(privateKey, kyberCiphertext, classicalCiphertext);
+      }
+    }
+    
+    // Fall back to classical decapsulation for legacy ciphertexts
+    const sharedSecret = sodium.crypto_scalarmult(privateKey.x25519, ciphertext);
+    return sharedSecret;
+  } catch (error) {
+    console.warn('Hybrid key decapsulation failed, falling back to classical:', error);
+    
+    // Fallback to classical X25519 key exchange
+    const sharedSecret = sodium.crypto_scalarmult(privateKey.x25519, ciphertext);
+    return sharedSecret;
+  }
 }
 
 /**
