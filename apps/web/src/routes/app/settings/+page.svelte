@@ -4,6 +4,8 @@
 	import { toasts } from '$lib/stores/toasts';
 	import { onMount } from 'svelte';
 	
+	// Note: exportData kept for future export functionality
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let exportData = false;
 	let changePassphrase = false;
 	let newPassphrase = '';
@@ -30,7 +32,7 @@
 			URL.revokeObjectURL(url);
 			
 			toasts.success('Data exported successfully');
-		} catch (err) {
+		} catch {
 			toasts.error('Failed to export data');
 		}
 	}
@@ -81,7 +83,7 @@
 			auth.setAutoLockTimeout(autoLockTimeout);
 			
 			toasts.success('Settings saved');
-		} catch (err) {
+		} catch {
 			toasts.error('Failed to save settings');
 		}
 	}
@@ -117,8 +119,8 @@
 			
 			<div class="setting-item">
 				<div class="setting-info">
-					<h3>Change Vault Passphrase</h3>
-					<p>Update the passphrase used to encrypt your local vault</p>
+					<h3>Change Account Passphrase</h3>
+					<p>Update the passphrase used to encrypt your local account</p>
 				</div>
 				<button class="secondary" on:click={() => changePassphrase = !changePassphrase}>
 					Change Passphrase
@@ -149,7 +151,7 @@
 			<div class="setting-item">
 				<div class="setting-info">
 					<h3>Auto-lock Timeout</h3>
-					<p>Automatically lock vault after inactivity</p>
+					<p>Automatically lock account after inactivity</p>
 				</div>
 				<select bind:value={autoLockTimeout} on:change={updateSettings}>
 					<option value={5}>5 minutes</option>

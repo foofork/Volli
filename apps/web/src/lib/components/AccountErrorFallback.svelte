@@ -12,10 +12,10 @@
 	}
 </script>
 
-<div class="vault-error">
+<div class="account-error">
 	<div class="error-icon">⚠️</div>
-	<h1>Vault Error</h1>
-	<p>We encountered an error with your secure vault.</p>
+	<h1>Account Error</h1>
+	<p>We encountered an error with your secure account.</p>
 	
 	{#if error.message.includes('decrypt') || error.message.includes('unlock')}
 		<p class="error-detail">
@@ -47,7 +47,7 @@
 </div>
 
 <style>
-	.vault-error {
+	.account-error {
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;

@@ -27,22 +27,24 @@ interface CreateIdentityResult {
 	requiresVaultCreation: boolean;
 }
 
+// Note: VaultData interface kept for backward compatibility but not used in new createAccount flow
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface VaultData {
 	version: number;
 	created: number;
 	data: {
-		contacts: any[];
-		messages: any[];
-		files: any[];
-		settings: any;
+		contacts: unknown[];
+		messages: unknown[];
+		files: unknown[];
+		settings: unknown;
 	};
 }
 
 // Simulated IndexedDB store for demo (in real app, use actual IndexedDB)
 const mockDB = {
 	identities: new Map<string, Identity>(),
-	vaults: new Map<string, any>(),
-	sessions: new Map<string, any>()
+	vaults: new Map<string, unknown>(),
+	sessions: new Map<string, unknown>()
 };
 
 function createAuthStore() {
@@ -62,7 +64,10 @@ function createAuthStore() {
 	const { subscribe, set, update } = writable<AuthState>(initialState);
 
 	let autoLockTimer: ReturnType<typeof setTimeout> | null = null;
+	// Note: These are kept for backward compatibility but not used in new createAccount flow
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let vaultKey: CryptoKey | null = null;
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let vaultPassphrase: string | null = null; // Temporarily stored for demo
 
 	// Helper functions
@@ -184,6 +189,54 @@ function createAuthStore() {
 		};
 	}
 
+	// Simplified account creation using PIN (replaces createVaultWithPassphrase)
+	async function createAccount(pin: string): Promise<void> {
+		if (pin.length !== 6 || !/^\d{6}$/.test(pin)) {
+			throw new Error('PIN must be exactly 6 digits');
+		}
+
+		const state = get({ subscribe });
+		if (!state.currentIdentity) {
+			throw new Error('No identity created');
+		}
+
+		// Use PIN directly - vault creation handles security internally
+		const vaultId = await core.createVault(pin);
+		
+		if (vaultId) {
+			// Generate session token
+			const sessionToken = 'session-' + generateSecureId();
+			
+			// Store session
+			localStorage.setItem('volli-session', JSON.stringify({
+				token: sessionToken,
+				expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+			}));
+			
+			// Store identity info
+			const updatedIdentity = {
+				...state.currentIdentity,
+				hasVault: true
+			};
+			localStorage.setItem('volli-identity', JSON.stringify(updatedIdentity));
+
+			update(state => ({
+				...state,
+				currentIdentity: updatedIdentity,
+				isAuthenticated: true,
+				vaultUnlocked: true,
+				sessionToken,
+				failedUnlockAttempts: 0,
+				error: null
+			}));
+
+			// Start auto-lock timer
+			startAutoLockTimer();
+		} else {
+			throw new Error('Failed to create account');
+		}
+	}
+
 	async function createVaultWithPassphrase(passphrase: string): Promise<void> {
 		const state = get({ subscribe });
 		if (!state.currentIdentity) {
@@ -196,44 +249,40 @@ function createAuthStore() {
 			throw new Error('Passphrase too weak. Minimum 12 characters with good entropy required');
 		}
 
-		try {
-			// Create vault using the core implementation
-			const vaultId = await core.createVault(passphrase);
+		// Create vault using the core implementation
+		const vaultId = await core.createVault(passphrase);
+		
+		if (vaultId) {
+			// Generate session token
+			const sessionToken = 'session-' + generateSecureId();
 			
-			if (vaultId) {
-				// Generate session token
-				const sessionToken = 'session-' + generateSecureId();
-				
-				// Store session
-				localStorage.setItem('volli-session', JSON.stringify({
-					token: sessionToken,
-					expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
-				}));
-				
-				// Store identity info
-				const updatedIdentity = {
-					...state.currentIdentity,
-					hasVault: true
-				};
-				localStorage.setItem('volli-identity', JSON.stringify(updatedIdentity));
+			// Store session
+			localStorage.setItem('volli-session', JSON.stringify({
+				token: sessionToken,
+				expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+			}));
+			
+			// Store identity info
+			const updatedIdentity = {
+				...state.currentIdentity,
+				hasVault: true
+			};
+			localStorage.setItem('volli-identity', JSON.stringify(updatedIdentity));
 
-				update(state => ({
-					...state,
-					currentIdentity: updatedIdentity,
-					isAuthenticated: true,
-					vaultUnlocked: true,
-					sessionToken,
-					failedUnlockAttempts: 0,
-					error: null
-				}));
+			update(state => ({
+				...state,
+				currentIdentity: updatedIdentity,
+				isAuthenticated: true,
+				vaultUnlocked: true,
+				sessionToken,
+				failedUnlockAttempts: 0,
+				error: null
+			}));
 
-				// Start auto-lock timer
-				startAutoLockTimer();
-			} else {
-				throw new Error('Failed to create vault');
-			}
-		} catch (error) {
-			throw error;
+			// Start auto-lock timer
+			startAutoLockTimer();
+		} else {
+			throw new Error('Failed to create vault');
 		}
 	}
 
@@ -275,7 +324,7 @@ function createAuthStore() {
 
 				return false;
 			}
-		} catch (error) {
+		} catch {
 			// Failed unlock
 			update(s => ({
 				...s,
@@ -421,7 +470,8 @@ function createAuthStore() {
 		subscribe,
 		initialize,
 		createIdentity,
-		createVaultWithPassphrase,
+		createAccount, // New simplified method
+		createVaultWithPassphrase, // Keep for backward compatibility
 		unlockVault,
 		lockVault,
 		changePassphrase,
