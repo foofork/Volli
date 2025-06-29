@@ -185,12 +185,8 @@ service-account*.json
 .netrc
 .pypirc
 
-# Documentation planning files
-/docs/*.md
-!/docs/README.md
-!/docs/ARCHITECTURE.md
-!/docs/GETTING_STARTED.md
-!/docs/SECURITY.md
+# Documentation - hide everything in docs directory
+/docs/
 
 # Root level planning documents
 /*.md
