@@ -191,3 +191,8 @@ service-account*.json
 !/docs/ARCHITECTURE.md
 !/docs/GETTING_STARTED.md
 !/docs/SECURITY.md
+
+# Root level planning documents
+/*.md
+!/README.md
+!/LICENSE
