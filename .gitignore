@@ -190,4 +190,4 @@ service-account*.json
 # Root level planning documents
 /*.md
 !/README.md
-!/LICENSE
+!/LICENSE*.timestamp-*.mjs
