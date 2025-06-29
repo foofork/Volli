@@ -128,7 +128,6 @@ identity_core_test_results.md
 
 # Build configuration (temporary)
 tsconfig.build.json
-vitest.config.ts
 
 # Test artifacts
 test-results/
