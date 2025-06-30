@@ -14,7 +14,6 @@
     "@volli/identity-core": "workspace:*",
     "@volli/messaging": "workspace:*",
     "@volli/signaling-server": "workspace:*",
-    "@volli/vault-core": "workspace:*",
     "dexie": "^3.2.4",
     "eventemitter3": "^5.0.1"
   },
