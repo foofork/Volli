@@ -1,0 +1,124 @@
+# Volly Signaling Server Integration
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.signaling.yml up
+
+version: '3.8'
+
+services:
+  # Volly Signaling Server (Enhanced LiveKit with Post-Quantum)
+  volly-signaling:
+    build:
+      context: ./external/volly-signaling
+      dockerfile: docker/Dockerfile
+    ports:
+      - '7880:7880' # WebSocket signaling
+      - '7881:7881' # HTTP API
+      - '7882:7882' # TURN server (if needed)
+    environment:
+      # API Keys (use secure values in production)
+      - LIVEKIT_KEYS=${LIVEKIT_API_KEY:-volly-dev-key}:${LIVEKIT_API_SECRET:-volly-dev-secret-key-2024}
+
+      # Redis configuration
+      - REDIS_HOST=volly-redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+
+      # Post-quantum configuration
+      - VOLLY_PQ_ENABLED=true
+      - VOLLY_PQ_ALGORITHM=ML-KEM-768
+      - VOLLY_PQ_SESSION_TIMEOUT=86400 # 24 hours
+
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FORMAT=json
+
+      # Performance tuning
+      - GOMAXPROCS=${SIGNALING_CPU_LIMIT:-4}
+    depends_on:
+      - volly-redis
+    volumes:
+      - ./external/volly-signaling/config-sample.yaml:/etc/volly-signaling/config.yaml:ro
+    networks:
+      - volly-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:7880/healthz']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+
+  # Redis for signaling session storage
+  volly-redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - volly_redis_data:/data
+      - ./external/volly-signaling/docker/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - volly-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+
+  # Optional: Redis monitoring (enable with --profile monitoring)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=volly:volly-redis:6379
+      - HTTP_USER=${REDIS_UI_USER:-admin}
+      - HTTP_PASSWORD=${REDIS_UI_PASSWORD:-password}
+    ports:
+      - '8081:8081'
+    depends_on:
+      - volly-redis
+    networks:
+      - volly-network
+    profiles:
+      - monitoring
+      - debug
+
+  # Optional: Signaling metrics (enable with --profile monitoring)
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./external/volly-signaling/docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - volly_prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - volly-network
+    profiles:
+      - monitoring
+
+volumes:
+  volly_redis_data:
+  volly_prometheus_data:
+
+networks:
+  volly-network:
+    driver: bridge
+    name: volly-network
