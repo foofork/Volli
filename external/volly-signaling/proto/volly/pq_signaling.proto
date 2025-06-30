@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package volly;
+
+option go_package = "github.com/volly-org/volly-signaling/pkg/volly/protocol";
+
+// Post-Quantum Handshake Messages
+message PQHandshakeRequest {
+    string algorithm = 1;           // "ML-KEM-768"
+    bytes client_public_key = 2;    // Client's ML-KEM-768 public key
+    string session_id = 3;          // Unique session identifier
+    int64 timestamp = 4;            // Request timestamp for replay protection
+}
+
+message PQHandshakeResponse {
+    string algorithm = 1;           // "ML-KEM-768"
+    bytes kem_ciphertext = 2;       // KEM encapsulation output
+    string session_id = 3;          // Echo session identifier
+    bytes server_signature = 4;     // Optional server signature
+    int64 timestamp = 5;            // Response timestamp
+}
+
+// Enhanced SignalRequest with post-quantum support
+message VollySignalRequest {
+    oneof message {
+        // Standard LiveKit messages
+        bytes offer = 1;
+        bytes answer = 2;
+        bytes trickle = 3;
+        bytes add_track = 4;
+        // ... other LiveKit messages
+
+        // Post-quantum extensions
+        PQHandshakeRequest pq_handshake = 20;
+        bytes pq_encrypted_message = 21;  // Messages encrypted with PQ shared secret
+    }
+}
+
+// Enhanced SignalResponse with post-quantum support
+message VollySignalResponse {
+    oneof message {
+        // Standard LiveKit messages
+        bytes join = 1;
+        bytes answer = 2;
+        bytes offer = 3;
+        bytes trickle = 4;
+        // ... other LiveKit messages
+
+        // Post-quantum extensions
+        PQHandshakeResponse pq_handshake_resp = 20;
+        bytes pq_encrypted_message = 21;  // Messages encrypted with PQ shared secret
+        PQSessionStatus pq_session_status = 22;
+    }
+}
+
+// Session status updates
+message PQSessionStatus {
+    string session_id = 1;
+    SessionState state = 2;
+    string error_message = 3;
+    int64 expires_at = 4;
+
+    enum SessionState {
+        UNKNOWN = 0;
+        ESTABLISHING = 1;
+        ACTIVE = 2;
+        EXPIRED = 3;
+        ERROR = 4;
+    }
+}

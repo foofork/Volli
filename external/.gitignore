@@ -1,0 +1,19 @@
+# This directory contains conceptual forks and external dependencies
+# Only track the essential integration files, not full source code
+
+# Ignore if we add the full LiveKit source later
+volly-signaling/cmd/
+volly-signaling/pkg/!(volly)
+volly-signaling/test/
+volly-signaling/vendor/
+volly-signaling/internal/
+volly-signaling/*.yaml
+!volly-signaling/NOTE.md
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out

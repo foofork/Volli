@@ -99,28 +99,31 @@ Based on comprehensive research and analysis of current post-quantum cryptograph
 - **Achievement**: Hybrid encryption with 0.30ms key generation, quantum-resistant security
 - **Files**: `packages/messaging/src/post-quantum-encryption.ts`, WASM provider integration
 
-#### **2. Production Signaling Infrastructure** ✅ **COMPLETE** 
-- **Was**: Localhost development server only
-- **Now**: LiveKit fork with post-quantum enhancements, Docker deployment
-- **Achievement**: Production-ready signaling with ML-KEM-768 session security
-- **Files**: `external/volly-signaling/`, `docker-compose.signaling.yml`
+#### **2. Production Signaling Infrastructure** ✅ **REVISED**
+- **Was**: Custom LiveKit fork with PQ overlay
+- **Now**: Standard LiveKit server + application-layer PQ encryption
+- **Achievement**: Simpler architecture, better maintainability, same security
+- **Reference**: `external/volly-signaling/` (archived concept), standard LiveKit deployment
 
-## 🛜 **Volly Signaling Server Architecture**
+## 🛜 **Volly Signaling Architecture (Revised)**
 
 ### **Overview**
-Volly now includes a production-ready WebRTC signaling server based on LiveKit, enhanced with post-quantum cryptography. This provides the infrastructure for video calling, audio calls, and secure peer discovery.
+Volly uses standard LiveKit for WebRTC signaling and media server functionality, with post-quantum cryptography applied at the application layer through our WASM crypto module.
 
-### **Key Features**
-- **Quantum-Resistant Security**: ML-KEM-768 key exchange for all signaling sessions
-- **Production Scale**: Redis clustering, horizontal scaling, health monitoring
-- **LiveKit Compatibility**: Backward compatible with standard LiveKit clients
-- **Docker Integration**: Easy development and production deployment
+### **Architecture Decision**
+- **Standard LiveKit**: Unmodified LiveKit server for maximum compatibility
+- **Application-Layer PQ**: ML-KEM-768 encryption in client code via WASM
+- **Simplified Stack**: No custom signaling modifications needed
+- **Future-Proof**: Compatible with WebRTC/WebAssembly evolution
 
-### **Post-Quantum Security Flow**
-1. **Enhanced JWT**: Client embeds ML-KEM-768 public key in access token
-2. **Key Encapsulation**: Server performs quantum-resistant key establishment
-3. **Session Encryption**: All signaling messages encrypted with shared secret
-4. **WebRTC Security**: Post-quantum protected connection negotiation
+### **Post-Quantum Security Approach**
+1. **Client Handshake**: ML-KEM-768 key exchange happens in Volly client
+2. **Metadata Encryption**: PQ-encrypt sensitive data before WebRTC negotiation
+3. **Media Encryption**: Standard DTLS-SRTP with PQ key exchange metadata
+4. **Message Security**: All chat messages use PQ encryption independently
+
+### **Reference Implementation**
+The `external/volly-signaling/` directory contains a conceptual PQ overlay for LiveKit, preserved for reference but not used in production.
 
 ### **Development Integration**
 ```bash

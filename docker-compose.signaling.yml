@@ -1,42 +1,31 @@
-# Volly Signaling Server Integration
-# Usage: docker-compose -f docker-compose.yml -f docker-compose.signaling.yml up
+# Volly Signaling Server - Standard LiveKit
+# Usage: docker-compose -f docker-compose.signaling.yml up
 
 version: '3.8'
 
 services:
-  # Volly Signaling Server (Enhanced LiveKit with Post-Quantum)
-  volly-signaling:
-    build:
-      context: ./external/volly-signaling
-      dockerfile: docker/Dockerfile
+  # Standard LiveKit Server
+  livekit:
+    image: livekit/livekit-server:latest
     ports:
-      - '7880:7880' # WebSocket signaling
+      - '7880:7880' # WebSocket
       - '7881:7881' # HTTP API
-      - '7882:7882' # TURN server (if needed)
+      - '7882:7882' # TURN/ICE
     environment:
-      # API Keys (use secure values in production)
-      - LIVEKIT_KEYS=${LIVEKIT_API_KEY:-volly-dev-key}:${LIVEKIT_API_SECRET:-volly-dev-secret-key-2024}
+      # API Keys for development
+      - LIVEKIT_KEYS=${LIVEKIT_API_KEY:-devkey}:${LIVEKIT_API_SECRET:-secret}
 
-      # Redis configuration
-      - REDIS_HOST=volly-redis
+      # Redis configuration for scaling
+      - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_DB=0
-
-      # Post-quantum configuration
-      - VOLLY_PQ_ENABLED=true
-      - VOLLY_PQ_ALGORITHM=ML-KEM-768
-      - VOLLY_PQ_SESSION_TIMEOUT=86400 # 24 hours
 
       # Logging
       - LOG_LEVEL=${LOG_LEVEL:-info}
-      - LOG_FORMAT=json
 
-      # Performance tuning
-      - GOMAXPROCS=${SIGNALING_CPU_LIMIT:-4}
+      # Development mode settings
+      - LIVEKIT_DEV_MODE=true
     depends_on:
-      - volly-redis
-    volumes:
-      - ./external/volly-signaling/config-sample.yaml:/etc/volly-signaling/config.yaml:ro
+      - redis
     networks:
       - volly-network
     restart: unless-stopped
@@ -46,24 +35,15 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '1.0'
-        reservations:
-          memory: 256M
-          cpus: '0.5'
 
-  # Redis for signaling session storage
-  volly-redis:
+  # Redis for session storage and scaling
+  redis:
     image: redis:7-alpine
     ports:
       - '6379:6379'
     volumes:
-      - volly_redis_data:/data
-      - ./external/volly-signaling/docker/redis.conf:/usr/local/etc/redis/redis.conf:ro
-    command: redis-server /usr/local/etc/redis/redis.conf
+      - redis_data:/data
+    command: redis-server --appendonly yes
     networks:
       - volly-network
     restart: unless-stopped
@@ -72,53 +52,29 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.5'
 
-  # Optional: Redis monitoring (enable with --profile monitoring)
+  # Optional: Redis Commander for debugging (enable with --profile debug)
   redis-commander:
     image: rediscommander/redis-commander:latest
     environment:
-      - REDIS_HOSTS=volly:volly-redis:6379
+      - REDIS_HOSTS=local:redis:6379
       - HTTP_USER=${REDIS_UI_USER:-admin}
       - HTTP_PASSWORD=${REDIS_UI_PASSWORD:-password}
     ports:
       - '8081:8081'
     depends_on:
-      - volly-redis
+      - redis
     networks:
       - volly-network
     profiles:
-      - monitoring
       - debug
 
-  # Optional: Signaling metrics (enable with --profile monitoring)
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - '9090:9090'
-    volumes:
-      - ./external/volly-signaling/docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - volly_prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
-    networks:
-      - volly-network
-    profiles:
-      - monitoring
-
 volumes:
-  volly_redis_data:
-  volly_prometheus_data:
+  redis_data:
 
 networks:
   volly-network:
     driver: bridge
     name: volly-network
+# Note: Post-quantum encryption is handled at the application layer
+# See packages/messaging/src/post-quantum-encryption.ts for implementation
