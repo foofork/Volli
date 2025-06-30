@@ -6,13 +6,11 @@ import {
   CryptoProvider, 
   CryptoCapabilities, 
   CryptoFeature, 
-  ProviderPerformance,
-  ProviderType 
+  ProviderPerformance
 } from '../interfaces/crypto-provider';
 import { 
   AlgorithmIdentifier, 
-  AlgorithmType, 
-  AlgorithmCapabilities 
+  AlgorithmType
 } from '../interfaces/algorithm-types';
 import { KeyPair, PublicKey, PrivateKey, EncapsulationResult } from '../crypto-types';
 
@@ -207,14 +205,14 @@ export class WASMCryptoProvider implements CryptoProvider {
   /**
    * Import public key (not needed for WASM provider)
    */
-  async importPublicKey(keyData: Uint8Array, algorithm: AlgorithmIdentifier): Promise<PublicKey> {
+  async importPublicKey(_keyData: Uint8Array, _algorithm: AlgorithmIdentifier): Promise<PublicKey> {
     throw new Error('WASM provider uses direct key data');
   }
   
   /**
    * Import private key (not needed for WASM provider)
    */
-  async importPrivateKey(keyData: Uint8Array, algorithm: AlgorithmIdentifier): Promise<PrivateKey> {
+  async importPrivateKey(_keyData: Uint8Array, _algorithm: AlgorithmIdentifier): Promise<PrivateKey> {
     throw new Error('WASM provider uses direct key data');
   }
   

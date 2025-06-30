@@ -119,3 +119,15 @@ export {
   performHybridKeyEncapsulation,
   performHybridKeyDecapsulation
 } from './crypto-impl';
+
+// Export secure crypto provider
+export {
+  SecureCryptoProvider,
+  SecurityError,
+  secureCrypto
+} from './secure-crypto-provider';
+export type {
+  SecureEncryptedData,
+  SecureKeyDerivationParams,
+  HashResult
+} from './secure-crypto-provider';

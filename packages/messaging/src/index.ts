@@ -5,3 +5,4 @@ export * from './conversation';
 export * from './encryption';
 export * from './queue';
 export * from './search';
+export * from './offline-message-vault';

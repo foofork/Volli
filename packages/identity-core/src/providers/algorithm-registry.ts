@@ -122,7 +122,7 @@ export class AlgorithmRegistry extends EventEmitter {
     let best: RegisteredAlgorithm | undefined;
     let bestScore = 0;
     
-    for (const [_, algorithm] of this.algorithms) {
+    for (const [, algorithm] of this.algorithms) {
       if (algorithm.metadata.id.type === type && algorithm.enabled) {
         const score = this.calculateAlgorithmScore(algorithm);
         if (score > bestScore) {
@@ -236,7 +236,7 @@ export class AlgorithmRegistry extends EventEmitter {
     let compatible: RegisteredAlgorithm | undefined;
     let bestVersion: AlgorithmVersion | undefined;
     
-    for (const [_, algorithm] of this.algorithms) {
+    for (const [, algorithm] of this.algorithms) {
       const meta = algorithm.metadata;
       
       // Same algorithm name and type

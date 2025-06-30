@@ -2,7 +2,7 @@
  * Crypto Worker Pool for parallel cryptographic operations
  */
 
-import { KeyPair, EncapsulationResult, EncryptedData } from '../crypto-types';
+import { KeyPair, EncapsulationResult } from '../crypto-types';
 import { AlgorithmIdentifier } from '../interfaces/algorithm-types';
 
 interface WorkerTask {

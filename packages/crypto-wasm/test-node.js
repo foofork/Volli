@@ -5,6 +5,9 @@
  * - Encapsulation: <100ms
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable no-console */
+
 const { 
     VollyKEM, 
     benchmark_keygen, 

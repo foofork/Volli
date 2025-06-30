@@ -3,7 +3,7 @@
  */
 
 import { EventEmitter } from 'eventemitter3';
-import { KeyPair, PublicKey, PrivateKey, EncapsulationResult, EncryptedData } from '../crypto-types';
+import { KeyPair, PublicKey, PrivateKey, EncapsulationResult } from '../crypto-types';
 import { AlgorithmIdentifier, AlgorithmType } from '../interfaces/algorithm-types';
 import { CryptoProvider, ProviderRegistry } from '../interfaces/crypto-provider';
 import { AlgorithmRegistry } from '../providers/algorithm-registry';
