@@ -3,6 +3,7 @@ export * from './message';
 export * from './message-manager';
 export * from './conversation';
 export * from './encryption';
+export * from './post-quantum-encryption';
 export * from './queue';
 export * from './search';
 export * from './offline-message-vault';
