@@ -24,7 +24,7 @@ export class Vault extends EventEmitter {
   private config: VaultConfig;
   private isInitialized = false;
   private _isOpen = false;
-  private collections: Map<string, Map<string, any>> = new Map();
+  private collections: Map<string, Map<string, unknown>> = new Map();
 
   constructor(config: VaultConfig) {
     super();
@@ -72,7 +72,7 @@ export class Vault extends EventEmitter {
    */
   async createDocument(
     type: string,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     metadata?: Partial<Document['metadata']>
   ): Promise<Document> {
     this.ensureInitialized();
@@ -128,7 +128,7 @@ export class Vault extends EventEmitter {
    */
   async updateDocument(
     id: string,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     metadata?: Partial<Document['metadata']>
   ): Promise<Document | null> {
     this.ensureInitialized();
@@ -378,7 +378,7 @@ export class Vault extends EventEmitter {
   /**
    * Generate content hash for document
    */
-  private generateContentHash(data: Record<string, any>): string {
+  private generateContentHash(data: Record<string, unknown>): string {
     const serialized = JSON.stringify(data, Object.keys(data).sort());
     const hash = hashData(new TextEncoder().encode(serialized));
     return Buffer.from(hash).toString('hex');
@@ -387,8 +387,8 @@ export class Vault extends EventEmitter {
   /**
    * Get last backup timestamp
    */
-  private getLastBackupTime(): number | undefined {
-    const timestamp = this.storage.getMetadata('last_backup_at');
+  private async getLastBackupTime(): Promise<number | undefined> {
+    const timestamp = await this.storage.getMetadata('last_backup_at');
     return timestamp ? parseInt(timestamp, 10) : undefined;
   }
 
@@ -401,7 +401,7 @@ export class Vault extends EventEmitter {
     }
 
     // Get all document types
-    const stats = this.storage.getStats();
+    const stats = await this.storage.getStats();
 
     for (const type of Object.keys(stats.typeBreakdown)) {
       const documents = await this.storage.getDocumentsByType(type);
@@ -458,7 +458,7 @@ export class Vault extends EventEmitter {
   /**
    * Store item in collection (test compatibility)
    */
-  async store(collection: string, data: any): Promise<void> {
+  async store(collection: string, data: unknown): Promise<void> {
     if (!this._isOpen) {
       throw new Error('Vault is not open');
     }
@@ -480,7 +480,7 @@ export class Vault extends EventEmitter {
   /**
    * Get item from collection (test compatibility)
    */
-  async get(collection: string, id: string): Promise<any | null> {
+  async get(collection: string, id: string): Promise<unknown | null> {
     if (!this._isOpen) {
       throw new Error('Vault is not open');
     }
@@ -510,7 +510,7 @@ export class Vault extends EventEmitter {
   /**
    * Query collection (test compatibility)
    */
-  async query(collection: string, options?: any): Promise<any[]> {
+  async query(collection: string, options?: unknown): Promise<unknown[]> {
     if (!this._isOpen) {
       throw new Error('Vault is not open');
     }
@@ -593,7 +593,7 @@ export class Vault extends EventEmitter {
   async searchCollection(
     collection: string,
     query: string
-  ): Promise<Array<{ item: any; score: number }>> {
+  ): Promise<Array<{ item: unknown; score: number }>> {
     if (!query) {
       return [];
     }
@@ -603,7 +603,7 @@ export class Vault extends EventEmitter {
       return [];
     }
 
-    const results: Array<{ item: any; score: number }> = [];
+    const results: Array<{ item: unknown; score: number }> = [];
     const queryLower = query.toLowerCase();
 
     for (const item of collectionMap.values()) {

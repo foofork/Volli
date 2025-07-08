@@ -21,20 +21,20 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@automerge/automerge": "^2.1.0",
+    "@automerge/automerge": "^2.2.9",
+    "dexie": "^3.2.7",
     "eventemitter3": "^5.0.1",
-    "flexsearch": "^0.7.31",
-    "libsodium-wrappers": "^0.7.13",
-    "sql.js": "^1.8.0",
-    "uuid": "^9.0.0"
+    "flexsearch": "^0.7.43",
+    "libsodium-wrappers": "^0.7.15",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@types/flexsearch": "^0.7.3",
+    "@types/flexsearch": "^0.7.42",
     "@types/libsodium-wrappers": "^0.7.14",
-    "@types/sql.js": "^1.4.4",
     "@types/uuid": "^10.0.0",
-    "tsup": "^7.0.0",
-    "vitest": "^1.0.0"
+    "fake-indexeddb": "^4.0.2",
+    "tsup": "^7.2.0",
+    "vitest": "^1.6.1"
   },
   "files": [
     "dist"
