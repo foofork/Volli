@@ -1,0 +1,45 @@
+[package]
+name = "volli-crypto-wasm"
+version = "0.1.0"
+edition = "2021"
+description = "Post-quantum cryptography WASM module for Volly"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+getrandom = { version = "0.2", features = ["js"] }
+
+# Post-quantum cryptography - using WASM-compatible crates
+fips204 = "0.4"  # ML-DSA (FIPS 204)
+fips203 = "0.2"  # ML-KEM (FIPS 203) 
+sha3 = "0.10"
+rand = "0.8"
+rand_chacha = "0.3"
+
+# Optional console logging for debugging
+console_error_panic_hook = { version = "0.1", optional = true }
+wee_alloc = { version = "0.4", optional = true }
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+  "console",
+  "Performance",
+  "Window",
+]
+
+[features]
+default = ["console_error_panic_hook"]
+
+[profile.release]
+# Optimize for size for WASM
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"

@@ -2,13 +2,23 @@
   import { cn } from '../utils/cn';
   import { createEventDispatcher } from 'svelte';
 
-  export let threads = [];
-  export let selectedThreadId = null;
+  interface Thread {
+    id: string;
+    name: string;
+    avatar?: string;
+    isOnline?: boolean;
+    lastMessage: string;
+    lastMessageTime: Date;
+    unreadCount?: number;
+  }
+
+  export let threads: Thread[] = [];
+  export let selectedThreadId: string | null = null;
   export let className = '';
 
   const dispatch = createEventDispatcher();
 
-  function formatTime(date) {
+  function formatTime(date: Date) {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -33,7 +43,7 @@
     }
   }
 
-  function selectThread(threadId) {
+  function selectThread(threadId: string) {
     dispatch('select', { threadId });
   }
 </script>
@@ -81,7 +91,7 @@
         </p>
       </div>
 
-      {#if thread.unreadCount > 0}
+      {#if thread.unreadCount && thread.unreadCount > 0}
         <div class="flex-shrink-0">
           <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full bg-volli-primary-600 dark:bg-volli-primary-500 text-white">
             {thread.unreadCount > 99 ? '99+' : thread.unreadCount}

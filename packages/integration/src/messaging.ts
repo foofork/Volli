@@ -1,6 +1,12 @@
 import { VolliDB, Message, Vault, Contact } from './database';
 import type { VolliCore } from './index';
-import { keyEncapsulation, encryptData, initCrypto } from '@volli/identity-core';
+import { 
+  initPostQuantumEncryption, 
+  encryptPostQuantumMessage,
+  decryptPostQuantumMessage,
+  type PostQuantumEncryptedMessage 
+} from '@volli/messaging';
+import { type PublicKey, type PrivateKey } from '@volli/identity-core';
 
 export class MessagingService {
   constructor(
@@ -94,35 +100,67 @@ export class MessagingService {
   }
   
   /**
-   * Encrypt a message for a specific recipient using their public key
+   * Encrypt a message for a specific recipient using post-quantum ML-KEM-768
    * Returns the encrypted content that can only be decrypted by the recipient
    */
   async encryptForRecipient(content: string, recipientPublicKey: string): Promise<string> {
-    await initCrypto();
+    await initPostQuantumEncryption();
     
     // Parse the recipient's public key
-    const publicKey = JSON.parse(recipientPublicKey);
+    const publicKey: PublicKey = JSON.parse(recipientPublicKey);
     
-    // Perform key encapsulation to get a shared secret
-    const { sharedSecret, ciphertext: kemCiphertext } = await keyEncapsulation(publicKey);
+    // Create message content object
+    const messageContent = {
+      data: content,
+      mimeType: 'text/plain'
+    };
     
-    // Convert content to bytes
-    const contentBytes = new TextEncoder().encode(content);
+    // Encrypt using post-quantum encryption
+    const encrypted: PostQuantumEncryptedMessage = await encryptPostQuantumMessage(
+      messageContent,
+      publicKey
+    );
     
-    // Encrypt the content with the shared secret
-    const { ciphertext, nonce } = await encryptData(contentBytes, sharedSecret);
-    
-    // Package everything together
+    // Package for storage/transmission
     const encryptedMessage = {
-      kemCiphertext: Array.from(kemCiphertext),
-      ciphertext: Array.from(ciphertext),
-      nonce: Array.from(nonce)
+      encryptedContent: Array.from(encrypted.encryptedContent),
+      encryptionInfo: encrypted.encryptionInfo,
+      kemCiphertext: Array.from(encrypted.kemCiphertext),
+      postQuantumKeyId: encrypted.postQuantumKeyId,
+      version: 2 // Post-quantum version
     };
     
     // Return as JSON string
     return JSON.stringify(encryptedMessage);
   }
   
+  /**
+   * Decrypt a message using post-quantum decryption
+   */
+  async decryptForRecipient(encryptedContent: string, recipientPrivateKey: string): Promise<string> {
+    await initPostQuantumEncryption();
+    
+    // Parse the encrypted message
+    const encryptedMessage = JSON.parse(encryptedContent);
+    
+    // Parse the recipient's private key
+    const privateKey: PrivateKey = JSON.parse(recipientPrivateKey);
+    
+    // Reconstruct the post-quantum encrypted message
+    const encrypted: PostQuantumEncryptedMessage = {
+      encryptedContent: new Uint8Array(encryptedMessage.encryptedContent),
+      encryptionInfo: encryptedMessage.encryptionInfo,
+      kemCiphertext: new Uint8Array(encryptedMessage.kemCiphertext),
+      postQuantumKeyId: encryptedMessage.postQuantumKeyId
+    };
+    
+    // Decrypt using post-quantum decryption
+    const messageContent = await decryptPostQuantumMessage(encrypted, privateKey);
+    
+    // Return the decrypted text content
+    return messageContent.data as string;
+  }
+
   /**
    * Get the public key for a contact
    */

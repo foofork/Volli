@@ -1,0 +1,80 @@
+# Volly Signaling Server - Standard LiveKit
+# Usage: docker-compose -f docker-compose.signaling.yml up
+
+version: '3.8'
+
+services:
+  # Standard LiveKit Server
+  livekit:
+    image: livekit/livekit-server:latest
+    ports:
+      - '7880:7880' # WebSocket
+      - '7881:7881' # HTTP API
+      - '7882:7882' # TURN/ICE
+    environment:
+      # API Keys for development
+      - LIVEKIT_KEYS=${LIVEKIT_API_KEY:-devkey}:${LIVEKIT_API_SECRET:-secret}
+
+      # Redis configuration for scaling
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+
+      # Development mode settings
+      - LIVEKIT_DEV_MODE=true
+    depends_on:
+      - redis
+    networks:
+      - volly-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:7880/healthz']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis for session storage and scaling
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - volly-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Optional: Redis Commander for debugging (enable with --profile debug)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+      - HTTP_USER=${REDIS_UI_USER:-admin}
+      - HTTP_PASSWORD=${REDIS_UI_PASSWORD:-password}
+    ports:
+      - '8081:8081'
+    depends_on:
+      - redis
+    networks:
+      - volly-network
+    profiles:
+      - debug
+
+volumes:
+  redis_data:
+
+networks:
+  volly-network:
+    driver: bridge
+    name: volly-network
+# Note: Post-quantum encryption is handled at the application layer
+# See packages/messaging/src/post-quantum-encryption.ts for implementation

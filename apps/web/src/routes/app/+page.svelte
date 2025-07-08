@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { auth } from '$lib/stores/auth';
-	import { messages, conversations, activeConversation, activeMessages } from '$lib/stores/messages';
+	import { get } from 'svelte/store';
+	import { messagesRunes } from '$lib/stores/messages-runes.svelte';
 	import { toasts } from '$lib/stores/toasts';
 	import { handleArrowNavigation, announceToScreenReader, generateId } from '$lib/utils/accessibility';
 	
@@ -19,24 +20,20 @@
 	const messagesRegionId = generateId('messages-region');
 	
 	onMount(() => {
-		// Conversations are loaded by the layout when vault is unlocked
-		// Just ensure we're subscribed to the store
-		const unsubscribe = messages.subscribe(() => {
-			// Trigger reactivity
-		});
-		
-		return unsubscribe;
+		// With Svelte 5 runes, we don't need manual subscriptions
+		// The reactive state is automatically managed
+		messagesRunes.loadConversations();
 	});
 	
 	async function handleSendMessage() {
-		if (!messageInput.trim() || !$activeConversation || isSendingMessage) return;
+		if (!messageInput.trim() || !messagesRunes.activeConversation || isSendingMessage) return;
 		
 		isSendingMessage = true;
 		const message = messageInput.trim();
 		messageInput = ''; // Clear input immediately for better UX
 		
 		try {
-			await messages.sendMessage(message);
+			await messagesRunes.sendMessage(message);
 			announceToScreenReader('Message sent successfully');
 		} catch (error) {
 			console.error('Failed to send message:', error);
@@ -58,8 +55,8 @@
 			// In a real app, this would be an actual user ID
 			// For demo, we'll create a mock participant
 			const participantId = `user-${newConversationParticipant.toLowerCase().replace(/\s+/g, '-')}`;
-			const conversationId = await messages.createConversation([participantId]);
-			messages.setActiveConversation(conversationId);
+			const conversationId = await messagesRunes.createConversation([participantId]);
+			messagesRunes.setActiveConversation(conversationId);
 			
 			// Reset form
 			newConversationParticipant = '';
@@ -82,8 +79,8 @@
 	}
 	
 	function selectConversation(id: string) {
-		messages.setActiveConversation(id);
-		const conversation = $conversations.find(c => c.id === id);
+		messagesRunes.setActiveConversation(id);
+		const conversation = messagesRunes.conversations.find(c => c.id === id);
 		if (conversation) {
 			announceToScreenReader(`Switched to conversation with ${getConversationName(conversation)}`);
 		}
@@ -136,8 +133,9 @@
 	function getConversationName(conversation: any) {
 		// In a real app, we'd look up participant names
 		// For demo, we'll generate a name from the participant ID
+		const authState = get(auth);
 		const otherParticipants = conversation.participants.filter(
-			(p: string) => p !== $auth.currentIdentity?.id && p !== 'test-identity-123'
+			(p: string) => p !== authState.currentIdentity?.id && p !== 'test-identity-123'
 		);
 		
 		if (otherParticipants.length === 0) {
@@ -160,7 +158,8 @@
 		}
 		
 		const lastMessage = conversation.messages[conversation.messages.length - 1];
-		const isSent = lastMessage.senderId === $auth.currentIdentity?.id || 
+		const authState = get(auth);
+		const isSent = lastMessage.senderId === authState.currentIdentity?.id || 
 		              lastMessage.senderId === 'test-identity-123';
 		
 		return (isSent ? 'You: ' : '') + lastMessage.content;
@@ -168,7 +167,7 @@
 </script>
 
 <div class="messages-layout">
-	<aside class="conversation-list" role="complementary" aria-label="Conversations">
+	<aside class="conversation-list" aria-label="Conversations">
 		<div class="list-header">
 			<h2>Messages</h2>
 			<button class="new-chat" on:click={toggleNewConversation} aria-label="Start new conversation" aria-expanded={showNewConversation}>
@@ -198,25 +197,25 @@
 			</form>
 		{/if}
 		
-		<div class="conversations" bind:this={conversationListElement} on:keydown={handleConversationListKeydown} role="list" aria-label="Conversation list" id={conversationListId}>
-			{#if $messages.isLoading}
+		<ul class="conversations" bind:this={conversationListElement} role="list" aria-label="Conversation list" id={conversationListId}>
+			{#if messagesRunes.isLoading}
 				<div class="empty-state" role="status" aria-live="polite">
 					<div class="spinner" aria-hidden="true"></div>
 					<p>Loading conversations...</p>
 				</div>
-			{:else if $conversations.length === 0}
+			{:else if messagesRunes.conversations.length === 0}
 				<div class="empty-state">
 					<p>No conversations yet</p>
 					<button on:click={toggleNewConversation} aria-label="Start your first conversation">Start a conversation</button>
 				</div>
 			{:else}
-				{#each $conversations as conversation (conversation.id)}
-					<button
-						class="conversation-item"
-						class:active={$activeConversation?.id === conversation.id}
-						on:click={() => selectConversation(conversation.id)}
-						role="listitem"
-						aria-selected={$activeConversation?.id === conversation.id}
+				{#each messagesRunes.conversations as conversation (conversation.id)}
+					<li>
+						<button
+							class="conversation-item"
+							class:active={messagesRunes.activeConversation?.id === conversation.id}
+							on:click={() => selectConversation(conversation.id)}
+							aria-pressed={messagesRunes.activeConversation?.id === conversation.id}
 						aria-label={`Conversation with ${getConversationName(conversation)}. Last message: ${getLastMessagePreview(conversation)}`}
 						tabindex="0"
 					>
@@ -234,16 +233,17 @@
 								</time>
 							</div>
 						{/if}
-					</button>
+						</button>
+					</li>
 				{/each}
 			{/if}
-		</div>
+		</ul>
 	</aside>
 	
 	<section class="chat-view" role="main" aria-label="Chat messages">
-		{#if $activeConversation}
+		{#if messagesRunes.activeConversation}
 			<header class="chat-header">
-				<h3 id="conversation-title">{getConversationName($activeConversation)}</h3>
+				<h3 id="conversation-title">{getConversationName(messagesRunes.activeConversation)}</h3>
 				<div class="chat-actions" role="group" aria-label="Conversation actions">
 					<button class="icon-button" aria-label="Start call" title="Call">
 						<span role="img" aria-label="Phone icon">📞</span>
@@ -255,7 +255,7 @@
 			</header>
 			
 			<div class="messages-container" bind:this={messagesContainerElement} role="log" aria-live="polite" aria-label="Message history" id={messagesRegionId}>
-				{#if $activeMessages.length === 0}
+				{#if messagesRunes.activeMessages.length === 0}
 					<div class="empty-chat">
 						<p>
 							<span role="img" aria-label="Lock icon">🔒</span>
@@ -264,8 +264,8 @@
 						<p>Start a conversation</p>
 					</div>
 				{:else}
-					{#each $activeMessages as message (message.id)}
-						<div class="message" class:sent={message.senderId === $auth.currentIdentity?.id || message.senderId === 'test-identity-123'} role="group" aria-labelledby="message-{message.id}">
+					{#each messagesRunes.activeMessages as message (message.id)}
+						<div class="message" class:sent={message.senderId === get(auth).currentIdentity?.id || message.senderId === 'test-identity-123'} role="group" aria-labelledby="message-{message.id}">
 							<div class="message-bubble" id="message-{message.id}">
 								{message.content}
 							</div>

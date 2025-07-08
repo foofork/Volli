@@ -8,9 +8,12 @@
 	import { contacts } from '$lib/stores/contacts';
 	import { files } from '$lib/stores/files';
 	import { toasts } from '$lib/stores/toasts';
-	import { KeyboardShortcuts, handleArrowNavigation, announceToScreenReader } from '$lib/utils/accessibility';
-	import { networkStore } from '@volli/integration';
-	import VaultErrorFallback from '$lib/components/VaultErrorFallback.svelte';
+	import { KeyboardShortcuts, announceToScreenReader } from '$lib/utils/accessibility';
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	import { handleArrowNavigation } from '$lib/utils/accessibility';
+	import { smartNetwork } from '@volli/integration';
+	import AccountErrorFallback from '$lib/components/AccountErrorFallback.svelte';
+	import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
 	
 	let isReady = false;
 	let unlockPassphrase = '';
@@ -26,8 +29,8 @@
 				return;
 			}
 			
-			await networkStore.connectToSignaling(
-				'ws://localhost:8080',
+			// Use smart network with auto-reconnect and server selection
+			await smartNetwork.connect(
 				currentIdentity.id,
 				currentIdentity.publicKey
 			);
@@ -62,9 +65,9 @@
 					await contacts.loadContacts();
 					await files.loadFiles();
 					await connectToSignaling();
-					announceToScreenReader('Application ready. Vault unlocked and secure.');
+					announceToScreenReader('Application ready. Account unlocked and secure.');
 				} else {
-					announceToScreenReader('Please unlock your vault to continue.');
+					announceToScreenReader('Please unlock your account to continue.');
 				}
 				isReady = true;
 			}
@@ -89,7 +92,7 @@
 			const success = await auth.unlockVault(unlockPassphrase);
 			if (success) {
 				unlockPassphrase = '';
-				toasts.success('Vault unlocked successfully!');
+				toasts.success('Account unlocked successfully!');
 				await messages.loadConversations();
 				await contacts.loadContacts();
 				await files.loadFiles();
@@ -99,7 +102,7 @@
 				toasts.error('Incorrect passphrase');
 			}
 		} catch (err) {
-			unlockError = err instanceof Error ? err.message : 'Failed to unlock vault';
+			unlockError = err instanceof Error ? err.message : 'Failed to unlock account';
 			toasts.error(unlockError);
 		} finally {
 			isUnlocking = false;
@@ -111,8 +114,8 @@
 		messages.reset();
 		contacts.reset();
 		files.reset();
-		toasts.info('Vault locked');
-		announceToScreenReader('Vault locked successfully');
+		toasts.info('Account locked');
+		announceToScreenReader('Account locked successfully');
 	}
 	
 	async function handleLogout() {
@@ -123,7 +126,7 @@
 	
 </script>
 
-<ErrorBoundary fallback={VaultErrorFallback}>
+<ErrorBoundary fallback={AccountErrorFallback}>
 {#if isReady}
 	{#if !$vault.isUnlocked}
 		<div class="unlock-screen">
@@ -132,7 +135,7 @@
 					<span role="img" aria-label="Lock icon">🔐</span>
 					Volli
 				</h1>
-				<h2>Unlock Your Vault</h2>
+				<h2>Unlock Your Account</h2>
 				<p>Enter your passphrase to decrypt your messages</p>
 				
 				<form on:submit|preventDefault={handleUnlock} aria-labelledby="unlock-heading">
@@ -150,7 +153,7 @@
 					{/if}
 					
 					<button type="submit" disabled={isUnlocking || !unlockPassphrase} aria-describedby="unlock-help">
-						{isUnlocking ? 'Unlocking...' : 'Unlock Vault'}
+						{isUnlocking ? 'Unlocking...' : 'Unlock Account'}
 					</button>
 					<div class="sr-only" id="unlock-help">Use your secure passphrase to decrypt and access your messages</div>
 				</form>
@@ -202,13 +205,12 @@
 						<div class="user-details">
 							<div class="user-name" aria-label="Current user">{$auth.currentIdentity?.displayName}</div>
 							<div class="user-status">
-								<span role="img" aria-label="Online status indicator">🟢</span>
-								Secure
+								<ConnectionStatus />
 							</div>
 						</div>
 					</div>
 					<div class="footer-actions" role="group" aria-label="Account actions">
-						<button class="icon-button" on:click={handleLock} aria-label="Lock vault (Ctrl+L)" title="Lock vault">
+						<button class="icon-button" on:click={handleLock} aria-label="Lock account (Ctrl+L)" title="Lock account">
 							<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
 								<path d="M5 9V7a5 5 0 0110 0v2m-9 0h8a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4a2 2 0 012-2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 							</svg>

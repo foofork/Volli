@@ -128,7 +128,6 @@ identity_core_test_results.md
 
 # Build configuration (temporary)
 tsconfig.build.json
-vitest.config.ts
 
 # Test artifacts
 test-results/
@@ -184,3 +183,11 @@ service-account*.json
 .yarnrc
 .netrc
 .pypirc
+
+# Documentation - hide everything in docs directory
+/docs/
+
+# Root level planning documents
+/*.md
+!/README.md
+!/LICENSE*.timestamp-*.mjs

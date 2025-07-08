@@ -5,17 +5,35 @@
   import { onMount, afterUpdate, createEventDispatcher } from 'svelte';
   import type { Message } from '../types';
 
-  export let thread = null;
-  export let messages = [];
-  export let currentUserId;
-  export let isTyping = false;
-  export let typingUser = '';
-  export let className = '';
+  interface Thread {
+    id: string;
+    name: string;
+    title?: string;
+    participantIds: string[];
+    participants: number;
+    isOnline?: boolean;
+    lastMessage?: Message;
+    createdAt: number;
+    updatedAt: number;
+  }
 
-  let messagesContainer;
-  let autoScroll = true;
+  export let thread: Thread | null = null;
+  export let messages: Message[] = [];
+  export let currentUserId: string;
+  export let isTyping: boolean = false;
+  export let typingUser: string = '';
+  export let className: string = '';
 
-  const dispatch = createEventDispatcher();
+  let messagesContainer: HTMLDivElement | undefined;
+  let autoScroll: boolean = true;
+
+  interface ThreadViewEvents {
+    loadMore: { threadId: string };
+    sendMessage: { threadId: string; message: string };
+    typing: { threadId: string; isTyping: boolean };
+  }
+
+  const dispatch = createEventDispatcher<ThreadViewEvents>();
 
   onMount(() => {
     scrollToBottom();
@@ -45,13 +63,13 @@
     }
   }
 
-  function handleSendMessage(event) {
+  function handleSendMessage(event: CustomEvent<{ message: string }>) {
     if (thread) {
       dispatch('sendMessage', { threadId: thread.id, message: event.detail.message });
     }
   }
 
-  function groupMessagesByDate(messages) {
+  function groupMessagesByDate(messages: Message[]) {
     const groups = new Map<string, Message[]>();
     
     messages.forEach(message => {
@@ -59,7 +77,7 @@
         year: 'numeric',
         month: 'long',
         day: 'numeric'
-      }).format(message.timestamp);
+      }).format(new Date(message.timestamp));
       
       if (!groups.has(dateKey)) {
         groups.set(dateKey, []);
@@ -70,6 +88,7 @@
     return groups;
   }
 
+  let messageGroups: Map<string, Message[]>;
   $: messageGroups = groupMessagesByDate(messages);
 </script>
 

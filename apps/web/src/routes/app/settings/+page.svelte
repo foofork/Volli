@@ -3,7 +3,11 @@
 	import { vault } from '$lib/stores/vault';
 	import { toasts } from '$lib/stores/toasts';
 	import { onMount } from 'svelte';
+	import UserFriendlyId from '$lib/components/UserFriendlyId.svelte';
+	import StatusIndicator from '$lib/components/StatusIndicator.svelte';
 	
+	// Note: exportData kept for future export functionality
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let exportData = false;
 	let changePassphrase = false;
 	let newPassphrase = '';
@@ -30,7 +34,7 @@
 			URL.revokeObjectURL(url);
 			
 			toasts.success('Data exported successfully');
-		} catch (err) {
+		} catch {
 			toasts.error('Failed to export data');
 		}
 	}
@@ -81,7 +85,7 @@
 			auth.setAutoLockTimeout(autoLockTimeout);
 			
 			toasts.success('Settings saved');
-		} catch (err) {
+		} catch {
 			toasts.error('Failed to save settings');
 		}
 	}
@@ -117,8 +121,8 @@
 			
 			<div class="setting-item">
 				<div class="setting-info">
-					<h3>Change Vault Passphrase</h3>
-					<p>Update the passphrase used to encrypt your local vault</p>
+					<h3>Change Account Passphrase</h3>
+					<p>Update the passphrase used to encrypt your local account</p>
 				</div>
 				<button class="secondary" on:click={() => changePassphrase = !changePassphrase}>
 					Change Passphrase
@@ -149,7 +153,7 @@
 			<div class="setting-item">
 				<div class="setting-info">
 					<h3>Auto-lock Timeout</h3>
-					<p>Automatically lock vault after inactivity</p>
+					<p>Automatically lock account after inactivity</p>
 				</div>
 				<select bind:value={autoLockTimeout} on:change={updateSettings}>
 					<option value={5}>5 minutes</option>
@@ -224,15 +228,31 @@
 				</div>
 				<div class="info-item">
 					<span class="label">Encryption</span>
-					<span class="value">Post-Quantum (Kyber/Dilithium)</span>
+					<div class="encryption-status">
+						<StatusIndicator status="secure" label="Quantum-Safe" size="small" />
+						<span class="value">Post-Quantum Security</span>
+					</div>
 				</div>
 				<div class="info-item">
 					<span class="label">Storage</span>
 					<span class="value">Local-first (SQLite)</span>
 				</div>
 				<div class="info-item">
-					<span class="label">Identity</span>
-					<span class="value">{$auth.currentIdentity?.id.slice(0, 12)}...</span>
+					<span class="label">Your Identity</span>
+					<div class="identity-display">
+						{#if $auth.currentIdentity}
+							<UserFriendlyId 
+								id={$auth.currentIdentity.id} 
+								name={$auth.currentIdentity.displayName}
+								type="identity"
+								size="small"
+								showCopy={true}
+								inline={true}
+							/>
+						{:else}
+							<span class="value">Not available</span>
+						{/if}
+					</div>
 				</div>
 			</div>
 		</section>
@@ -424,6 +444,22 @@
 	.info-item .value {
 		font-weight: 600;
 		color: #fff;
+	}
+	
+	.identity-display {
+		display: flex;
+		align-items: center;
+	}
+	
+	.encryption-status {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+	
+	.encryption-status .value {
+		font-size: 0.9rem;
 	}
 	
 	@media (max-width: 768px) {

@@ -1,341 +1,328 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/stores/auth';
-	import { PassphraseInput } from '$lib/components';
-	import { toasts } from '$lib/stores/toasts';
-	import { onMount } from 'svelte';
+	import { KeyboardShortcuts } from '$lib/utils/accessibility';
 	
-	let displayName = '';
-	let passphrase = '';
-	let confirmPassphrase = '';
-	let isCreating = false;
-	let error = '';
-	let step: 'identity' | 'passphrase' = 'identity';
-	let passphraseStrength: any = null;
-	
+	let ready = false;
+	let keyboardShortcuts: KeyboardShortcuts;
+
 	onMount(async () => {
-		// Initialize auth
-		await auth.initialize();
-		
-		// Check if already authenticated
-		const unsubscribe = auth.subscribe(state => {
-			if (state.isAuthenticated && state.vaultUnlocked) {
-				goto('/app');
-			} else if (state.currentIdentity && !state.vaultUnlocked) {
-				// Identity exists but vault not created/unlocked
-				step = 'passphrase';
-			}
-		});
-		
-		return unsubscribe;
+		try {
+			// Check if already authenticated
+			const unsubscribe = auth.subscribe(state => {
+				if (state.isAuthenticated) {
+					goto('/app');
+				}
+			});
+			
+			// Set up keyboard shortcuts
+			keyboardShortcuts = new KeyboardShortcuts();
+			keyboardShortcuts.register('enter', getStarted);
+			keyboardShortcuts.register('g', getStarted); // 'g' for get started
+			keyboardShortcuts.register('c', createIdentity); // 'c' for create
+			keyboardShortcuts.register('s', setupIdentity); // 's' for setup
+			
+			ready = true;
+			
+			return () => {
+				unsubscribe();
+				keyboardShortcuts?.destroy();
+			};
+		} catch (error) {
+			console.error('Failed to initialize auth page:', error);
+			ready = true; // Show UI even if there's an error
+		}
 	});
 	
-	async function handleCreateIdentity() {
-		if (!displayName.trim()) {
-			error = 'Please enter a display name';
-			return;
-		}
-		
-		isCreating = true;
-		error = '';
-		
-		try {
-			await auth.createIdentity(displayName.trim());
-			toasts.success('Identity created successfully!');
-			step = 'passphrase';
-			error = '';
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to create identity';
-			toasts.error(error);
-		} finally {
-			isCreating = false;
-		}
+	function getStarted() {
+		goto('/auth/identity/create');
 	}
 	
-	async function handleCreateVault() {
-		if (!passphrase) {
-			error = 'Please enter a passphrase';
-			return;
-		}
-		
-		if (passphrase !== confirmPassphrase) {
-			error = 'Passphrases do not match';
-			return;
-		}
-		
-		if (!passphraseStrength || passphraseStrength.entropy < 60) {
-			error = 'Passphrase is too weak. Please choose a stronger passphrase.';
-			return;
-		}
-		
-		isCreating = true;
-		error = '';
-		
-		try {
-			await auth.createVaultWithPassphrase(passphrase);
-			toasts.success('Vault created successfully! Redirecting...');
-			// Navigation handled by subscription
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to create vault';
-			toasts.error(error);
-		} finally {
-			isCreating = false;
-		}
+	function createIdentity() {
+		goto('/auth/identity/create');
 	}
 	
-	function handlePassphraseStrength(event: CustomEvent) {
-		passphraseStrength = event.detail;
+	function setupIdentity() {
+		goto('/auth/identity/setup');
 	}
 </script>
 
 <svelte:head>
-	<title>Create Identity - Volli</title>
+	<title>Volly - Secure Messaging</title>
+	<meta name="description" content="Post-quantum secure, local-first messaging platform" />
 </svelte:head>
 
-<main class="auth-container">
-	<div class="auth-card">
-		<div class="logo">
-			<h1>🔐 Volli</h1>
-			<p>Post-quantum secure messaging</p>
-		</div>
+<main class="container">
+	<div class="hero">
+		<h1>
+			<span class="logo-icon" role="img" aria-label="Lock icon">🔐</span>
+			Volly
+		</h1>
+		<p class="tagline">Post-quantum secure, local-first messaging</p>
 		
-		{#if step === 'identity'}
-			<form on:submit|preventDefault={handleCreateIdentity}>
-				<h2>Create Your Identity</h2>
-				<p class="description">
-					Your identity is stored locally and encrypted with post-quantum cryptography.
-					No personal data is ever sent to any server.
-				</p>
-				
-				<div class="form-group">
-					<label for="displayName">Display Name</label>
-					<input
-						id="displayName"
-						type="text"
-						bind:value={displayName}
-						placeholder="Enter your name"
-						disabled={isCreating}
-						required
-					/>
+		{#if ready}
+			<section class="features" aria-label="Key features">
+				<div class="feature">
+					<h3>
+						<span class="feature-icon" role="img" aria-label="Lock icon">🔒</span>
+						Post-Quantum Security
+					</h3>
+					<p>ML-KEM & ML-DSA algorithms protect against future quantum threats</p>
 				</div>
 				
-				{#if error}
-					<div class="error">{error}</div>
-				{/if}
-				
-				<button type="submit" disabled={isCreating}>
-					{isCreating ? 'Creating...' : 'Create Identity'}
-				</button>
-				
-				<div class="security-note">
-					<p>🔒 Your keys are generated locally</p>
-					<p>🌐 Works 100% offline</p>
-					<p>🚫 No tracking or analytics</p>
-				</div>
-			</form>
-		{:else}
-			<form on:submit|preventDefault={handleCreateVault}>
-				<h2>Secure Your Vault</h2>
-				<p class="description">
-					Create a strong passphrase to encrypt your vault. This passphrase will be required
-					to unlock your messages and cannot be recovered if lost.
-				</p>
-				
-				<div class="form-group">
-					<PassphraseInput
-						bind:value={passphrase}
-						label="Passphrase"
-						placeholder="Enter a strong passphrase"
-						disabled={isCreating}
-						on:strength={handlePassphraseStrength}
-					/>
+				<div class="feature">
+					<h3>
+						<span class="feature-icon" role="img" aria-label="Mobile phone icon">📱</span>
+						Multi-Platform
+					</h3>
+					<p>One codebase for Web, iOS, Android, and Desktop</p>
 				</div>
 				
-				<div class="form-group">
-					<label for="confirmPassphrase">Confirm Passphrase</label>
-					<input
-						id="confirmPassphrase"
-						type="password"
-						bind:value={confirmPassphrase}
-						placeholder="Confirm your passphrase"
-						disabled={isCreating}
-						required
-					/>
+				<div class="feature">
+					<h3>
+						<span class="feature-icon" role="img" aria-label="Globe icon">🌐</span>
+						Local-First
+					</h3>
+					<p>Works 100% offline with P2P sync when online</p>
 				</div>
 				
-				{#if error}
-					<div class="error">{error}</div>
-				{/if}
-				
+				<div class="feature">
+					<h3>
+						<span class="feature-icon" role="img" aria-label="Plug icon">🔌</span>
+						Hybrid Security
+					</h3>
+					<p>Classical + post-quantum crypto for transition security</p>
+				</div>
+			</section>
+			
+			<div class="cta" role="group" aria-label="Main actions">
 				<button 
-					type="submit" 
-					disabled={isCreating || !passphrase || !passphraseStrength || passphraseStrength.entropy < 60}
+					class="primary" 
+					on:click={getStarted}
+					aria-describedby="get-started-hint"
 				>
-					{isCreating ? 'Creating Vault...' : 'Create Secure Vault'}
+					Create New Identity
 				</button>
-				
-				<div class="security-note">
-					<p>⚠️ Remember your passphrase!</p>
-					<p>🔐 It cannot be recovered</p>
-					<p>💾 Store it somewhere safe</p>
+				<button 
+					class="secondary" 
+					on:click={setupIdentity}
+					aria-describedby="setup-hint"
+				>
+					Setup Existing Identity
+				</button>
+				<div class="sr-only">
+					<div id="get-started-hint">Create a new secure identity (Keyboard shortcut: G, C, or Enter)</div>
+					<div id="setup-hint">Setup an existing identity from backup (Keyboard shortcut: S)</div>
 				</div>
-			</form>
+			</div>
+		{:else}
+			<div class="loading" role="status" aria-live="polite">
+				<div class="spinner" aria-hidden="true"></div>
+				<p>Loading secure environment...</p>
+			</div>
 		{/if}
 	</div>
 </main>
 
 <style>
-	.auth-container {
+	.container {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 2rem;
 		min-height: 100vh;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 2rem;
-		background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
 	}
 	
-	.auth-card {
-		width: 100%;
-		max-width: 450px;
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 16px;
-		padding: 3rem;
-		backdrop-filter: blur(10px);
-	}
-	
-	.logo {
+	.hero {
 		text-align: center;
-		margin-bottom: 3rem;
 	}
 	
-	.logo h1 {
-		font-size: 3rem;
-		margin: 0;
+	h1 {
+		font-size: 4rem;
+		margin: 0 0 1rem;
 		background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
 		background-clip: text;
 	}
 	
-	.logo p {
-		color: #888;
-		margin-top: 0.5rem;
-	}
-	
-	h2 {
-		margin: 0 0 1rem;
+	.tagline {
 		font-size: 1.5rem;
-		color: #fff;
+		color: #888;
+		margin-bottom: 3rem;
 	}
 	
-	.description {
-		color: #aaa;
-		line-height: 1.6;
-		margin-bottom: 2rem;
-		font-size: 0.95rem;
+	.features {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		gap: 2rem;
+		margin: 3rem 0;
 	}
 	
-	.form-group {
-		margin-bottom: 1.5rem;
-	}
-	
-	label {
-		display: block;
-		margin-bottom: 0.5rem;
-		color: #ccc;
-		font-weight: 500;
-	}
-	
-	input {
-		width: 100%;
-		padding: 0.75rem 1rem;
+	.feature {
 		background: rgba(255, 255, 255, 0.05);
+		padding: 2rem;
+		border-radius: 12px;
 		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 8px;
-		color: #fff;
-		font-size: 1rem;
 		transition: all 0.3s ease;
 	}
 	
-	input:focus {
-		outline: none;
-		border-color: #3B82F6;
+	.feature:hover {
 		background: rgba(255, 255, 255, 0.08);
+		transform: translateY(-4px);
+		border-color: rgba(59, 130, 246, 0.5);
 	}
 	
-	input:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
+	.feature:focus-within {
+		background: rgba(255, 255, 255, 0.08);
+		border-color: rgba(59, 130, 246, 0.7);
+		outline: 2px solid #3B82F6;
+		outline-offset: 2px;
+	}
+	
+	.feature h3 {
+		margin: 0 0 1rem;
+		font-size: 1.25rem;
+	}
+	
+	.feature p {
+		color: #aaa;
+		line-height: 1.6;
+		margin: 0;
+	}
+	
+	.cta {
+		margin-top: 3rem;
+		display: flex;
+		gap: 1rem;
+		justify-content: center;
 	}
 	
 	button {
-		width: 100%;
-		padding: 1rem;
-		background: #3B82F6;
-		color: white;
+		padding: 0.75rem 2rem;
+		font-size: 1.1rem;
 		border: none;
 		border-radius: 8px;
-		font-size: 1.1rem;
-		font-weight: 600;
 		cursor: pointer;
 		transition: all 0.3s ease;
-	}
-	
-	button:hover:not(:disabled) {
-		background: #2563EB;
-		transform: translateY(-1px);
-	}
-	
-	button:disabled {
-		opacity: 0.7;
-		cursor: not-allowed;
-	}
-	
-	.error {
-		background: rgba(239, 68, 68, 0.1);
-		border: 1px solid rgba(239, 68, 68, 0.3);
-		color: #EF4444;
-		padding: 0.75rem;
-		border-radius: 8px;
-		margin-bottom: 1rem;
-		font-size: 0.9rem;
-	}
-	
-	.required {
-		color: #EF4444;
 		font-weight: 600;
+		position: relative;
+	}
+	
+	button:focus {
+		outline: 2px solid #3B82F6;
+		outline-offset: 3px;
+	}
+	
+	.primary {
+		background: #3B82F6;
+		color: white;
+	}
+	
+	.primary:hover {
+		background: #2563EB;
+		transform: translateY(-2px);
+	}
+	
+	.secondary {
+		background: transparent;
+		color: #3B82F6;
+		border: 2px solid #3B82F6;
+	}
+	
+	.secondary:hover {
+		background: rgba(59, 130, 246, 0.1);
+	}
+	
+	.secondary:focus {
+		background: rgba(59, 130, 246, 0.15);
+	}
+	
+	.loading {
+		color: #666;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+	}
+	
+	.spinner {
+		width: 32px;
+		height: 32px;
+		border: 3px solid rgba(255, 255, 255, 0.1);
+		border-top-color: #3B82F6;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+	}
+	
+	@keyframes spin {
+		to { transform: rotate(360deg); }
+	}
+	
+	.sr-only {
+		position: absolute;
+		left: -10000px;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
 	}
 	
 	/* High contrast mode support */
 	@media (prefers-contrast: high) {
-		input:focus {
-			box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.8);
-			border-color: #1E40AF;
+		button:focus {
+			outline: 3px solid #1E40AF;
 		}
 		
-		button:focus {
+		.feature:focus-within {
 			outline: 3px solid #1E40AF;
 		}
 	}
 	
 	/* Reduced motion support */
 	@media (prefers-reduced-motion: reduce) {
-		button:hover:not(:disabled) {
+		.feature {
+			transition: none;
+		}
+		
+		button {
+			transition: none;
+		}
+		
+		.spinner {
+			animation: none;
+		}
+		
+		.feature:hover {
+			transform: none;
+		}
+		
+		.primary:hover {
 			transform: none;
 		}
 	}
 	
-	.security-note {
-		margin-top: 2rem;
-		padding-top: 2rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
-		text-align: center;
-	}
-	
-	.security-note p {
-		color: #888;
-		font-size: 0.9rem;
-		margin: 0.5rem 0;
+	@media (max-width: 768px) {
+		h1 {
+			font-size: 3rem;
+		}
+		
+		.tagline {
+			font-size: 1.25rem;
+		}
+		
+		.features {
+			grid-template-columns: 1fr;
+		}
+		
+		.cta {
+			flex-direction: column;
+		}
+		
+		button {
+			width: 100%;
+		}
 	}
 </style>
